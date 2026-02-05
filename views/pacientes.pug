@@ -1,0 +1,35 @@
+doctype html
+html
+  head
+    title Pacientes
+    link(rel='stylesheet', href='/styles.css')
+  body
+    h1 Pacientes
+    if pacientes.length > 0
+      table
+        thead
+          tr
+            th ID
+            th Nombre
+            th DNI
+            th Obra Social
+            th Contacto
+            th Acciones
+        tbody
+          each paciente in pacientes
+            tr
+              td= paciente.id
+              td= paciente.nombre
+              td= paciente.dni
+              td= paciente.obra_social
+              td= paciente.contacto
+              td
+                a(href=`/pacientes/${paciente.id}`) Ver Detalle
+                | |
+                form(action=`/pacientes/${paciente.id}/editar`, method='POST', style='display:inline')
+                  button(type='submit') Editar
+    else
+      p No hay pacientes disponibles.
+    a(href='/pacientes/nuevo') Crear nuevo paciente
+    br
+    a(href='/') Volver al inicio

@@ -1,0 +1,18 @@
+doctype html
+html
+  head
+    title Detalle del Paciente
+    link(rel='stylesheet', href='/styles.css')
+  body
+    h1 Detalle del Paciente
+    if paciente
+      ul
+        li ID: #{paciente.id}
+        li Nombre: #{paciente.nombre}
+        li DNI: #{paciente.dni}
+        li Obra Social: #{paciente.obra_social}
+        li Contacto: #{paciente.contacto}
+      a(href=`/pacientes/${paciente.id}/editar`) Editar Paciente
+    else
+      p Paciente no encontrado.
+    a(href='/pacientes') Volver a la lista de pacientes

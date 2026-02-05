@@ -1,0 +1,46 @@
+doctype html
+html
+  head
+    title Lista de Turnos
+    link(rel='stylesheet', href='/styles.css')
+  body
+    h1 Lista de Turnos
+    if turnos.length > 0
+      table
+        thead
+          tr
+            th Paciente
+            th Profesional
+            th Especialidad
+            th Sucursal
+            th Fecha
+            th Hora
+            th Estado
+            th Acciones
+        tbody
+          each turno in turnos
+            tr             
+              td= turno.paciente_nombre
+              td= turno.profesional_nombre
+              td= turno.especialidad_nombre
+              td= turno.sucursal_nombre
+              td= turno.fecha
+              td= turno.hora
+              td= turno.estado
+              td
+                |  <!-- Separador para mejorar la legibilidad -->
+                form(action=`/turnos/${turno.id}/eliminar`, method='POST', style='display:inline')
+                  button(type='submit') Eliminar
+                  br
+
+                form(action=`/turnos/${turno.id}/editar`, method='GET', style='display:inline')
+                  button(type='submit') Editar
+                  br
+                form(action=`/turnos/${turno.id}`, method='GET', style='display:inline')
+                  button(type='submit') Ver Detalle
+                  br
+    else
+      p No hay turnos disponibles.
+    a(href='/turnos/nuevo' class="button") Crear nuevo turno
+   
+    a(href='/' class="button") Volver al inicio

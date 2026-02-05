@@ -1,0 +1,62 @@
+const express = require('express');
+const bodyParser = require('body-parser');
+const path = require('path');
+const session = require('express-session');
+const flash = require('connect-flash');
+const logger = require('morgan');
+const cookieParser = require('cookie-parser');
+
+const routes = require('./routes/index');
+const agendaRoutes = require('./routes/agenda');
+const authController = require('./controllers/authController');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middlewares básicos
+app.use(logger('dev'));
+app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Session + flash
+app.use(session({
+  secret: 'tu_secreto_aqui',
+  resave: false,
+  saveUninitialized: false,
+}));
+app.use(flash());
+app.use((req, res, next) => {
+  res.locals.success_msg = req.flash('success_msg');
+  res.locals.error_msg = req.flash('error_msg');
+  res.locals.error = req.flash('error');
+  next();
+});
+
+// Motor de plantillas
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+
+// Rutas
+app.use('/', routes);
+app.use('/', agendaRoutes); // rutas de agenda
+
+// Manejo 404
+app.use((req, res, next) => {
+  const err = new Error('No encontrado');
+  err.status = 404;
+  next(err);
+});
+
+// Manejo de errores global
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500);
+  res.render('error', { message: err.message, error: err });
+});
+
+// Iniciar servidor
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+});

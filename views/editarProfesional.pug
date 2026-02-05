@@ -1,0 +1,110 @@
+doctype html
+html
+  head
+    title Editar Profesional
+    link(rel='stylesheet', href='/styles.css')
+    script.
+      function toggleHorarioFin(inicioId, finId) {
+        const inicioSelect = document.getElementById(inicioId);
+        const finSelect = document.getElementById(finId);
+        if (inicioSelect.value === "no") {
+          finSelect.disabled = true;
+          finSelect.value = "no";  // Selecciona automáticamente "No disponible"
+        } else {
+          finSelect.disabled = false;
+          if (finSelect.value === "no") {
+            finSelect.value = "";  // Restablece el valor si estaba en "No disponible"
+          }
+        }
+      }
+  body
+    .container
+      h1 Editar Profesional
+
+      form(action=`/profesionales/${profesional.id}/editar` method="POST")
+        div
+          label(for="nombre_completo") Nombre Completo
+          input(type="text" name="nombre_completo" value=profesional.nombre_completo required)
+
+        div
+          label(for="matricula") Matrícula
+          input(type="text" name="matricula" value=profesional.matricula required)
+
+        div
+          label Especialidades
+          .checkbox-group
+            each especialidad in especialidades
+              div
+                label
+                  input(type="checkbox" name="especialidades" value=especialidad.id checked=profesional.especialidades.includes(especialidad.id)) 
+                  | #{especialidad.nombre}
+
+        div
+          h3 Configuración de Horarios
+          
+          // Horario Mañana
+          div
+            label(for="hora_inicio_turno1") Inicio Mañana
+            select(name="hora_inicio_turno1" id="hora_inicio_turno1" onchange="toggleHorarioFin('hora_inicio_turno1', 'hora_fin_turno1')")
+              option(value="no" selected=profesional.hora_inicio_turno1 === "no") No disponible
+              option(value="09:00" selected=profesional.hora_inicio_turno1 === "09:00") 9:00
+              option(value="09:30" selected=profesional.hora_inicio_turno1 === "09:30") 9:30
+              option(value="10:00" selected=profesional.hora_inicio_turno1 === "10:00") 10:00
+              option(value="10:30" selected=profesional.hora_inicio_turno1 === "10:30") 10:30
+              option(value="11:00" selected=profesional.hora_inicio_turno1 === "11:00") 11:00
+              option(value="11:30" selected=profesional.hora_inicio_turno1 === "11:30") 11:30
+              option(value="12:00" selected=profesional.hora_inicio_turno1 === "12:00") 12:00
+              option(value="12:30" selected=profesional.hora_inicio_turno1 === "12:30") 12:30
+              option(value="13:00" selected=profesional.hora_inicio_turno1 === "13:00") 13:00
+
+          div
+            label(for="hora_fin_turno1") Fin Mañana
+            select(name="hora_fin_turno1" id="hora_fin_turno1")
+              option(value="no" selected=profesional.hora_fin_turno1 === "no") No disponible
+              option(value="09:00" selected=profesional.hora_fin_turno1 === "09:00") 9:00
+              option(value="09:30" selected=profesional.hora_fin_turno1 === "09:30") 9:30
+              option(value="10:00" selected=profesional.hora_fin_turno1 === "10:00") 10:00
+              option(value="10:30" selected=profesional.hora_fin_turno1 === "10:30") 10:30
+              option(value="11:00" selected=profesional.hora_fin_turno1 === "11:00") 11:00
+              option(value="11:30" selected=profesional.hora_fin_turno1 === "11:30") 11:30
+              option(value="12:00" selected=profesional.hora_fin_turno1 === "12:00") 12:00
+              option(value="12:30" selected=profesional.hora_fin_turno1 === "12:30") 12:30
+              option(value="13:00" selected=profesional.hora_fin_turno1 === "13:00") 13:00
+
+          // Horario Tarde
+          div
+            label(for="hora_inicio_turno2") Inicio Tarde
+            select(name="hora_inicio_turno2" id="hora_inicio_turno2" onchange="toggleHorarioFin('hora_inicio_turno2', 'hora_fin_turno2')")
+              option(value="no" selected=profesional.hora_inicio_turno2 === "no") No disponible
+              option(value="16:00" selected=profesional.hora_inicio_turno2 === "16:00") 16:00
+              option(value="16:30" selected=profesional.hora_inicio_turno2 === "16:30") 16:30
+              option(value="17:00" selected=profesional.hora_inicio_turno2 === "17:00") 17:00
+              option(value="17:30" selected=profesional.hora_inicio_turno2 === "17:30") 17:30
+              option(value="18:00" selected=profesional.hora_inicio_turno2 === "18:00") 18:00
+              option(value="18:30" selected=profesional.hora_inicio_turno2 === "18:30") 18:30
+              option(value="19:00" selected=profesional.hora_inicio_turno2 === "19:00") 19:00
+              option(value="19:30" selected=profesional.hora_inicio_turno2 === "19:30") 19:30
+              option(value="20:00" selected=profesional.hora_inicio_turno2 === "20:00") 20:00
+              option(value="20:30" selected=profesional.hora_inicio_turno2 === "20:30") 20:30
+              option(value="21:00" selected=profesional.hora_inicio_turno2 === "21:00") 21:00
+
+          div
+            label(for="hora_fin_turno2") Fin Tarde
+            select(name="hora_fin_turno2" id="hora_fin_turno2")
+              option(value="no" selected=profesional.hora_fin_turno2 === "no") No disponible
+              option(value="16:00" selected=profesional.hora_fin_turno2 === "16:00") 16:00
+              option(value="16:30" selected=profesional.hora_fin_turno2 === "16:30") 16:30
+              option(value="17:00" selected=profesional.hora_fin_turno2 === "17:00") 17:00
+              option(value="17:30" selected=profesional.hora_fin_turno2 === "17:30") 17:30
+              option(value="18:00" selected=profesional.hora_fin_turno2 === "18:00") 18:00
+              option(value="18:30" selected=profesional.hora_fin_turno2 === "18:30") 18:30
+              option(value="19:00" selected=profesional.hora_fin_turno2 === "19:00") 19:00
+              option(value="19:30" selected=profesional.hora_fin_turno2 === "19:30") 19:30
+              option(value="20:00" selected=profesional.hora_fin_turno2 === "20:00") 20:00
+              option(value="20:30" selected=profesional.hora_fin_turno2 === "20:30") 20:30
+              option(value="21:00" selected=profesional.hora_fin_turno2 === "21:00") 21:00
+
+        div
+          button(type="submit" class="button") Guardar Cambios
+
+      a(href="/profesionales" class="button") Volver a la Lista

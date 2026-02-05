@@ -1,0 +1,34 @@
+doctype html
+html
+  head
+    title= title
+    link(rel='stylesheet', href='/styles.css')
+  body
+    h1= title
+    if turno
+      ul
+        li ID del Turno: #{turno.id}
+        li Paciente: #{turno.paciente}
+        li Profesional: #{turno.profesional}
+        li Fecha: #{turno.fecha}
+        li Hora: #{turno.hora}
+        li Estado: #{turno.estado}
+      form(action=`/turnos/${turno.id}/editar`, method='POST')
+        div
+          label(for='estado') Cambiar estado:
+          select(name='estado')
+            option(value='Libre', selected=turno.estado === 'Libre') Libre
+            option(value='Reservada', selected=turno.estado === 'Reservada') Reservada
+            option(value='Confirmado', selected=turno.estado === 'Confirmado') Confirmado
+            option(value='Cancelado', selected=turno.estado === 'Cancelado') Cancelado
+            option(value='Ausente', selected=turno.estado === 'Ausente') Ausente
+            option(value='Presente', selected=turno.estado === 'Presente') Presente
+            option(value='En consulta', selected=turno.estado === 'En consulta') En consulta
+            option(value='Atendido', selected=turno.estado === 'Atendido') Atendido
+        div
+          button(type='submit') Guardar Cambios
+    else
+      p Turno no encontrado
+    a(href='/turnos') Volver a lista de turnos
+    br
+    a(href='/') Volver al inicio

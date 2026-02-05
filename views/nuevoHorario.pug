@@ -1,0 +1,47 @@
+doctype html
+html
+  head
+    title Agregar Horario
+    link(rel='stylesheet', href='/styles.css')
+
+  body
+    h1 Agregar Horario
+
+    form(action="/agendas/horarios" method="POST")
+
+      label Agenda
+      select(name="agenda_id" required)
+        option(value="" disabled selected) -- Selecciona Agenda --
+        each a in agendas
+          option(value=a.agenda_id)= `${a.nombre_completo} - ${a.especialidad}`
+
+      br
+
+      label Día de la semana
+      select(name="dia_semana" required)
+        option(value="" disabled selected) -- Selecciona Día --
+        option(value="1") Lunes
+        option(value="2") Martes
+        option(value="3") Miércoles
+        option(value="4") Jueves
+        option(value="5") Viernes
+        option(value="6") Sábado
+        option(value="7") Domingo
+
+      br
+
+      label Hora inicio
+      input(type="time" name="hora_inicio" required)
+
+      br
+
+      label Hora fin
+      input(type="time" name="hora_fin" required)
+
+      br
+      br
+
+      button(type="submit") Guardar horario
+
+    br
+    a(href="/agendas") Volver

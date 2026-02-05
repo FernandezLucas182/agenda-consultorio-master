@@ -1,0 +1,35 @@
+doctype html
+html
+  head
+    title Nueva Agenda
+    link(rel='stylesheet', href='/styles.css')
+  body
+    h1 Crear Agenda de Atención
+
+    form(action="/agendas/nueva" method="POST")
+      
+      label Profesional
+      select(name="profesional_id" required)
+        option(value="" disabled selected) -- Selecciona profesional --
+        each prof in profesionales
+          option(value=prof.id)= prof.nombre_completo
+
+      br
+
+      label Especialidad
+      select(name="especialidad_id" required)
+        option(value="" disabled selected) -- Selecciona especialidad --
+        each esp in especialidades
+          option(value=esp.id)= esp.nombre
+
+      br
+
+      label Duración del turno (minutos)
+      input(type="number" name="duracion_turno" required)
+
+      br
+      br
+      button(type="submit") Crear agenda
+
+    br
+    a(href="/agendas") Volver

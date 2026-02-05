@@ -1,0 +1,35 @@
+doctype html
+html
+  head
+    title Agenda de Consultorios
+    link(rel='stylesheet', href='/styles.css')
+
+  body
+    h1 Agenda de Atención
+
+    if agenda.length > 0
+      table
+        thead
+          tr
+            th Profesional
+            th Especialidad
+            th Día
+            th Desde
+            th Hasta
+            th Duración Turno (min)
+
+        tbody
+          - const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
+          each item in agenda
+            tr
+              td= item.nombre_completo
+              td= item.especialidad
+              td= dias[item.dia_semana - 1]
+              td= item.hora_inicio
+              td= item.hora_fin
+              td= item.duracion_turno
+    else
+      p No hay agendas cargadas.
+
+    br
+    a(href='/') Volver al inicio

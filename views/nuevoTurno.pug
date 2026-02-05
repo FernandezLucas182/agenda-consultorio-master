@@ -1,0 +1,152 @@
+doctype html
+html
+  head
+    title Crear Nuevo Turno
+    link(rel='stylesheet', href='/styles.css')
+  body
+    h1 Crear Nuevo Turno
+    form(action='/turnos', method='POST')
+
+      div
+        label(for='paciente') Paciente:
+        select(name='paciente_id', required)
+          each paciente in pacientes
+            option(value=paciente.id) #{paciente.nombre_completo}
+
+      div
+        label(for='especialidad') Especialidad:
+        select(name='especialidad_id' id='especialidad_id' required)
+          option(value='') Selecciona una especialidad
+          each especialidad in especialidades
+            option(value=especialidad.id) #{especialidad.nombre}
+
+      div
+        label(for='profesional') Profesional:
+        select(name='profesional_id' id='profesional_id' required)
+          option(value='') Selecciona un profesional
+
+      div
+        label(for='sucursal') Sucursal:
+        select(name='sucursal_id' id='sucursal_id' required)
+          option(value='') Selecciona una sucursal
+          each sucursal in sucursales
+            option(value=sucursal.id) #{sucursal.nombre}
+
+      div
+        label(for='fecha') Fecha:
+        input(type='date', name='fecha', id='fecha', required)
+
+      div
+        label(for='hora') Hora:
+        select(name='hora', id='hora', required)
+          option(value='') Selecciona un horario
+
+      div
+        button(type='submit') Crear Turno
+
+    a(href='/turnos') Volver a la lista de turnos
+
+    // Script para actualizar la lista de profesionales y horarios
+    script.
+      document.addEventListener('DOMContentLoaded', function() {
+        const especialidadSelect = document.getElementById('especialidad_id');
+        const profesionalSelect = document.getElementById('profesional_id');
+        const sucursalSelect = document.getElementById('sucursal_id');
+        const fechaInput = document.getElementById('fecha');
+        const horaSelect = document.getElementById('hora');
+        let horarioProfesional = {}; // Para almacenar los horarios del profesional
+
+        // Cargar profesionales cuando se selecciona una especialidad
+        especialidadSelect.addEventListener('change', function() {
+          const especialidadId = this.value;
+
+          if (especialidadId) {
+            fetch(`/profesionales/especialidad/${especialidadId}`)
+              .then(response => response.json())
+              .then(profesionales => {
+                profesionalSelect.innerHTML = '<option value="">Selecciona un profesional</option>';
+                profesionales.forEach(profesional => {
+                  const option = document.createElement('option');
+                  option.value = profesional.id;
+                  option.textContent = profesional.nombre_completo;
+                  profesionalSelect.appendChild(option);
+                });
+              })
+              .catch(error => {
+                console.error('Error al cargar los profesionales:', error);
+                profesionalSelect.innerHTML = '<option value="">Error al cargar profesionales</option>';
+              });
+          } else {
+            profesionalSelect.innerHTML = '<option value="">Selecciona un profesional</option>';
+          }
+        });
+
+        // Cargar horarios disponibles para el profesional seleccionado
+        function cargarHorariosDisponibles() {
+          const profesionalId = profesionalSelect.value;
+          const fecha = fechaInput.value;
+
+          if (profesionalId && fecha) {
+            // Obtener los horarios del profesional seleccionado
+            fetch(`/profesionales/especialidad/${especialidadSelect.value}`)
+              .then(response => response.json())
+              .then(profesionales => {
+                const profesional = profesionales.find(p => p.id === parseInt(profesionalId));
+                if (profesional) {
+                  horarioProfesional = {
+                    inicio1: profesional.hora_inicio_turno1,
+                    fin1: profesional.hora_fin_turno1,
+                    inicio2: profesional.hora_inicio_turno2,
+                    fin2: profesional.hora_fin_turno2
+                  };
+                }
+
+                // Obtener los horarios ocupados para la fecha seleccionada
+                fetch(`/turnos/horarios-ocupados/${profesionalId}/${fecha}`)
+                  .then(response => response.json())
+                  .then(horariosOcupados => {
+                    horaSelect.innerHTML = '<option value="">Selecciona un horario</option>'; // Reset select
+
+                    // Definir las franjas horarias basadas en las horas del profesional
+                    const startTimes = [horarioProfesional.inicio1, horarioProfesional.inicio2];
+                    const endTimes = [horarioProfesional.fin1, horarioProfesional.fin2];
+
+                    startTimes.forEach((startTime, index) => {
+                      const endTime = endTimes[index];
+                      let startHour = parseInt(startTime.split(':')[0]);
+                      let startMinute = parseInt(startTime.split(':')[1]);
+                      let endHour = parseInt(endTime.split(':')[0]);
+                      let endMinute = parseInt(endTime.split(':')[1]);
+
+                      while (startHour < endHour || (startHour === endHour && startMinute < endMinute)) {
+                        const horaActual = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
+                        const estaOcupado = horariosOcupados.includes(horaActual);
+
+                        // Solo agregar horarios disponibles
+                        if (!estaOcupado) {
+                          const option = document.createElement('option');
+                          option.value = horaActual;
+                          option.textContent = horaActual;
+                          horaSelect.appendChild(option);
+                        }
+
+                        // Incrementar la hora en intervalos de 30 minutos
+                        startMinute += 30;
+                        if (startMinute === 60) {
+                          startMinute = 0;
+                          startHour++;
+                        }
+                      }
+                    });
+                  })
+                  .catch(error => {
+                    console.error('Error al cargar horarios ocupados:', error);
+                  });
+              });
+          }
+        }
+
+        // Cargar horarios cuando se selecciona un profesional y una fecha
+        profesionalSelect.addEventListener('change', cargarHorariosDisponibles);
+        fechaInput.addEventListener('change', cargarHorariosDisponibles);
+      });

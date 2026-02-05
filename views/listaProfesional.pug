@@ -1,0 +1,45 @@
+doctype html
+html
+  head
+    title Lista de Profesionales
+    link(rel='stylesheet', href='/styles.css')
+  body
+    .container
+      h1 Lista de Profesionales
+
+      if profesionales.length > 0
+        table
+          thead
+            tr
+              th Matrícula
+              th Nombre Completo
+              th Estado
+              th Especialidades
+              th Acciones
+          tbody
+            each profesional in profesionales
+              tr
+                td= profesional.matricula
+                td= profesional.nombre_completo
+                td= profesional.estado
+                td
+                  if profesional.especialidades
+                    ul
+                      each especialidad in profesional.especialidades.split(',')
+                        li= especialidad
+                  else
+                    | No tiene especialidades
+                td
+                  a(href=`/profesionales/${profesional.id}/editar`, class='button') Editar
+                  form(action=`/profesionales/${profesional.id}/${profesional.estado === 'activo' ? 'inactivar' : 'activar'}`, method="POST", style="display:inline")
+                    button(type="submit" class="button button-danger") #{profesional.estado === 'activo' ? 'Inactivar' : 'Activar'}
+      else
+        p No hay profesionales registrados.
+
+      .actions
+        a(href="/profesionales/nuevo" class="button") Agregar Nuevo Profesional
+        a(href="/" class="button") Volver a pagina principal
+
+
+    .footer
+      p © 2024 Agenda Médica. Isaias Felippo-Lucas fernandez.

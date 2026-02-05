@@ -1,0 +1,10 @@
+doctype html
+html
+  head
+    title Login
+  body
+    h1 Iniciar sesión
+    form(action="/auth/login" method="POST")
+      input(type="text" name="username" placeholder="Usuario")
+      input(type="password" name="password" placeholder="Contraseña")
+      button(type="submit") Iniciar sesión

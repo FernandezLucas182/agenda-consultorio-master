@@ -1,0 +1,18 @@
+doctype html
+html
+  head
+    title Detalle del Turno
+    link(rel='stylesheet', href='/styles.css')
+  body
+    h1 Detalle del Turno
+    if turno
+      ul
+        li Paciente: #{turno.paciente_nombre}
+        li Profesional: #{turno.profesional_nombre}
+        li Especialidad: #{turno.especialidad_nombre}
+        li Sucursal: #{turno.sucursal_nombre}
+        li Fecha: #{turno.fecha}
+        li Hora: #{turno.hora}
+        li Estado: #{turno.estado}
+        
+    a(href='/turnos') Volver a la lista de turnos
