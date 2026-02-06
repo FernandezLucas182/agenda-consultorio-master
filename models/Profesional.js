@@ -2,16 +2,23 @@ const db = require('./Db');
 
 class Profesional {
   // Obtener todos los profesionales con sus especialidades
-  static obtenerTodos(callback) {
-    const query = `
-      SELECT p.id, p.nombre_completo, p.estado, p.matricula, GROUP_CONCAT(e.nombre) AS especialidades
-      FROM profesionales p
-      LEFT JOIN profesional_especialidad pe ON p.id = pe.profesional_id
-      LEFT JOIN especialidades e ON pe.especialidad_id = e.id
-      GROUP BY p.id
-    `;
-    db.query(query, callback);
-  }
+static obtenerTodos(callback) {
+  const query = `
+    SELECT p.id, p.nombre_completo, p.estado, p.matricula, 
+           GROUP_CONCAT(e.nombre) AS especialidades
+    FROM profesionales p
+    LEFT JOIN profesional_especialidad pe ON p.id = pe.profesional_id
+    LEFT JOIN especialidades e ON pe.especialidad_id = e.id
+    GROUP BY p.id
+  `;
+
+  db.query(query, (err, resultados) => {
+    if (err) return callback(err);
+
+    callback(null, resultados || []); // 👈 nunca undefined
+  });
+}
+
 
  static crear({ nombre, matricula, especialidades, hora_inicio_turno1, hora_fin_turno1, hora_inicio_turno2, hora_fin_turno2 }, callback) {
   console.log(nombre, matricula, especialidades, hora_inicio_turno1, hora_fin_turno1, hora_inicio_turno2, hora_fin_turno2)
@@ -79,7 +86,10 @@ static editar(id, { nombre, matricula, especialidades, hora_inicio_turno1, hora_
 
   // Obtener especialidades disponibles
   static obtenerEspecialidades(callback) {
-    db.query('SELECT * FROM especialidades', callback);
+    db.query('SELECT * FROM especialidades', (err, resultados) => {
+      if (err) return callback(err);
+      callback(null, resultados || []);
+    });
   }
 
   // Obtener profesional por ID con sus especialidades
