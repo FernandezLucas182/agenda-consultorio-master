@@ -158,18 +158,23 @@ exports.eliminarTurno = (req, res) => {
 
 exports.obtenerProfesionalesPorEspecialidad = (req, res) => {
   db.query(
-    `SELECT p.id, p.nombre_completo
+    `SELECT DISTINCT p.id, p.nombre_completo
      FROM profesionales p
      JOIN profesional_especialidad pe 
        ON p.id = pe.profesional_id
-     WHERE pe.especialidad_id = ?`,
+     WHERE pe.especialidad_id = ?
+       AND p.estado = 'activo'`,
     [req.params.especialidadId],
     (err, profesionales) => {
-      if (err) return res.status(500).json([]);
+      if (err) {
+        console.error(err);
+        return res.json([]);
+      }
       res.json(profesionales);
     }
   );
 };
+
 
 // ==========================
 // ESPECIALIDADES POR PROFESIONAL (AJAX)
@@ -184,11 +189,12 @@ exports.obtenerEspecialidadesPorProfesional = (req, res) => {
      WHERE pe.profesional_id = ?`,
     [req.params.profesionalId],
     (err, especialidades) => {
-      if (err) return res.status(500).json([]);
+      if (err) return res.json([]);
       res.json(especialidades);
     }
   );
 };
+
 
 
 

@@ -62,18 +62,18 @@ router.get(
 
 
 // =====================
-// AJAX DINÁMICO
+// AJAX DINÁMICO (RELACIONES)
 // =====================
 
-// 👉 profesionales según especialidad (nuevo turno)
+// profesionales por especialidad
 router.get(
   '/profesionales/especialidad/:especialidadId',
   turnosController.obtenerProfesionalesPorEspecialidad
 );
 
-// 👉 especialidades según profesional (editar turno)
+// especialidades por profesional  ✅ ESTA ES LA CLAVE
 router.get(
-  '/profesionales/:id/especialidades',
+  '/profesionales/:profesionalId/especialidades',
   turnosController.obtenerEspecialidadesPorProfesional
 );
 
@@ -92,6 +92,5 @@ router.post('/profesionales/:id/editar', profesionalController.editarProfesional
 
 router.post('/profesionales/:id/inactivar', profesionalController.inactivarProfesional);
 router.post('/profesionales/:id/activar', profesionalController.activarProfesional);
-
 
 module.exports = router;

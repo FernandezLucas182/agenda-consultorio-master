@@ -3,6 +3,7 @@ html
   head
     title Editar Turno
     link(rel='stylesheet', href='/styles.css')
+
   body
     h1 Editar Turno
 
@@ -19,7 +20,7 @@ html
 
       div
         label Profesional:
-        select(name='profesional_id' id='profesional_id' required)
+        select(name='profesional_id' id='profesionalSelect' required)
           each pr in profesionales
             option(
               value=pr.id
@@ -28,7 +29,7 @@ html
 
       div
         label Especialidad:
-        select(name='especialidad_id' id='especialidad_id' required)
+        select(name='especialidad_id' id='especialidadSelect' required)
           option(value='') Selecciona especialidad
 
       div
@@ -42,7 +43,7 @@ html
 
       div
         label Fecha:
-        input(type='date', name='fecha', id='fecha', value=turno.fecha, required)
+        input(type='date', name='fecha', value=turno.fecha, required)
 
       div
         label Hora:
@@ -60,47 +61,39 @@ html
     a(href='/turnos') Volver
 
 
-    // ==========================
-    // FILTRAR ESPECIALIDADES POR PROFESIONAL
-    // ==========================
     script.
-      document.addEventListener('DOMContentLoaded', () => {
-        const profesionalSelect = document.getElementById('profesional_id');
-        const especialidadSelect = document.getElementById('especialidad_id');
+      const profesionalSelect = document.getElementById('profesionalSelect');
+      const especialidadSelect = document.getElementById('especialidadSelect');
 
-        const especialidadActual = #{turno.especialidad_id};
+      const especialidadActual = parseInt("#{turno.especialidad_id}");
 
-        function cargarEspecialidades() {
-          const profesionalId = profesionalSelect.value;
+      async function cargarEspecialidades(profesionalId) {
+        if (!profesionalId) return;
 
-          if (!profesionalId) return;
+        especialidadSelect.innerHTML = '<option>Cargando...</option>';
 
-          fetch(`/profesionales/${profesionalId}/especialidades`)
+        const res = await fetch(`/profesionales/${profesionalId}/especialidades`);
+        const data = await res.json();
 
-            .then(res => res.json())
-            .then(especialidades => {
-              especialidadSelect.innerHTML = '<option value="">Selecciona especialidad</option>';
+        especialidadSelect.innerHTML = '<option value="">Selecciona especialidad</option>';
 
-              especialidades.forEach(e => {
-                const opt = document.createElement('option');
-                opt.value = e.id;
-                opt.textContent = e.nombre;
+        data.forEach(e => {
+          const option = document.createElement('option');
+          option.value = e.id;
+          option.textContent = e.nombre;
 
-                if (e.id == especialidadActual) {
-                  opt.selected = true;
-                }
+          if (e.id === especialidadActual) {
+            option.selected = true;
+          }
 
-                especialidadSelect.appendChild(opt);
-              });
-            })
-            .catch(() => {
-              especialidadSelect.innerHTML = '<option>Error cargando especialidades</option>';
-            });
-        }
+          especialidadSelect.appendChild(option);
+        });
+      }
 
-        // cargar al entrar
-        cargarEspecialidades();
+      // carga inicial
+      cargarEspecialidades(profesionalSelect.value);
 
-        // recargar si cambia profesional
-        profesionalSelect.addEventListener('change', cargarEspecialidades);
+      // cambio dinámico
+      profesionalSelect.addEventListener('change', () => {
+        cargarEspecialidades(profesionalSelect.value);
       });

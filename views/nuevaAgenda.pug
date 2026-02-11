@@ -10,7 +10,7 @@ html
     form(action="/agendas/nueva" method="POST")
       
       label Profesional
-      select(name="profesional_id" required)
+      select(name="profesional_id" id="profesionalSelect" required)
         option(value="" disabled selected) -- Selecciona profesional --
         each prof in profesionales
           option(value=prof.id)= prof.nombre_completo
@@ -20,6 +20,8 @@ html
       label Especialidad
       select(name="especialidad_id" id="especialidadSelect" required)
         option(value="" disabled selected) -- Selecciona especialidad --
+        each esp in especialidades
+          option(value=esp.id)= esp.nombre
 
       br
 
@@ -38,7 +40,7 @@ html
       button(type="submit") Crear agenda
 
     script.
-      const profesionalSelect = document.querySelector('select[name="profesional_id"]');
+      const profesionalSelect = document.getElementById('profesionalSelect');
       const especialidadSelect = document.getElementById('especialidadSelect');
 
       profesionalSelect.addEventListener('change', async () => {
@@ -46,17 +48,23 @@ html
 
         especialidadSelect.innerHTML = '<option disabled selected>Cargando...</option>';
 
-        const res = await fetch(`/profesionales/${profesionalId}/especialidades`);
-        const data = await res.json();
+        try {
+          const res = await fetch(`/profesionales/${profesionalId}/especialidades`);
+          const data = await res.json();
 
-        especialidadSelect.innerHTML = '<option disabled selected>Selecciona especialidad</option>';
+          especialidadSelect.innerHTML = '<option disabled selected>Selecciona especialidad</option>';
 
-        data.forEach(e => {
-          const option = document.createElement('option');
-          option.value = e.id;
-          option.textContent = e.nombre;
-          especialidadSelect.appendChild(option);
-        });
+          data.forEach(e => {
+            const option = document.createElement('option');
+            option.value = e.id;
+            option.textContent = e.nombre;
+            especialidadSelect.appendChild(option);
+          });
+
+        } catch (err) {
+          console.error(err);
+          especialidadSelect.innerHTML = '<option disabled>Error cargando</option>';
+        }
       });
 
     br
