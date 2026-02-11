@@ -12,8 +12,9 @@ html
       label Agenda
       select(name="agenda_id" required)
         option(value="" disabled selected) -- Selecciona Agenda --
-        each a in agendas
-          option(value=a.agenda_id)= `${a.nombre_completo} - ${a.especialidad}`
+        each agenda in agendas
+          option(value=agenda.agenda_id || agenda.id)= agenda.nombre_completo + ' - ' + agenda.especialidad
+
 
       br
 
@@ -42,6 +43,14 @@ html
       br
 
       button(type="submit") Guardar horario
+br
+br
 
-    br
-    a(href="/agendas") Volver
+a(href="/agendas")
+  button(type="button") Ir a agendas
+
+br
+br
+
+a(href="/")
+  button(type="button") Cancelar y volver al inicio

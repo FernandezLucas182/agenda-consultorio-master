@@ -2,67 +2,76 @@ const Agenda = require('../models/Agenda');
 const Profesional = require('../models/Profesional');
 const Especialidad = require('../models/Especialidad');
 
+
+// ==========================
+// FORM CREAR AGENDA BASE
+// ==========================
 exports.formularioNuevaAgenda = (req, res) => {
   Profesional.obtenerTodos((err, profesionales) => {
-    if (err) {
-      console.error(err);
-      profesionales = [];
-    }
+    if (err) profesionales = [];
 
     Especialidad.obtenerTodas((err2, especialidades) => {
-      if (err2) {
-        console.error(err2);
-        especialidades = [];
-      }
+      if (err2) especialidades = [];
 
       res.render('nuevaAgenda', {
-        profesionales: profesionales || [],
-        especialidades: especialidades || []
+        profesionales,
+        especialidades
       });
     });
   });
 };
 
-exports.formularioNuevoHorario = (req, res) => {
-  Agenda.obtenerAgendaCompleta((err, agendas) => {
-    if (err) {
-      console.error(err);
-      agendas = [];
-    }
 
-    res.render('nuevoHorario', {
-      agendas: agendas || []
-    });
-  });
-};
-
-exports.mostrarAgendas = (req, res) => {
-  Agenda.obtenerAgendaCompleta((err, agenda) => {
-    if (err) {
-      console.error(err);
-      agenda = [];
-    }
-
-    res.render('agendas', { agenda });
-  });
-};
-
+// ==========================
+// CREAR AGENDA BASE
+// ==========================
 exports.crearAgendaBase = (req, res) => {
   const { profesional_id, especialidad_id, duracion_turno } = req.body;
 
   Agenda.crearAgendaBase(
     { profesional_id, especialidad_id, duracion_turno },
-    (err) => {
+    (err, result) => {
       if (err) {
         console.error(err);
         return res.status(500).send('Error al crear agenda');
       }
 
-      res.redirect('/agendas/horarios/nuevo');
+      // 👉 mandamos el ID recién creado
+      res.redirect(`/agendas/horarios/nuevo?agenda_id=${result.insertId}`);
     }
   );
 };
 
+
+
+// ==========================
+// FORM AGREGAR HORARIO
+// ==========================
+exports.formularioNuevoHorario = (req, res) => {
+  const agendaId = req.query.agenda_id;
+
+  // 👉 si viene una agenda puntual (flujo normal)
+  if (agendaId) {
+    Agenda.obtenerAgendaBasePorId(agendaId, (err, agendas) => {
+      if (err) agendas = [];
+      res.render('nuevoHorario', { agendas });
+    });
+
+  // 👉 si entra directo al formulario (modo libre)
+  } else {
+    Agenda.obtenerAgendasBase((err, agendas) => {
+      if (err) agendas = [];
+      res.render('nuevoHorario', { agendas });
+    });
+  }
+};
+
+
+
+
+// ==========================
+// GUARDAR HORARIO
+// ==========================
 exports.agregarHorario = (req, res) => {
   const { agenda_id, dia_semana, hora_inicio, hora_fin } = req.body;
 
@@ -74,7 +83,21 @@ exports.agregarHorario = (req, res) => {
         return res.status(500).send('Error al agregar horario');
       }
 
-      res.redirect('/agendas');
+      // 👉 volvemos para seguir cargando más horarios
+     res.redirect(`/agendas/horarios/nuevo?agenda_id=${agenda_id}`);
+
     }
   );
+};
+
+
+// ==========================
+// MOSTRAR AGENDA COMPLETA
+// ==========================
+exports.mostrarAgendas = (req, res) => {
+  Agenda.obtenerAgendaCompleta((err, agenda) => {
+    if (err) agenda = [];
+
+    res.render('agendas', { agenda });
+  });
 };

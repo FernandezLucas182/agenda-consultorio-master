@@ -4,69 +4,103 @@ html
     title Editar Turno
     link(rel='stylesheet', href='/styles.css')
   body
-    h1 Editar Turno 
-    form(action=`/turnos/${turno.id}/editar`, method='POST')
-      div
-        label(for='paciente_id') Paciente:
-        select(name='paciente_id', required)
-          each paciente in pacientes
-            option(value=paciente.id, selected=turno.paciente_id == paciente.id)= paciente.nombre_completo
-      div
-        label(for='profesional_id') Profesional:
-        select(name='profesional_id', id='profesional_id', required, onchange='cargarHorarios()')
-          each profesional in profesionales
-            option(
-              value=profesional.id, 
-              selected=turno.profesional_id == profesional.id,
-              data-hora-inicio-turno1=profesional.hora_inicio_turno1,
-              data-hora-fin-turno1=profesional.hora_fin_turno1,
-              data-hora-inicio-turno2=profesional.hora_inicio_turno2,
-              data-hora-fin-turno2=profesional.hora_fin_turno2
-            )= profesional.nombre_completo
-      div
-        label(for='especialidad_id') Especialidad:
-        select(name='especialidad_id', required)
-          each especialidad in especialidades
-            option(value=especialidad.id, selected=turno.especialidad_id == especialidad.id)= especialidad.nombre
-      div
-        label(for='sucursal_id') Sucursal:
-        select(name='sucursal_id', required)
-          each sucursal in sucursales
-            option(value=sucursal.id, selected=turno.sucursal_id == sucursal.id)= sucursal.nombre
-      div
-        label(for='fecha') Fecha:
-        input(type='date', name='fecha', value=turno.fecha, required)
-      div
-        label(for='hora') Hora:
-        input(type='time', name='hora', id='hora', value=turno.hora, required)
-      div
-        label(for='estado') Estado:
-        select(name='estado', required)
-          option(value='Libre', selected=turno.estado === 'Libre') Libre
-          option(value='Reservada', selected=turno.estado === 'Reservada') Reservada
-          option(value='Confirmado', selected=turno.estado === 'Confirmado') Confirmado
-          option(value='Cancelado', selected=turno.estado === 'Cancelado') Cancelado
-          option(value='Ausente', selected=turno.estado === 'Ausente') Ausente
-          option(value='Presente', selected=turno.estado === 'Presente') Presente
-          option(value='En consulta', selected=turno.estado === 'En consulta') En consulta
-          option(value='Atendido', selected=turno.estado === 'Atendido') Atendido
-      div
-        button(type='submit') Guardar Cambios
-    a(href='/turnos') Volver a la lista de turnos
+    h1 Editar Turno
 
+    form(action=`/turnos/${turno.id}/editar`, method='POST')
+
+      div
+        label Paciente:
+        select(name='paciente_id' required)
+          each p in pacientes
+            option(
+              value=p.id
+              selected=(p.id == turno.paciente_id)
+            )= p.nombre
+
+      div
+        label Profesional:
+        select(name='profesional_id' id='profesional_id' required)
+          each pr in profesionales
+            option(
+              value=pr.id
+              selected=(pr.id == turno.profesional_id)
+            )= pr.nombre_completo
+
+      div
+        label Especialidad:
+        select(name='especialidad_id' id='especialidad_id' required)
+          option(value='') Selecciona especialidad
+
+      div
+        label Sucursal:
+        select(name='sucursal_id' required)
+          each s in sucursales
+            option(
+              value=s.id
+              selected=(s.id == turno.sucursal_id)
+            )= s.nombre
+
+      div
+        label Fecha:
+        input(type='date', name='fecha', id='fecha', value=turno.fecha, required)
+
+      div
+        label Hora:
+        input(type='time', name='hora', value=turno.hora, required)
+
+      div
+        label Estado:
+        select(name='estado')
+          option(value='pendiente' selected=turno.estado=='pendiente') Pendiente
+          option(value='confirmado' selected=turno.estado=='confirmado') Confirmado
+          option(value='cancelado' selected=turno.estado=='cancelado') Cancelado
+
+      button(type='submit') Guardar Cambios
+
+    a(href='/turnos') Volver
+
+
+    // ==========================
+    // FILTRAR ESPECIALIDADES POR PROFESIONAL
+    // ==========================
     script.
-      function cargarHorarios() {
+      document.addEventListener('DOMContentLoaded', () => {
         const profesionalSelect = document.getElementById('profesional_id');
-        const horaInput = document.getElementById('hora');
-        
-        // Obtener horarios del profesional seleccionado
-        const selectedOption = profesionalSelect.options[profesionalSelect.selectedIndex];
-        const horaInicioTurno1 = selectedOption.getAttribute('data-hora-inicio-turno1');
-        const horaFinTurno1 = selectedOption.getAttribute('data-hora-fin-turno1');
-        const horaInicioTurno2 = selectedOption.getAttribute('data-hora-inicio-turno2');
-        const horaFinTurno2 = selectedOption.getAttribute('data-hora-fin-turno2');
-        
-        // Ajustar el rango del campo de hora basado en la franja horaria del profesional
-        horaInput.min = horaInicioTurno1;
-        horaInput.max = horaFinTurno2;  // Último horario del segundo turno
-      }
+        const especialidadSelect = document.getElementById('especialidad_id');
+
+        const especialidadActual = #{turno.especialidad_id};
+
+        function cargarEspecialidades() {
+          const profesionalId = profesionalSelect.value;
+
+          if (!profesionalId) return;
+
+          fetch(`/profesionales/${profesionalId}/especialidades`)
+
+            .then(res => res.json())
+            .then(especialidades => {
+              especialidadSelect.innerHTML = '<option value="">Selecciona especialidad</option>';
+
+              especialidades.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e.id;
+                opt.textContent = e.nombre;
+
+                if (e.id == especialidadActual) {
+                  opt.selected = true;
+                }
+
+                especialidadSelect.appendChild(opt);
+              });
+            })
+            .catch(() => {
+              especialidadSelect.innerHTML = '<option>Error cargando especialidades</option>';
+            });
+        }
+
+        // cargar al entrar
+        cargarEspecialidades();
+
+        // recargar si cambia profesional
+        profesionalSelect.addEventListener('change', cargarEspecialidades);
+      });

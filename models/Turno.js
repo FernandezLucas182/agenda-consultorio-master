@@ -1,93 +1,176 @@
 const db = require('./Db');
 
 class Turno {
+
+  // ==========================
+  // OBTENER TODOS LOS TURNOS
+  // ==========================
   static obtenerTodos(callback) {
-    db.query(`SELECT turnos.id, turnos.estado, pacientes.nombre_completo AS paciente_nombre, turnos.fecha, turnos.hora, 
-                     sucursales.nombre AS sucursal_nombre, especialidades.nombre AS especialidad_nombre, 
-                     profesionales.nombre_completo AS profesional_nombre
-              FROM turnos
-              JOIN pacientes ON turnos.paciente_id = pacientes.id
-              JOIN profesionales ON turnos.profesional_id = profesionales.id
-              JOIN especialidades ON turnos.especialidad_id = especialidades.id
-              JOIN sucursales ON turnos.sucursal_id = sucursales.id`, (err, resultados) => {
-      if (err) return callback(err);
-      callback(null, resultados);
+
+    const sql = `
+      SELECT 
+        t.id,
+        t.fecha,
+        t.hora,
+        t.estado,
+
+        p.nombre AS paciente_nombre,
+        pr.nombre_completo AS profesional_nombre,
+        e.nombre AS especialidad_nombre,
+        s.nombre AS sucursal_nombre
+
+      FROM turnos t
+      LEFT JOIN pacientes p ON t.paciente_id = p.id
+      LEFT JOIN profesionales pr ON t.profesional_id = pr.id
+      LEFT JOIN especialidades e ON t.especialidad_id = e.id
+      LEFT JOIN sucursales s ON t.sucursal_id = s.id
+      ORDER BY t.fecha, t.hora
+    `;
+
+    db.query(sql, (err, filas) => {
+      if (err) {
+        console.error('❌ ERROR SQL TURNOS:', err);
+        return callback(err);
+      }
+
+      callback(null, filas || []);
     });
   }
 
-  static crear(datos, callback) {
-    const { paciente_id, profesional_id, especialidad_id, sucursal_id,fecha, hora } = datos;
-  
-    // Verificar que todos los datos requeridos estén presentes
-    if (!paciente_id || !profesional_id || !especialidad_id || !sucursal_id || !fecha || !hora ) {
-      return callback(new Error('Faltan datos para crear el turno.'));
-    }
-  
-    // Ejecutar la consulta
-    db.query(
-      'INSERT INTO turnos (paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora) VALUES (?, ?, ?, ?, ?, ?)',
-      [paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora],
-      (err, results) => {
-        if (err) {
-          console.error('Error al insertar el turno:', err);
-          return callback(err);  // Enviar el error al callback si ocurre
-        }
-  
-        // Opcional: enviar el ID del turno creado como parte del resultado
-        callback(null, { message: 'Turno creado exitosamente', turnoId: results.insertId });
-      }
-    );
-  }
 
+  // ==========================
+  // OBTENER UN TURNO POR ID
+  // ==========================
   static obtenerPorId(id, callback) {
-    db.query(`SELECT turnos.id, turnos.estado, pacientes.nombre_completo AS paciente_nombre, turnos.fecha, turnos.hora, 
-                     sucursales.nombre AS sucursal_nombre, especialidades.nombre AS especialidad_nombre, 
-                     profesionales.nombre_completo AS profesional_nombre
-              FROM turnos
-              JOIN pacientes ON turnos.paciente_id = pacientes.id
-              JOIN profesionales ON turnos.profesional_id = profesionales.id
-              JOIN especialidades ON turnos.especialidad_id = especialidades.id
-              JOIN sucursales ON turnos.sucursal_id = sucursales.id
-              WHERE turnos.id = ?`, [id], (err, resultados) => {
+
+    const sql = `
+      SELECT 
+        t.id,
+        t.fecha,
+        t.hora,
+        t.estado,
+
+        p.nombre AS paciente_nombre,
+        pr.nombre_completo AS profesional_nombre,
+        e.nombre AS especialidad_nombre,
+        s.nombre AS sucursal_nombre
+
+      FROM turnos t
+      LEFT JOIN pacientes p ON t.paciente_id = p.id
+      LEFT JOIN profesionales pr ON t.profesional_id = pr.id
+      LEFT JOIN especialidades e ON t.especialidad_id = e.id
+      LEFT JOIN sucursales s ON t.sucursal_id = s.id
+      WHERE t.id = ?
+    `;
+
+    db.query(sql, [id], (err, filas) => {
       if (err) return callback(err);
-      callback(null, resultados[0]);
+      callback(null, filas[0] || null);
     });
   }
 
+
+  // ==========================
+  // CREAR TURNO
+  // ==========================
+  static crear(datos, callback) {
+
+    const {
+      paciente_id,
+      profesional_id,
+      especialidad_id,
+      sucursal_id,
+      fecha,
+      hora
+    } = datos;
+
+    const sql = `
+      INSERT INTO turnos 
+      (paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+
+    db.query(
+      sql,
+      [paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora],
+      callback
+    );
+  }
+
+
+  // ==========================
+  // EDITAR TURNO
+  // ==========================
   static editar(id, datos, callback) {
-    const { paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora, estado } = datos;
-  
+
+    const {
+      paciente_id,
+      profesional_id,
+      especialidad_id,
+      sucursal_id,
+      fecha,
+      hora,
+      estado
+    } = datos;
+
+    const sql = `
+      UPDATE turnos 
+      SET 
+        paciente_id = ?,
+        profesional_id = ?,
+        especialidad_id = ?,
+        sucursal_id = ?,
+        fecha = ?,
+        hora = ?,
+        estado = ?
+      WHERE id = ?
+    `;
+
     db.query(
-      `UPDATE turnos SET paciente_id = ?, profesional_id = ?, especialidad_id = ?, sucursal_id = ?, fecha = ?, hora = ?, estado = ?
-       WHERE id = ?`,
-      [paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora, estado, id],
-      (err) => {
-        if (err) return callback(err);
-        callback(null);
-      }
+      sql,
+      [
+        paciente_id,
+        profesional_id,
+        especialidad_id,
+        sucursal_id,
+        fecha,
+        hora,
+        estado,
+        id
+      ],
+      callback
     );
   }
-  
-  
 
+
+  // ==========================
+  // ELIMINAR TURNO
+  // ==========================
   static eliminar(id, callback) {
-    db.query('DELETE FROM turnos WHERE id = ?', [id], (err) => {
+    db.query('DELETE FROM turnos WHERE id = ?', [id], callback);
+  }
+
+
+  // ==========================
+  // HORARIOS OCUPADOS
+  // ==========================
+  static obtenerHorariosOcupados(profesionalId, fecha, callback) {
+
+    const sql = `
+      SELECT hora
+      FROM turnos
+      WHERE profesional_id = ? 
+        AND fecha = ?
+    `;
+
+    db.query(sql, [profesionalId, fecha], (err, filas) => {
       if (err) return callback(err);
-      callback(null);
+
+      const ocupados = filas.map(f => f.hora);
+      callback(null, ocupados);
     });
   }
-  
 
-  static obtenerHorariosOcupados(profesionalId, fecha, callback) {
-    db.query(
-      'SELECT hora FROM turnos WHERE profesional_id = ? AND fecha = ?',
-      [profesionalId, fecha],
-      (err, resultados) => {
-        if (err) return callback(err);
-        callback(null, resultados.map(row => row.hora));
-      }
-    );
-  }
 }
 
 module.exports = Turno;

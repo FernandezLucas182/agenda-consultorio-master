@@ -3,6 +3,7 @@ html
   head
     title Nueva Agenda
     link(rel='stylesheet', href='/styles.css')
+
   body
     h1 Crear Agenda de Atención
 
@@ -17,19 +18,46 @@ html
       br
 
       label Especialidad
-      select(name="especialidad_id" required)
+      select(name="especialidad_id" id="especialidadSelect" required)
         option(value="" disabled selected) -- Selecciona especialidad --
-        each esp in especialidades
-          option(value=esp.id)= esp.nombre
 
       br
 
       label Duración del turno (minutos)
-      input(type="number" name="duracion_turno" required)
+      select(name="duracion_turno" required)
+        option(value="" disabled selected) -- Seleccionar duración --
+        option(value="10") 10 minutos
+        option(value="20") 20 minutos
+        option(value="30") 30 minutos
+        option(value="40") 40 minutos
+        option(value="50") 50 minutos
+        option(value="60") 60 minutos
 
       br
       br
       button(type="submit") Crear agenda
+
+    script.
+      const profesionalSelect = document.querySelector('select[name="profesional_id"]');
+      const especialidadSelect = document.getElementById('especialidadSelect');
+
+      profesionalSelect.addEventListener('change', async () => {
+        const profesionalId = profesionalSelect.value;
+
+        especialidadSelect.innerHTML = '<option disabled selected>Cargando...</option>';
+
+        const res = await fetch(`/profesionales/${profesionalId}/especialidades`);
+        const data = await res.json();
+
+        especialidadSelect.innerHTML = '<option disabled selected>Selecciona especialidad</option>';
+
+        data.forEach(e => {
+          const option = document.createElement('option');
+          option.value = e.id;
+          option.textContent = e.nombre;
+          especialidadSelect.appendChild(option);
+        });
+      });
 
     br
     a(href="/agendas") Volver

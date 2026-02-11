@@ -33,13 +33,21 @@ static obtenerTodos(callback) {
 
     // Insertar especialidades asociadas
     if (especialidades && especialidades.length > 0) {
-      const values = especialidades.map(eid => [profesionalId, eid]);
-      const especialidadQuery = 'INSERT INTO profesional_especialidad (profesional_id, especialidad_id) VALUES ?';
-      db.query(especialidadQuery, [values], callback);
+      especialidades.forEach(eid => {
+        db.query(
+          'INSERT INTO profesional_especialidad (profesional_id, especialidad_id) VALUES (?, ?)',
+          [profesionalId, eid]
+        );
+      });
+
+callback(null);
+
     } else {
       callback(null);
     }
   });
+  console.log("ESPECIALIDADES QUE LLEGAN:", especialidades);
+
 }
 
 static editar(id, { nombre, matricula, especialidades, hora_inicio_turno1, hora_fin_turno1, hora_inicio_turno2, hora_fin_turno2 }, callback) {
@@ -115,6 +123,23 @@ static obtenerPorId(id, callback) {
     callback(null, profesional);
   });
 }
+
+// Obtener especialidades de un profesional puntual
+static obtenerEspecialidadesPorProfesional(profesionalId, callback) {
+  const query = `
+    SELECT e.id, e.nombre
+    FROM especialidades e
+    JOIN profesional_especialidad pe 
+      ON e.id = pe.especialidad_id
+    WHERE pe.profesional_id = ?
+  `;
+
+  db.query(query, [profesionalId], (err, resultados) => {
+    if (err) return callback(err);
+    callback(null, resultados || []);
+  });
+}
+
 }
 
 module.exports = Profesional;
