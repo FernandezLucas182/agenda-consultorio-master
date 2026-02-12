@@ -48,15 +48,17 @@ html
 
     a(href='/turnos') Volver a la lista de turnos
 
-
+    // ======================
+    // JS para carga dinámica de horarios
+    // ======================
     script.
       document.addEventListener('DOMContentLoaded', () => {
-
         const especialidad = document.getElementById('especialidad_id');
         const profesional = document.getElementById('profesional_id');
         const fecha = document.getElementById('fecha');
         const hora = document.getElementById('hora');
 
+        // Cambia profesionales según especialidad
         especialidad.addEventListener('change', () => {
           fetch(`/profesionales/especialidad/${especialidad.value}`)
             .then(r => r.json())
@@ -68,23 +70,60 @@ html
             });
         });
 
+        // Función principal para cargar horarios
         function cargarHorarios() {
-
           if (!profesional.value || !fecha.value) return;
 
-          fetch(`/turnos/horarios-disponibles/${profesional.value}/${fecha.value}`)
+          const fechaValor = fecha.value.trim();
+
+          // ⛔ validar formato de fecha YYYY-MM-DD
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaValor)) {
+            console.warn('Fecha inválida:', fechaValor);
+            return;
+          }
+
+          fetch(`/turnos/horarios-disponibles/${profesional.value}/${fechaValor}`, {
+            cache: "no-store"
+          })
             .then(r => r.json())
-            .then(horarios => {
+            .then(data => {
+              hora.innerHTML = '';
 
+              // 🚫 si backend devuelve motivo (feriado, fin de semana, vacaciones)
+              if (data.motivo) {
+                const mensajes = {
+                  fin_de_semana: 'No se atiende sábados ni domingos',
+                  feriado: 'Es feriado — no hay atención',
+                  sin_agenda: 'El profesional no atiende este día',
+                  vacaciones: 'El profesional está de vacaciones'
+                };
+                const option = document.createElement('option');
+                option.textContent = mensajes[data.motivo] || 'No hay atención';
+                option.disabled = true;
+                hora.appendChild(option);
+                return;
+              }
+
+              // Si no hay horarios
+              if (!data.length) {
+                const option = document.createElement('option');
+                option.textContent = 'No hay horarios disponibles';
+                option.disabled = true;
+                hora.appendChild(option);
+                return;
+              }
+
+              // Cargar horarios disponibles
               hora.innerHTML = '<option value="">Selecciona un horario</option>';
-
-              horarios.forEach(h => {
-                hora.innerHTML += `<option value="${h}">${h}</option>`;
+              data.forEach(h => {
+                const option = document.createElement('option');
+                option.value = h;
+                option.textContent = h;
+                hora.appendChild(option);
               });
             });
         }
 
         profesional.addEventListener('change', cargarHorarios);
         fecha.addEventListener('change', cargarHorarios);
-
       });

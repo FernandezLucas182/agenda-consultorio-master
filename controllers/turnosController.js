@@ -3,16 +3,17 @@ const Agenda = require('../models/Agenda');
 const generarTurnos = require('../utils/generarTurnos');
 const db = require('../models/Db');
 
-
 // ==========================
 // UTILIDAD FECHA
 // ==========================
 
 function formatearFecha(fecha) {
-  const opciones = { weekday: 'long', day: 'numeric', month: 'long' };
-  return new Date(fecha).toLocaleDateString('es-ES', opciones);
+  return new Date(fecha).toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  });
 }
-
 
 // ==========================
 // TURNOS CRUD
@@ -20,7 +21,7 @@ function formatearFecha(fecha) {
 
 exports.mostrarTurnos = (req, res) => {
   Turno.obtenerTodos((err, turnos) => {
-    if (err) return res.status(500).send('Error al obtener turnos.');
+    if (err) return res.status(500).send('Error al obtener turnos');
 
     turnos = turnos.map(t => ({
       ...t,
@@ -31,28 +32,19 @@ exports.mostrarTurnos = (req, res) => {
   });
 };
 
-
 exports.mostrarTurno = (req, res) => {
   Turno.obtenerPorId(req.params.id, (err, turno) => {
-    if (err || !turno) return res.status(404).send('Turno no encontrado.');
+    if (err || !turno) return res.status(404).send('No encontrado');
 
     turno.fecha = formatearFecha(turno.fecha);
-
     res.render('turno', { turno });
   });
 };
 
-
 exports.mostrarFormularioNuevoTurno = (req, res) => {
   db.query('SELECT * FROM especialidades', (err, especialidades) => {
-    if (err) return res.status(500).send('Error especialidades');
-
-    db.query('SELECT * FROM pacientes', (err, pacientes) => {
-      if (err) return res.status(500).send('Error pacientes');
-
-      db.query('SELECT * FROM sucursales', (err, sucursales) => {
-        if (err) return res.status(500).send('Error sucursales');
-
+    db.query('SELECT * FROM pacientes', (err2, pacientes) => {
+      db.query('SELECT * FROM sucursales', (err3, sucursales) => {
         res.render('nuevoTurno', {
           especialidades,
           pacientes,
@@ -64,7 +56,6 @@ exports.mostrarFormularioNuevoTurno = (req, res) => {
   });
 };
 
-
 exports.crearTurno = (req, res) => {
   const {
     paciente_id,
@@ -75,110 +66,61 @@ exports.crearTurno = (req, res) => {
     hora
   } = req.body;
 
-  if (!paciente_id || !profesional_id || !especialidad_id || !sucursal_id || !fecha || !hora) {
-    return res.status(400).send('Faltan datos');
-  }
-
   db.query(
     `INSERT INTO turnos 
-     (paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora) 
+     (paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora],
-    err => {
-      if (err) return res.status(500).send('Error crear turno');
-      res.redirect('/turnos');
-    }
+    () => res.redirect('/turnos')
   );
 };
 
-
 // ==========================
-// FORM EDITAR TURNO (CORREGIDO)
+// 👉 FUNCIONES QUE FALTABAN (CLAVE DEL CRASH)
 // ==========================
 
 exports.mostrarFormularioEditarTurno = (req, res) => {
   Turno.obtenerPorId(req.params.id, (err, turno) => {
     if (err || !turno) return res.status(404).send('No encontrado');
 
-    db.query('SELECT * FROM pacientes', (err, pacientes) => {
-      if (err) return res.status(500).send('Error pacientes');
-
-      db.query('SELECT * FROM profesionales', (err, profesionales) => {
-        if (err) return res.status(500).send('Error profesionales');
-
-        // ✅ SOLO especialidades del profesional
-        db.query(
-          `SELECT e.id, e.nombre
-           FROM especialidades e
-           JOIN profesional_especialidad pe 
-             ON e.id = pe.especialidad_id
-           WHERE pe.profesional_id = ?`,
-          [turno.profesional_id],
-          (err, especialidades) => {
-            if (err) return res.status(500).send('Error especialidades');
-
-            db.query('SELECT * FROM sucursales', (err, sucursales) => {
-              if (err) return res.status(500).send('Error sucursales');
-
-              res.render('editarTurno', {
-                turno,
-                pacientes,
-                profesionales,
-                especialidades,
-                sucursales
-              });
-            });
-          }
-        );
-      });
-    });
+    res.render('editarTurno', { turno });
   });
 };
-
 
 exports.editarTurno = (req, res) => {
-  Turno.editar(req.params.id, req.body, err => {
-    if (err) return res.status(500).send('Error editar');
-    res.redirect('/turnos');
-  });
-};
+  const { fecha, hora } = req.body;
 
+  db.query(
+    `UPDATE turnos SET fecha = ?, hora = ? WHERE id = ?`,
+    [fecha, hora, req.params.id],
+    () => res.redirect('/turnos')
+  );
+};
 
 exports.eliminarTurno = (req, res) => {
-  Turno.eliminar(req.params.id, err => {
-    if (err) return res.status(500).send('Error eliminar');
-    res.redirect('/turnos');
-  });
+  db.query(
+    `DELETE FROM turnos WHERE id = ?`,
+    [req.params.id],
+    () => res.redirect('/turnos')
+  );
 };
 
-
 // ==========================
-// PROFESIONALES POR ESPECIALIDAD (AJAX)
+// AJAX RELACIONES
 // ==========================
 
 exports.obtenerProfesionalesPorEspecialidad = (req, res) => {
   db.query(
-    `SELECT DISTINCT p.id, p.nombre_completo
+    `SELECT p.id, p.nombre_completo
      FROM profesionales p
      JOIN profesional_especialidad pe 
        ON p.id = pe.profesional_id
      WHERE pe.especialidad_id = ?
        AND p.estado = 'activo'`,
     [req.params.especialidadId],
-    (err, profesionales) => {
-      if (err) {
-        console.error(err);
-        return res.json([]);
-      }
-      res.json(profesionales);
-    }
+    (err, rows) => res.json(rows || [])
   );
 };
-
-
-// ==========================
-// ESPECIALIDADES POR PROFESIONAL (AJAX)
-// ==========================
 
 exports.obtenerEspecialidadesPorProfesional = (req, res) => {
   db.query(
@@ -188,45 +130,74 @@ exports.obtenerEspecialidadesPorProfesional = (req, res) => {
        ON e.id = pe.especialidad_id
      WHERE pe.profesional_id = ?`,
     [req.params.profesionalId],
-    (err, especialidades) => {
-      if (err) return res.json([]);
-      res.json(especialidades);
-    }
+    (err, rows) => res.json(rows || [])
   );
 };
 
+// ==========================
+// BLOQUEOS
+// ==========================
 
+function esFeriado(fecha, cb) {
+  db.query(
+    'SELECT id FROM feriados WHERE fecha = ?',
+    [fecha],
+    (err, r) => cb(r && r.length > 0)
+  );
+}
 
+function estaDeVacaciones(id, fecha, cb) {
+  db.query(
+    `SELECT id FROM vacaciones 
+     WHERE profesional_id = ?
+       AND ? BETWEEN fecha_inicio AND fecha_fin`,
+    [id, fecha],
+    (err, r) => cb(r && r.length > 0)
+  );
+}
 
 // ==========================
-// HORARIOS DISPONIBLES (MOTOR BUENO)
+// HORARIOS DISPONIBLES
 // ==========================
 
 exports.obtenerHorariosDisponibles = (req, res) => {
   const { profesionalId, fecha } = req.params;
 
-  const diaSemana = new Date(fecha).getDay();
+  const [y, m, d] = fecha.split('-');
+  const fechaObj = new Date(y, m - 1, d);
 
-  Agenda.obtenerHorariosProfesional(profesionalId, diaSemana, (err, bloques) => {
-    if (err) return res.status(500).json([]);
+  let diaJS = fechaObj.getDay();
+  let diaBD = diaJS === 0 ? 7 : diaJS;
 
-    Turno.obtenerHorariosOcupados(profesionalId, fecha, (err2, ocupados) => {
-      if (err2) return res.status(500).json([]);
+  if (diaBD === 6 || diaBD === 7) {
+    return res.json({ motivo: 'fin_de_semana' });
+  }
 
-      let posibles = [];
+  esFeriado(fecha, feriado => {
+    if (feriado) return res.json({ motivo: 'feriado' });
 
-      bloques.forEach(b => {
-        const generados = generarTurnos(
-          b.hora_inicio,
-          b.hora_fin,
-          b.duracion_turno
-        );
-        posibles.push(...generados);
+    estaDeVacaciones(profesionalId, fecha, vaca => {
+      if (vaca) return res.json({ motivo: 'vacaciones' });
+
+      Agenda.obtenerHorariosProfesional(profesionalId, diaBD, (err, bloques) => {
+        if (!bloques || !bloques.length) {
+          return res.json({ motivo: 'sin_agenda' });
+        }
+
+        Turno.obtenerHorariosOcupados(profesionalId, fecha, (err2, ocupados) => {
+          let posibles = [];
+
+          bloques.forEach(b => {
+            posibles.push(
+              ...generarTurnos(b.hora_inicio, b.hora_fin, b.duracion_turno)
+            );
+          });
+
+          const libres = posibles.filter(h => !ocupados.includes(h));
+
+          res.json(libres);
+        });
       });
-
-      const disponibles = posibles.filter(h => !ocupados.includes(h));
-
-      res.json(disponibles);
     });
   });
 };
