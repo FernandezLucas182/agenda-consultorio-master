@@ -16,6 +16,7 @@ html
             th Fecha
             th Hora
             th Estado
+            th Tipo de turno  
             th Acciones
         tbody
           each turno in turnos
@@ -26,6 +27,7 @@ html
               td= turno.sucursal_nombre
               td= turno.fecha
               td= turno.hora
+              td= turno.tipo_turno || 'normal'
               td= turno.estado
               td
                 |  <!-- Separador para mejorar la legibilidad -->

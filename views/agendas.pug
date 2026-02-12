@@ -8,26 +8,36 @@ html
     h1 Agenda de Atención
 
     if agenda.length > 0
-      table
-        thead
-          tr
-            th Profesional
-            th Especialidad
-            th Día
-            th Desde
-            th Hasta
-            th Duración Turno (min)
 
-        tbody
-          - const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
-          each item in agenda
+      - let profesionalActual = null
+      - const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
+
+      each item in agenda
+
+        if profesionalActual !== item.nombre_completo
+          - profesionalActual = item.nombre_completo
+          h2(style="margin-top:30px; border-bottom:2px solid #ccc; padding-bottom:5px;")
+            = item.nombre_completo
+
+        table(style="margin-bottom:15px;")
+          thead
             tr
-              td= item.nombre_completo
+              th Especialidad
+              th Día
+              th Desde
+              th Hasta
+              th Duración (min)
+              th Máx. Sobreturnos  
+
+          tbody
+            tr
               td= item.especialidad
               td= dias[item.dia_semana - 1]
               td= item.hora_inicio
               td= item.hora_fin
               td= item.duracion_turno
+              td= item.max_sobreturnos
+
     else
       p No hay agendas cargadas.
 

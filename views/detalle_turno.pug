@@ -13,6 +13,8 @@ html
         li Fecha: #{turno.fecha}
         li Hora: #{turno.hora}
         li Estado: #{turno.estado}
+        li Tipo de turno: #{turno.tipo_turno === 'sobreturno' ? 'Sobreturno' : 'Normal'}
+
       form(action=`/turnos/${turno.id}/editar`, method='POST')
         div
           label(for='estado') Cambiar estado:

@@ -1,6 +1,8 @@
 const Agenda = require('../models/Agenda');
 const Profesional = require('../models/Profesional');
 const Especialidad = require('../models/Especialidad');
+const db = require('../models/Db');
+
 
 
 // ==========================
@@ -78,20 +80,30 @@ exports.formularioNuevoHorario = (req, res) => {
 exports.agregarHorario = (req, res) => {
   const { agenda_id, dia_semana, hora_inicio, hora_fin } = req.body;
 
+  if (hora_inicio >= hora_fin) {
+    return res.send('La hora de inicio debe ser menor que la hora de fin');
+  }
+
   Agenda.agregarHorario(
     { agenda_id, dia_semana, hora_inicio, hora_fin },
     (err) => {
+
       if (err) {
+        if (err.message === 'Horario solapado') {
+          return res.send('Ya existe una franja horaria que se superpone en ese día');
+        }
+
         console.error(err);
         return res.status(500).send('Error al agregar horario');
       }
 
-      // 👉 volvemos para seguir cargando más horarios
-     res.redirect(`/agendas/horarios/nuevo?agenda_id=${agenda_id}`);
-
+      res.redirect(`/agendas/horarios/nuevo?agenda_id=${agenda_id}`);
     }
   );
 };
+
+
+
 
 
 // ==========================

@@ -13,6 +13,7 @@ class Turno {
         t.fecha,
         t.hora,
         t.estado,
+        t.tipo_turno,
 
         p.nombre AS paciente_nombre,
         pr.nombre_completo AS profesional_nombre,
@@ -49,6 +50,8 @@ class Turno {
       t.fecha,
       t.hora,
       t.estado,
+      t.tipo_turno, 
+    
 
       t.paciente_id,
       t.profesional_id,

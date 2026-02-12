@@ -7,6 +7,10 @@ html
   body
     h1 Agregar Horario
 
+    if error
+      p(style="color:red")= error
+
+
     form(action="/agendas/horarios" method="POST")
 
       label Agenda
