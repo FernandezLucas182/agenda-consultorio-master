@@ -52,10 +52,13 @@ exports.formularioNuevoHorario = (req, res) => {
 
   // 👉 si viene una agenda puntual (flujo normal)
   if (agendaId) {
-    Agenda.obtenerAgendaBasePorId(agendaId, (err, agendas) => {
-      if (err) agendas = [];
-      res.render('nuevoHorario', { agendas });
+    Agenda.obtenerAgendaBasePorId(agendaId, (err, agenda) => {
+      if (err || !agenda) return res.render('nuevoHorario', { agendas: [] });
+
+      // lo convertimos en array para que Pug lo pueda recorrer
+      res.render('nuevoHorario', { agendas: [agenda] });
     });
+
 
   // 👉 si entra directo al formulario (modo libre)
   } else {

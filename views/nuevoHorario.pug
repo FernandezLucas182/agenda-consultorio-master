@@ -13,7 +13,7 @@ html
       select(name="agenda_id" required)
         option(value="" disabled selected) -- Selecciona Agenda --
         each agenda in agendas
-          option(value=agenda.agenda_id || agenda.id)= agenda.nombre_completo + ' - ' + agenda.especialidad
+          option(value=agenda.id)= agenda.nombre_completo + ' - ' + agenda.especialidad
 
 
       br

@@ -3,24 +3,23 @@ const db = require('./Db');
 class Agenda {
 
   static obtenerAgendasBase(callback) {
-    const sql = `
-      SELECT 
-        a.id,
-        p.nombre_completo,
-        e.nombre AS especialidad,
-        a.duracion_turno
-      FROM agendas_nueva a
-      JOIN profesionales p ON a.profesional_id = p.id
-      JOIN especialidades e ON a.especialidad_id = e.id
-      WHERE a.activo = 1
-      ORDER BY p.nombre_completo
-    `;
+  const sql = `
+    SELECT 
+      a.id AS agenda_id,
+      p.nombre_completo AS nombre_completo,
+      e.nombre AS especialidad
+    FROM agendas_nueva a
+    JOIN profesionales p ON a.profesional_id = p.id
+    JOIN especialidades e ON a.especialidad_id = e.id
+    WHERE a.activo = 1
+  `;
 
-    db.query(sql, (err, resultados) => {
-      if (err) return callback(err);
-      callback(null, resultados || []);
-    });
-  }
+  db.query(sql, (err, resultados) => {
+    if (err) return callback(err);
+    callback(null, resultados || []);
+  });
+}
+
 
   static obtenerAgendaCompleta(callback) {
     const sql = `

@@ -43,31 +43,37 @@ class Turno {
   // ==========================
   static obtenerPorId(id, callback) {
 
-    const sql = `
-      SELECT 
-        t.id,
-        t.fecha,
-        t.hora,
-        t.estado,
+  const sql = `
+    SELECT 
+      t.id,
+      t.fecha,
+      t.hora,
+      t.estado,
 
-        p.nombre AS paciente_nombre,
-        pr.nombre_completo AS profesional_nombre,
-        e.nombre AS especialidad_nombre,
-        s.nombre AS sucursal_nombre
+      t.paciente_id,
+      t.profesional_id,
+      t.especialidad_id,
+      t.sucursal_id,
 
-      FROM turnos t
-      LEFT JOIN pacientes p ON t.paciente_id = p.id
-      LEFT JOIN profesionales pr ON t.profesional_id = pr.id
-      LEFT JOIN especialidades e ON t.especialidad_id = e.id
-      LEFT JOIN sucursales s ON t.sucursal_id = s.id
-      WHERE t.id = ?
-    `;
+      p.nombre AS paciente_nombre,
+      pr.nombre_completo AS profesional_nombre,
+      e.nombre AS especialidad_nombre,
+      s.nombre AS sucursal_nombre
 
-    db.query(sql, [id], (err, filas) => {
-      if (err) return callback(err);
-      callback(null, filas[0] || null);
-    });
-  }
+    FROM turnos t
+    LEFT JOIN pacientes p ON t.paciente_id = p.id
+    LEFT JOIN profesionales pr ON t.profesional_id = pr.id
+    LEFT JOIN especialidades e ON t.especialidad_id = e.id
+    LEFT JOIN sucursales s ON t.sucursal_id = s.id
+    WHERE t.id = ?
+  `;
+
+  db.query(sql, [id], (err, filas) => {
+    if (err) return callback(err);
+    callback(null, filas[0] || null);
+  });
+}
+
 
 
   // ==========================

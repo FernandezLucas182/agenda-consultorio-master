@@ -30,7 +30,12 @@ html
       div
         label Especialidad:
         select(name='especialidad_id' id='especialidadSelect' required)
-          option(value='') Selecciona especialidad
+          each e in especialidades
+            option(
+              value=e.id
+              selected=(e.id == turno.especialidad_id)
+            )= e.nombre
+
 
       div
         label Sucursal:
@@ -47,7 +52,10 @@ html
 
       div
         label Hora:
-        input(type='time', name='hora', value=turno.hora, required)
+        select(name="hora" required)
+          each h in ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","16:00","16:30","17:00","17:30"]
+            option(value=h selected=(h == turno.hora))= h
+
 
       div
         label Estado:

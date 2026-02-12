@@ -83,16 +83,68 @@ exports.mostrarFormularioEditarTurno = (req, res) => {
   Turno.obtenerPorId(req.params.id, (err, turno) => {
     if (err || !turno) return res.status(404).send('No encontrado');
 
-    res.render('editarTurno', { turno });
+    db.query('SELECT * FROM pacientes', (e1, pacientes) => {
+      db.query('SELECT * FROM especialidades', (e2, especialidades) => {
+        db.query('SELECT * FROM sucursales', (e3, sucursales) => {
+          db.query(
+            `SELECT p.id, p.nombre_completo 
+             FROM profesionales p
+             JOIN profesional_especialidad pe 
+               ON p.id = pe.profesional_id
+             WHERE pe.especialidad_id = ?`,
+            [turno.especialidad_id],
+            (e4, profesionales) => {
+
+              res.render('editarTurno', {
+                turno,
+                pacientes: pacientes || [],
+                especialidades: especialidades || [],
+                profesionales: profesionales || [],
+                sucursales: sucursales || []
+});
+
+            }
+          );
+        });
+      });
+    });
   });
 };
 
+
+
+
 exports.editarTurno = (req, res) => {
-  const { fecha, hora } = req.body;
+  const {
+    paciente_id,
+    profesional_id,
+    especialidad_id,
+    sucursal_id,
+    fecha,
+    hora,
+    estado
+  } = req.body;
 
   db.query(
-    `UPDATE turnos SET fecha = ?, hora = ? WHERE id = ?`,
-    [fecha, hora, req.params.id],
+    `UPDATE turnos SET
+      paciente_id = ?,
+      profesional_id = ?,
+      especialidad_id = ?,
+      sucursal_id = ?,
+      fecha = ?,
+      hora = ?,
+      estado = ?
+     WHERE id = ?`,
+    [
+      paciente_id,
+      profesional_id,
+      especialidad_id,
+      sucursal_id,
+      fecha,
+      hora,
+      estado,
+      req.params.id
+    ],
     () => res.redirect('/turnos')
   );
 };
