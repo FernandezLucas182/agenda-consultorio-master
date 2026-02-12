@@ -6,7 +6,19 @@ html
   body
     h1 Crear Nuevo Turno
 
+    if error
+      div(style="color:red; margin-bottom:15px; font-weight:bold;")
+        | #{error}
+
+
     form(action='/turnos', method='POST')
+
+      div 
+        label Tipo de turno
+        select(name="tipo_turno")
+          option(value="normal") Normal
+          option(value="sobreturno") Sobreturno
+
 
       div
         label Paciente:

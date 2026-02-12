@@ -57,22 +57,106 @@ exports.mostrarFormularioNuevoTurno = (req, res) => {
 };
 
 exports.crearTurno = (req, res) => {
+
   const {
     paciente_id,
     profesional_id,
     especialidad_id,
     sucursal_id,
     fecha,
-    hora
+    hora,
+    tipo_turno
   } = req.body;
 
+  if (tipo_turno === 'sobreturno') {
+
+  // 1️⃣ Verificar que exista turno normal confirmado en esa hora
   db.query(
-    `INSERT INTO turnos 
-     (paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora],
-    () => res.redirect('/turnos')
+    `SELECT COUNT(*) as total
+     FROM turnos
+     WHERE profesional_id = ?
+       AND fecha = ?
+       AND hora = ?
+       AND tipo_turno = 'normal'
+       AND estado = 'confirmado'`,
+    [profesional_id, fecha, hora],
+    (err, existeNormal) => {
+
+      if (existeNormal[0].total === 0) {
+        return renderConError('Debe existir un turno normal confirmado en ese horario');
+
+      }
+
+      // 2️⃣ Contar sobreturnos existentes
+      db.query(
+        `SELECT COUNT(*) as total
+         FROM turnos
+         WHERE profesional_id = ?
+           AND fecha = ?
+           AND tipo_turno = 'sobreturno'`,
+        [profesional_id, fecha],
+        (err2, result) => {
+
+          const cantidadActual = result[0].total;
+
+          // 3️⃣ Obtener máximo permitido
+          db.query(
+            `SELECT max_sobreturnos
+             FROM agendas_nueva
+             WHERE profesional_id = ?
+               AND especialidad_id = ?`,
+            [profesional_id, especialidad_id],
+            (err3, agenda) => {
+
+              if (!agenda.length) {
+                return res.send('No existe configuración de agenda para este profesional');
+              }
+
+              const max = agenda[0].max_sobreturnos || 0;
+
+              if (cantidadActual >= max) {
+                return renderConError('Límite de sobreturnos alcanzado');
+
+              }
+
+              insertarTurno();
+            }
+          );
+        }
+      );
+    }
   );
+
+} else {
+  insertarTurno();
+}
+
+  function renderConError(mensaje) {
+  db.query('SELECT * FROM especialidades', (err, especialidades) => {
+    db.query('SELECT * FROM pacientes', (err2, pacientes) => {
+      db.query('SELECT * FROM sucursales', (err3, sucursales) => {
+        res.render('nuevoTurno', {
+          especialidades,
+          pacientes,
+          sucursales,
+          profesionales: [],
+          error: mensaje
+        });
+      });
+    });
+  });
+}
+
+
+  function insertarTurno() {
+    db.query(
+      `INSERT INTO turnos
+       (paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora, estado, tipo_turno)
+       VALUES (?, ?, ?, ?, ?, ?, 'reservado', ?)`,
+      [paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora, tipo_turno || 'normal'],
+      () => res.redirect('/turnos')
+    );
+  }
 };
 
 // ==========================
@@ -115,6 +199,7 @@ exports.mostrarFormularioEditarTurno = (req, res) => {
 
 
 exports.editarTurno = (req, res) => {
+  
   const {
     paciente_id,
     profesional_id,
