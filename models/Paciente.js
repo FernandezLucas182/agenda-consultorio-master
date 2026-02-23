@@ -2,11 +2,12 @@ const db = require('./Db'); // Asegúrate de tener una configuración de base de
 
 class Paciente {
   static obtenerTodos(callback) {
-    db.query('SELECT * FROM pacientes', (err, resultados) => {
-      if (err) return callback(err);
-      callback(null, resultados);
-    });
-  }
+  db.query('SELECT * FROM pacientes WHERE activo = 1', (err, resultados) => {
+    if (err) return callback(err);
+    callback(null, resultados);
+  });
+}
+
 
   static crear(datos, callback) {
     const { nombre, dni, obra_social, contacto } = datos;
@@ -27,15 +28,15 @@ class Paciente {
   }
 
   static editar(id, datos, callback) {
-    const { nombre, dni, obra_social, contacto } = datos;
-    db.query('UPDATE pacientes SET nombre = ?, dni = ?, obra_social = ?, contacto = ? WHERE id = ?', 
-      [nombre, dni, obra_social, contacto, id], 
-      (err) => {
-        if (err) return callback(err);
-        callback(null);
-      }
-    );
-  }
+  const { nombre, dni, obra_social, contacto, activo } = datos;
+
+  db.query(
+    'UPDATE pacientes SET nombre = ?, dni = ?, obra_social = ?, contacto = ?, activo = ? WHERE id = ?',
+    [nombre, dni, obra_social, contacto, activo, id],
+    callback
+  );
+}
+
 }
 
 module.exports = Paciente;

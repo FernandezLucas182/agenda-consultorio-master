@@ -7,17 +7,41 @@ html
   body
     h1 Agenda de Atención
 
+    br
+    a(href='/agendas/nueva') + Crear Agenda
+    br
+    a(href='/') + Volver al inicio
+    br
+    br
+
+    form(action='/agendas', method='GET', style="margin-bottom:20px;")
+      input(
+        type='text',
+        name='buscar',
+        placeholder='Buscar por profesional o especialidad',
+        value=buscar
+      )
+      button(type='submit') Buscar
+
+    br
+
     if agenda.length > 0
 
-      - let profesionalActual = null
+      - let agendaActual = null
       - const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
 
       each item in agenda
 
-        if profesionalActual !== item.nombre_completo
-          - profesionalActual = item.nombre_completo
+        // 🔹 Cuando cambia la agenda (no el profesional)
+        if agendaActual !== item.agenda_id
+          - agendaActual = item.agenda_id
+
           h2(style="margin-top:30px; border-bottom:2px solid #ccc; padding-bottom:5px;")
             = item.nombre_completo
+
+          // 🔥 BOTÓN EDITAR AGENDA COMPLETA
+          a(href=`/agendas/${item.agenda_id}/editar`)
+            button(type="button", style="margin-bottom:10px;") Editar Agenda Completa
 
         table(style="margin-bottom:15px;")
           thead
@@ -27,7 +51,8 @@ html
               th Desde
               th Hasta
               th Duración (min)
-              th Máx. Sobreturnos  
+              th Máx. Sobreturnos
+              th Acciones
 
           tbody
             tr
@@ -37,9 +62,15 @@ html
               td= item.hora_fin
               td= item.duracion_turno
               td= item.max_sobreturnos
+              td
+                a(href=`/agendas/${item.agenda_id}`) Ver
+                | |
+                a(href=`/horarios/${item.horario_id}/editar`) Editar Línea
 
     else
       p No hay agendas cargadas.
 
     br
-    a(href='/') Volver al inicio
+    a(href='/agendas/nueva') + Crear Agenda
+    br
+    a(href='/') + Volver al inicio

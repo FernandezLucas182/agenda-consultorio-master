@@ -8,7 +8,11 @@ html
     h1 Crear Agenda de Atención
 
     form(action="/agendas/nueva" method="POST")
-      
+
+      // ===============================
+      // DATOS GENERALES
+      // ===============================
+
       label Profesional
       select(name="profesional_id" id="profesionalSelect" required)
         option(value="" disabled selected) -- Selecciona profesional --
@@ -37,9 +41,44 @@ html
 
       br
       br
-      button(type="submit") Crear agenda
+
+      // ===============================
+      // DISPONIBILIDAD SEMANAL
+      // ===============================
+
+      h3 Disponibilidad semanal
+
+      - const dias = [{id:1,nombre:"Lunes"},{id:2,nombre:"Martes"},{id:3,nombre:"Miércoles"},{id:4,nombre:"Jueves"},{id:5,nombre:"Viernes"},{id:6,nombre:"Sábado"},{id:7,nombre:"Domingo"}]
+
+      each dia in dias
+        div(style="margin-bottom:15px; border:1px solid #ccc; padding:10px;")
+          label
+            input(type="checkbox" class="check-dia" data-dia=dia.id)
+            | #{dia.nombre}
+
+          div(id=`bloques-${dia.id}` style="margin-top:10px; margin-left:20px;")
+
+          button(
+            type="button"
+            onclick="agregarBloque(" + dia.id + ")"
+            style="margin-top:5px;"
+          ) + Agregar bloque
+
+      br
+      br
+
+      button(type="submit") Guardar Agenda Completa
+
+    br
+    a(href="/agendas") Volver
+
+      // ===============================
+    // SCRIPT
+    // ===============================
 
     script.
+      let bloqueIndex = 0;
+
       const profesionalSelect = document.getElementById('profesionalSelect');
       const especialidadSelect = document.getElementById('especialidadSelect');
 
@@ -67,5 +106,19 @@ html
         }
       });
 
-    br
-    a(href="/agendas") Volver
+      function agregarBloque(dia) {
+        const contenedor = document.getElementById('bloques-' + dia);
+
+        const div = document.createElement('div');
+        div.style.marginBottom = "5px";
+
+        div.innerHTML = `
+          <input type="hidden" name="horarios[${bloqueIndex}][dia]" value="${dia}">
+          Desde: <input type="time" name="horarios[${bloqueIndex}][desde]" required>
+          Hasta: <input type="time" name="horarios[${bloqueIndex}][hasta]" required>
+          <button type="button" onclick="this.parentElement.remove()">X</button>
+        `;
+
+        contenedor.appendChild(div);
+        bloqueIndex++;
+      }

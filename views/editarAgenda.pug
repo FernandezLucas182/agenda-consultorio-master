@@ -1,0 +1,120 @@
+doctype html
+html
+  head
+    title Editar Agenda
+    link(rel='stylesheet', href='/styles.css')
+
+  body
+    h1 Editar Agenda
+
+    form(method="POST", action=`/agendas/${agenda.id}/editar`)
+
+      // ===============================
+      // DATOS GENERALES
+      // ===============================
+
+      label Profesional
+      p #{agenda.nombre_completo}
+
+      label Especialidad
+      p #{agenda.especialidad}
+
+      br
+
+      label Duración del turno (minutos)
+      input(type="number", name="duracion_turno", value=agenda.duracion_turno required)
+
+      br
+      br
+
+      label Máx. sobreturnos
+      input(type="number", name="max_sobreturnos", value=agenda.max_sobreturnos min="0")
+
+      br
+      br
+
+      // ===============================
+      // DISPONIBILIDAD SEMANAL
+      // ===============================
+
+      h3 Disponibilidad semanal
+
+      each dia in dias
+
+        - var bloquesDia = []
+
+        - if (horarios && horarios.length)
+            - for (var i = 0; i < horarios.length; i++)
+                - if (horarios[i] && horarios[i].dia_semana === dia.id)
+                    - bloquesDia.push(horarios[i])
+
+        div(style="margin-bottom:15px; border:1px solid #ccc; padding:10px;")
+
+          label
+            - var estaActivo = bloquesDia.length > 0
+
+            input(
+              type="checkbox"
+              class="check-dia"
+              data-dia=dia.id
+              checked=estaActivo
+            )
+            | #{dia.nombre}
+
+          div(id=`bloques-${dia.id}` style="margin-top:10px; margin-left:20px;")
+
+            each bloque in bloquesDia
+              div(style="margin-bottom:5px;")
+                input(type="hidden", name=`horarios[${bloque.id}][id]`, value=bloque.id)
+                input(type="hidden", name=`horarios[${bloque.id}][dia]`, value=dia.id)
+
+                | Desde:
+                input(
+                  type="time"
+                  name=`horarios[${bloque.id}][desde]`
+                  value=bloque.hora_inicio
+                  required
+                )
+
+                | Hasta:
+                input(
+                  type="time"
+                  name=`horarios[${bloque.id}][hasta]`
+                  value=bloque.hora_fin
+                  required
+                )
+
+                button(type="button", onclick="this.parentElement.remove()") X
+
+          button(
+            type="button"
+            onclick=`agregarBloque(${dia.id})`
+            style="margin-top:5px;"
+          ) + Agregar bloque
+
+      br
+      br
+
+      button(type="submit") Guardar cambios
+
+    br
+    a(href="/agendas") Cancelar
+
+    script.
+      function agregarBloque(dia) {
+        const contenedor = document.getElementById('bloques-' + dia);
+
+        const div = document.createElement('div');
+        div.style.marginBottom = "5px";
+
+        const key = Date.now();
+
+        div.innerHTML = `
+          <input type="hidden" name="horarios[${key}][dia]" value="${dia}">
+          Desde: <input type="time" name="horarios[${key}][desde]" required>
+          Hasta: <input type="time" name="horarios[${key}][hasta]" required>
+          <button type="button" onclick="this.parentElement.remove()">X</button>
+        `;
+
+        contenedor.appendChild(div);
+      }

@@ -5,6 +5,8 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
+const agendaController = require('./controllers/agendaController');
+
 
 const routes = require('./routes/index'); // 👈 SOLO ESTE
 
@@ -20,6 +22,7 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
 
 // =====================
 // Session + flash
@@ -72,6 +75,9 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500);
   res.render('error', { message: err.message, error: err });
 });
+
+app.post('/agendas/:id/eliminar', agendaController.eliminarAgenda);
+
 
 // =====================
 // Server

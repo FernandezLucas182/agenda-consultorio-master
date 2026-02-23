@@ -1,0 +1,19 @@
+doctype html
+html
+  head
+    title Detalle Agenda
+    link(rel='stylesheet', href='/styles.css')
+
+  body
+    h1 Detalle de Agenda
+
+    each item in agenda
+      h2 #{item.nombre_completo} - #{item.especialidad}
+      p Duración turno: #{item.duracion_turno} minutos
+      p Día: #{item.dia_semana}
+      p Horario: #{item.hora_inicio} - #{item.hora_fin}
+      hr
+
+    br
+    a(href="/agendas")
+      button(type="button") Volver

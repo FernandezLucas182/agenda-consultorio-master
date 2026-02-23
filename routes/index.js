@@ -9,8 +9,13 @@ const agendaController = require('../controllers/agendaController');
 const turnosController = require('../controllers/turnosController');
 const profesionalController = require('../controllers/profesionalController');
 const authController = require('../controllers/authController');
+const pacienteController = require('../controllers/pacienteController');
 
-
+console.log("Agenda:", Object.keys(agendaController));
+console.log("Turnos:", Object.keys(turnosController));
+console.log("Profesional:", Object.keys(profesionalController));
+console.log("Auth:", Object.keys(authController));
+console.log("Paciente:", Object.keys(pacienteController));
 // =====================
 // HOME & LOGIN
 // =====================
@@ -35,6 +40,9 @@ router.post('/agendas/nueva', agendaController.crearAgendaBase);
 router.get('/agendas/horarios/nuevo', agendaController.formularioNuevoHorario);
 router.post('/agendas/horarios', agendaController.agregarHorario);
 
+router.get('/agendas/:id', agendaController.detalleAgenda);
+router.get('/agendas/:id/editar', agendaController.formularioEditarAgenda);
+router.post('/agendas/:id/editar', agendaController.editarAgenda);
 
 // =====================
 // TURNOS
@@ -92,5 +100,30 @@ router.post('/profesionales/:id/editar', profesionalController.editarProfesional
 
 router.post('/profesionales/:id/inactivar', profesionalController.inactivarProfesional);
 router.post('/profesionales/:id/activar', profesionalController.activarProfesional);
+
+//=======================
+//PACIENTES
+//=======================
+
+// LISTAR
+router.get('/pacientes', pacienteController.mostrarPacientes);
+
+// FORM CREAR
+router.get('/pacientes/nuevo', (req, res) => {
+  res.render('nuevoPaciente');
+});
+
+// CREAR
+router.post('/pacientes', pacienteController.crearPaciente);
+
+// VER DETALLE
+router.get('/pacientes/:id', pacienteController.mostrarPaciente);
+
+// FORM EDITAR
+router.get('/pacientes/:id/editar', pacienteController.mostrarEditarPaciente);
+
+// GUARDAR EDICION
+router.post('/pacientes/:id/editar', pacienteController.editarPaciente);
+
 
 module.exports = router;

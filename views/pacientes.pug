@@ -26,10 +26,10 @@ html
               td
                 a(href=`/pacientes/${paciente.id}`) Ver Detalle
                 | |
-                form(action=`/pacientes/${paciente.id}/editar`, method='POST', style='display:inline')
-                  button(type='submit') Editar
+                a(href=`/pacientes/${paciente.id}/editar`) Editar
     else
       p No hay pacientes disponibles.
+    br
     a(href='/pacientes/nuevo') Crear nuevo paciente
     br
     a(href='/') Volver al inicio

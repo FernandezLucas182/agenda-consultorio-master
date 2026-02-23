@@ -1,0 +1,41 @@
+doctype html
+html
+  head
+    title Editar Paciente
+    link(rel='stylesheet', href='/styles.css')
+  body
+    h1 Editar Paciente
+
+    if paciente
+      form(action=`/pacientes/${paciente.id}/editar`, method='POST')
+        
+        div
+          label(for="nombre") Nombre:
+          input(type="text", name="nombre", value=paciente.nombre, required)
+
+        div
+          label(for="dni") DNI:
+          input(type="text", name="dni", value=paciente.dni, required)
+
+        div
+          label(for="obra_social") Obra Social:
+          input(type="text", name="obra_social", value=paciente.obra_social)
+
+        div
+          label(for="contacto") Contacto:
+          input(type="text", name="contacto", value=paciente.contacto)
+
+        div
+          label(for="activo") Estado:
+          select(name="activo")
+            option(value="1", selected=paciente.activo == 1) Activo
+            option(value="0", selected=paciente.activo == 0) Inactivo
+
+        br
+        button(type="submit") Guardar cambios
+
+      br
+      a(href='/pacientes') Volver a la lista
+
+    else
+      p Paciente no encontrado.

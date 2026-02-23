@@ -17,7 +17,7 @@ exports.crearPaciente = (req, res) => {
     if (err) {
       return res.status(500).send('Error al crear paciente.');
     }
-    res.redirect('/pacientes'); // Redirige a la lista de pacientes
+    res.redirect('/pacientes');
   });
 };
 
@@ -32,10 +32,23 @@ exports.mostrarPaciente = (req, res) => {
   });
 };
 
-// Editar un paciente
+// 🔹 MOSTRAR FORMULARIO EDITAR
+exports.mostrarEditarPaciente = (req, res) => {
+  const pacienteId = req.params.id;
+
+  Paciente.obtenerPorId(pacienteId, (err, paciente) => {
+    if (err || !paciente) {
+      return res.status(404).send('Paciente no encontrado.');
+    }
+    res.render('editarPaciente', { paciente });
+  });
+};
+
+// 🔹 GUARDAR CAMBIOS
 exports.editarPaciente = (req, res) => {
   const pacienteId = req.params.id;
   const pacienteData = req.body;
+
   Paciente.editar(pacienteId, pacienteData, (err) => {
     if (err) {
       return res.status(500).send('Error al editar paciente.');

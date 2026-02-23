@@ -1,0 +1,31 @@
+doctype html
+html
+  head
+    title Nuevo Paciente
+    link(rel='stylesheet', href='/styles.css')
+  body
+    h1 Crear Nuevo Paciente
+
+    form(action='/pacientes', method='POST')
+
+      div
+        label Nombre:
+        input(type='text', name='nombre', required)
+
+      div
+        label DNI:
+        input(type='text', name='dni', required)
+
+      div
+        label Obra Social:
+        input(type='text', name='obra_social')
+
+      div
+        label Contacto:
+        input(type='text', name='contacto')
+
+      br
+      button(type='submit') Guardar
+
+    br
+    a(href='/pacientes') Volver
