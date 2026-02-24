@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 12-02-2026 a las 02:09:20
+-- Tiempo de generación: 23-02-2026 a las 09:09:43
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -45,36 +45,16 @@ CREATE TABLE `agendas_nueva` (
   `profesional_id` int(11) NOT NULL,
   `especialidad_id` int(11) NOT NULL,
   `duracion_turno` int(11) NOT NULL,
-  `activo` tinyint(1) DEFAULT 1
+  `activo` tinyint(1) DEFAULT 1,
+  `max_sobreturnos` int(11) DEFAULT 2
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
 -- Volcado de datos para la tabla `agendas_nueva`
 --
 
-INSERT INTO `agendas_nueva` (`id`, `profesional_id`, `especialidad_id`, `duracion_turno`, `activo`) VALUES
-(4, 1, 1, 30, 1),
-(5, 1, 6, 40, 1),
-(6, 3, 4, 20, 1),
-(7, 3, 2, 30, 1),
-(8, 4, 3, 30, 1),
-(9, 4, 6, 45, 1),
-(10, 3, 6, 45, 1),
-(11, 3, 1, 40, 1),
-(12, 3, 1, 40, 1),
-(13, 3, 1, 40, 1),
-(14, 3, 1, 50, 1),
-(15, 3, 1, 50, 1),
-(16, 3, 1, 50, 1),
-(17, 4, 3, 30, 1),
-(18, 5, 2, 10, 1),
-(19, 4, 3, 10, 1),
-(20, 4, 5, 10, 1),
-(21, 4, 5, 10, 1),
-(22, 6, 1, 30, 1),
-(23, 6, 4, 20, 1),
-(24, 3, 1, 10, 1),
-(25, 7, 2, 20, 1);
+INSERT INTO `agendas_nueva` (`id`, `profesional_id`, `especialidad_id`, `duracion_turno`, `activo`, `max_sobreturnos`) VALUES
+(3, 1, 4, 30, 1, 2);
 
 -- --------------------------------------------------------
 
@@ -95,27 +75,12 @@ CREATE TABLE `agenda_horarios` (
 --
 
 INSERT INTO `agenda_horarios` (`id`, `agenda_id`, `dia_semana`, `hora_inicio`, `hora_fin`) VALUES
-(3, 4, 1, '09:00:00', '13:00:00'),
-(4, 4, 3, '16:00:00', '20:00:00'),
-(5, 5, 2, '10:00:00', '14:00:00'),
-(6, 6, 1, '08:00:00', '12:00:00'),
-(7, 6, 4, '15:00:00', '18:00:00'),
-(8, 8, 5, '09:00:00', '13:00:00'),
-(9, 8, 1, '09:00:00', '20:00:00'),
-(10, 6, 1, '16:00:00', '21:00:00'),
-(11, 6, 7, '09:00:00', '12:00:00'),
-(12, 6, 7, '17:00:00', '21:00:00'),
-(13, 6, 7, '18:00:00', '21:00:00'),
-(14, 14, 6, '09:00:00', '12:00:00'),
-(15, 15, 6, '17:00:00', '19:00:00'),
-(17, 21, 4, '11:00:00', '14:00:00'),
-(18, 20, 4, '17:00:00', '21:00:00'),
-(19, 22, 3, '09:00:00', '12:00:00'),
-(20, 22, 3, '18:00:00', '21:00:00'),
-(21, 23, 1, '07:00:00', '12:00:00'),
-(22, 23, 1, '17:00:00', '21:00:00'),
-(23, 24, 2, '10:00:00', '13:00:00'),
-(24, 25, 5, '12:00:00', '21:00:00');
+(9, 3, 1, '08:00:00', '13:00:00'),
+(10, 3, 1, '17:00:00', '21:00:00'),
+(11, 3, 2, '08:00:00', '21:00:00'),
+(12, 3, 3, '10:00:00', '17:00:00'),
+(13, 3, 4, '07:00:00', '18:00:00'),
+(14, 3, 5, '09:00:00', '21:00:00');
 
 -- --------------------------------------------------------
 
@@ -188,22 +153,24 @@ CREATE TABLE `pacientes` (
   `nombre` varchar(100) NOT NULL,
   `dni` varchar(20) NOT NULL,
   `obra_social` varchar(100) DEFAULT NULL,
-  `contacto` varchar(100) DEFAULT NULL
+  `contacto` varchar(100) DEFAULT NULL,
+  `activo` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
 -- Volcado de datos para la tabla `pacientes`
 --
 
-INSERT INTO `pacientes` (`id`, `nombre`, `dni`, `obra_social`, `contacto`) VALUES
-(1, 'Juan Pérez', '30111222', 'OSDE', '1133445566'),
-(2, 'María Gómez', '28999888', 'Swiss Medical', '1144556677'),
-(27, 'Carlos Gómez', '33111222', 'OSDE', 'carlos@gmail.com'),
-(28, 'María López', '28999444', 'Swiss Medical', 'maria@gmail.com'),
-(29, 'Ana Torres', '31222333', 'IOMA', 'ana@gmail.com'),
-(30, 'Pedro Fernández', '27555666', 'PAMI', 'pedro@gmail.com'),
-(31, 'Lucía Herrera', '33444777', 'Galeno', 'lucia@gmail.com'),
-(32, 'Sofía Ramírez', '35666888', 'OSDE', 'sofia@gmail.com');
+INSERT INTO `pacientes` (`id`, `nombre`, `dni`, `obra_social`, `contacto`, `activo`) VALUES
+(1, '', '', NULL, NULL, NULL),
+(2, 'María Gómez', '33759862', 'Swiss Medical', '11333333', 1),
+(27, 'Carlos Gómez', '33111222', 'OSDE', 'carlos@gmail.com', 1),
+(28, 'María López', '28999444', 'Swiss Medical', 'maria@gmail.com', 1),
+(29, 'Ana Torres', '31222333', 'IOMA', 'ana@gmail.com', 1),
+(30, 'Pedro Fernández', '27555666', 'PAMI', 'pedro@gmail.com', 1),
+(31, 'Lucía Herrera', '33444777', 'Galeno', 'lucia@gmail.com', 1),
+(32, 'Sofía Ramírez', '35666888', 'OSDE', 'sofia@gmail.com', 1),
+(33, 'Susana Alina', '31654788', 'Sacror', '2665859145', 1);
 
 -- --------------------------------------------------------
 
@@ -236,7 +203,10 @@ INSERT INTO `profesionales` (`id`, `nombre_completo`, `matricula`, `estado`, `ho
 (8, 'Miguel Abuelo', '9001', 'activo', NULL, NULL, NULL, NULL),
 (9, 'Marge Simpson', '9002', 'activo', NULL, NULL, NULL, NULL),
 (10, 'Violeta Parra', '9003', 'activo', NULL, NULL, NULL, NULL),
-(12, 'José Roberto', '1913456', 'activo', '09:00:00', '13:00:00', NULL, NULL);
+(12, 'José Roberto', '1913456', 'activo', '09:00:00', '13:00:00', NULL, NULL),
+(13, 'Camaron de la Isla', '6665554', 'activo', '10:00:00', '12:30:00', '19:30:00', '21:00:00'),
+(14, 'Eduardo Caseres', '677592', 'activo', '09:00:00', '12:00:00', '17:00:00', '20:30:00'),
+(15, 'alberto rodriguez', '7777777', 'activo', '09:00:00', '13:00:00', '17:30:00', '20:00:00');
 
 -- --------------------------------------------------------
 
@@ -271,7 +241,10 @@ INSERT INTO `profesional_especialidad` (`profesional_id`, `especialidad_id`) VAL
 (9, 14),
 (10, 12),
 (12, 4),
-(12, 12);
+(12, 12),
+(13, 1),
+(14, 7),
+(15, 4);
 
 -- --------------------------------------------------------
 
@@ -306,16 +279,9 @@ CREATE TABLE `turnos` (
   `sucursal_id` int(11) NOT NULL,
   `fecha` date NOT NULL,
   `hora` time NOT NULL,
-  `estado` enum('libre','reservado','confirmado','cancelado','ausente','presente','en_consulta','atendido') DEFAULT 'reservado'
+  `estado` enum('no_disponible','libre','reservado','confirmado','cancelado','ausente','presente','en_consulta','atendido') NOT NULL DEFAULT 'libre',
+  `tipo_turno` enum('normal','sobreturno') NOT NULL DEFAULT 'normal'
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
---
--- Volcado de datos para la tabla `turnos`
---
-
-INSERT INTO `turnos` (`id`, `paciente_id`, `profesional_id`, `especialidad_id`, `sucursal_id`, `fecha`, `hora`, `estado`) VALUES
-(1, 1, 6, 1, 1, '2026-02-12', '10:50:00', 'confirmado'),
-(2, 1, 4, 5, 2, '2026-02-21', '10:00:00', 'reservado');
 
 -- --------------------------------------------------------
 
@@ -339,7 +305,7 @@ INSERT INTO `vacaciones` (`id`, `profesional_id`, `fecha_inicio`, `fecha_fin`) V
 (2, 3, '2026-02-10', '2026-02-20'),
 (3, 4, '2026-03-01', '2026-03-15'),
 (4, 5, '2026-01-05', '2026-01-18'),
-(5, 6, '2026-02-01', '2026-02-12'),
+(5, 6, '2026-02-01', '2026-02-11'),
 (6, 7, '2026-03-20', '2026-04-05'),
 (7, 8, '2026-01-10', '2026-01-25'),
 (8, 9, '2026-02-15', '2026-02-28'),
@@ -362,7 +328,7 @@ ALTER TABLE `agendas`
 --
 ALTER TABLE `agendas_nueva`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `profesional_id` (`profesional_id`),
+  ADD UNIQUE KEY `unique_prof_espec` (`profesional_id`,`especialidad_id`),
   ADD KEY `especialidad_id` (`especialidad_id`);
 
 --
@@ -444,13 +410,13 @@ ALTER TABLE `agendas`
 -- AUTO_INCREMENT de la tabla `agendas_nueva`
 --
 ALTER TABLE `agendas_nueva`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `agenda_horarios`
 --
 ALTER TABLE `agenda_horarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT de la tabla `especialidades`
@@ -468,13 +434,13 @@ ALTER TABLE `feriados`
 -- AUTO_INCREMENT de la tabla `pacientes`
 --
 ALTER TABLE `pacientes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT de la tabla `profesionales`
 --
 ALTER TABLE `profesionales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT de la tabla `sucursales`
@@ -486,7 +452,7 @@ ALTER TABLE `sucursales`
 -- AUTO_INCREMENT de la tabla `turnos`
 --
 ALTER TABLE `turnos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `vacaciones`
