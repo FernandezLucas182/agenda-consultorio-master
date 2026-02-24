@@ -184,6 +184,8 @@ static obtenerHorariosPorAgenda(agenda_id, callback) {
 
 
 
+
+
 // ==========================
 // REEMPLAZAR HORARIOS COMPLETOS
 // ==========================
@@ -446,6 +448,23 @@ static actualizarHorarios(agenda_id, listaHorarios, callback) {
         );
       }
     );
+  });
+}
+
+static obtenerHorariosProfesional(profesional_id, dia_semana, callback) {
+
+  const sql = `
+    SELECT ah.hora_inicio, ah.hora_fin, a.duracion_turno
+    FROM agendas_nueva a
+    JOIN agenda_horarios ah ON ah.agenda_id = a.id
+    WHERE a.profesional_id = ?
+      AND a.activo = 1
+      AND ah.dia_semana = ?
+  `;
+
+  db.query(sql, [profesional_id, dia_semana], (err, resultados) => {
+    if (err) return callback(err);
+    callback(null, resultados || []);
   });
 }
 

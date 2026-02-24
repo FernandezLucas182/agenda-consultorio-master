@@ -10,7 +10,6 @@ html
       div(style="color:red; margin-bottom:15px; font-weight:bold;")
         | #{error}
 
-
     form(action='/turnos', method='POST')
 
       div 
@@ -18,7 +17,6 @@ html
         select(name="tipo_turno")
           option(value="normal") Normal
           option(value="sobreturno") Sobreturno
-
 
       div
         label Paciente:
@@ -55,22 +53,29 @@ html
         select(name='hora', id='hora', required)
           option(value='') Selecciona un horario
 
+      // 🔵 SECCIÓN VISUAL NUEVA (NO ROMPE NADA)
+      div
+        label Selección visual:
+        div#slots(style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;")
+
       div
         button(type='submit') Crear Turno
 
     a(href='/turnos') Volver a la lista de turnos
 
+
     // ======================
-    // JS para carga dinámica de horarios
+    // JS
     // ======================
     script.
       document.addEventListener('DOMContentLoaded', () => {
+
         const especialidad = document.getElementById('especialidad_id');
         const profesional = document.getElementById('profesional_id');
         const fecha = document.getElementById('fecha');
         const hora = document.getElementById('hora');
+        const slots = document.getElementById('slots');
 
-        // Cambia profesionales según especialidad
         especialidad.addEventListener('change', () => {
           fetch(`/profesionales/especialidad/${especialidad.value}`)
             .then(r => r.json())
@@ -82,60 +87,70 @@ html
             });
         });
 
-        // Función principal para cargar horarios
         function cargarHorarios() {
+
           if (!profesional.value || !fecha.value) return;
 
-          const fechaValor = fecha.value.trim();
-
-          // ⛔ validar formato de fecha YYYY-MM-DD
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaValor)) {
-            console.warn('Fecha inválida:', fechaValor);
-            return;
-          }
-
-          fetch(`/turnos/horarios-disponibles/${profesional.value}/${fechaValor}`, {
+          fetch(`/turnos/horarios-disponibles/${profesional.value}/${fecha.value}`, {
             cache: "no-store"
           })
             .then(r => r.json())
             .then(data => {
-              hora.innerHTML = '';
 
-              // 🚫 si backend devuelve motivo (feriado, fin de semana, vacaciones)
-              if (data.motivo) {
-                const mensajes = {
-                  fin_de_semana: 'No se atiende sábados ni domingos',
-                  feriado: 'Es feriado — no hay atención',
-                  sin_agenda: 'El profesional no atiende este día',
-                  vacaciones: 'El profesional está de vacaciones'
-                };
-                const option = document.createElement('option');
-                option.textContent = mensajes[data.motivo] || 'No hay atención';
-                option.disabled = true;
-                hora.appendChild(option);
-                return;
-              }
-
-              // Si no hay horarios
-              if (!data.length) {
-                const option = document.createElement('option');
-                option.textContent = 'No hay horarios disponibles';
-                option.disabled = true;
-                hora.appendChild(option);
-                return;
-              }
-
-              // Cargar horarios disponibles
+              slots.innerHTML = '';
               hora.innerHTML = '<option value="">Selecciona un horario</option>';
-              data.forEach(h => {
-                const option = document.createElement('option');
-                option.value = h;
-                option.textContent = h;
-                hora.appendChild(option);
+
+              const slotsDiv = document.getElementById('slots');
+              slotsDiv.innerHTML = '';
+
+              if (data.motivo) {
+                return;
+              }
+
+              const libres = data.libres || [];
+              const ocupados = data.ocupados || [];
+
+              const todos = [...libres, ...ocupados].sort();
+
+              todos.forEach(h => {
+
+                // 🔵 También mantenemos el select sincronizado
+                if (libres.includes(h)) {
+                  const option = document.createElement('option');
+                  option.value = h;
+                  option.textContent = h;
+                  hora.appendChild(option);
+                }
+
+                const btn = document.createElement('button');
+                btn.type = "button";
+                btn.textContent = h;
+                btn.style.padding = "6px 10px";
+                btn.style.border = "1px solid #ccc";
+
+                if (ocupados.includes(h)) {
+                  btn.style.backgroundColor = "#ff4d4d";
+                  btn.disabled = true;
+                } else {
+                  btn.style.backgroundColor = "#4CAF50";
+                  btn.style.color = "white";
+
+                  btn.onclick = () => {
+                    hora.value = h;
+
+                    document.querySelectorAll('#slots button')
+                      .forEach(b => b.style.outline = "none");
+
+                    btn.style.outline = "3px solid black";
+                  };
+                }
+
+                slots.appendChild(btn);
               });
             });
         }
 
         profesional.addEventListener('change', cargarHorarios);
         fecha.addEventListener('change', cargarHorarios);
+
       });

@@ -10,6 +10,7 @@ const turnosController = require('../controllers/turnosController');
 const profesionalController = require('../controllers/profesionalController');
 const authController = require('../controllers/authController');
 const pacienteController = require('../controllers/pacienteController');
+const ausenciasController = require('../controllers/ausenciasController');
 
 console.log("Agenda:", Object.keys(agendaController));
 console.log("Turnos:", Object.keys(turnosController));
@@ -57,6 +58,20 @@ router.get('/turnos/:id', turnosController.mostrarTurno);
 router.get('/turnos/:id/editar', turnosController.mostrarFormularioEditarTurno);
 router.post('/turnos/:id/editar', turnosController.editarTurno);
 router.post('/turnos/:id/eliminar', turnosController.eliminarTurno);
+
+
+
+//=====================
+//AUSENCIAS
+//=====================
+
+
+
+
+router.get('/ausencias', ausenciasController.listarAusencias);
+router.get('/ausencias/nueva', ausenciasController.mostrarFormulario);
+router.post('/ausencias/nueva', ausenciasController.crearAusencia);
+router.get('/confirmar-turno/:token', turnosController.confirmarTurno);
 
 
 // =====================
