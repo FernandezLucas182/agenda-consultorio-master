@@ -1,18 +1,13 @@
 const mysql = require('mysql2');
 
-const db = mysql.createConnection({
+const db = mysql.createPool({
   host: 'localhost',
   user: 'root',
   password: '',
-  database: 'agenda_consultorio'
-});
-
-db.connect((err) => {
-  if (err) {
-    console.error('Error conectando a la base de datos:', err);
-    return;
-  }
-  console.log('Conectado a la base de datos agenda_consultorio');
+  database: 'agenda_consultorio',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
 module.exports = db;

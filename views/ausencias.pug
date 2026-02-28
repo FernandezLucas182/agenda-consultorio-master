@@ -15,6 +15,7 @@ html
         th Desde
         th Hasta
         th Motivo
+        th Acciones
 
       each a in ausencias
         tr
@@ -22,3 +23,5 @@ html
           td= a.fecha_inicio
           td= a.fecha_fin
           td= a.motivo
+          td
+            a(href=`/ausencias/${a.id}/editar`) Editar

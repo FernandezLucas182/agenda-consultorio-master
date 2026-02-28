@@ -1,0 +1,41 @@
+doctype html
+html
+  head
+    title Editar Ausencia
+    link(rel='stylesheet', href='/styles.css')
+
+  body
+    h1 Editar Ausencia
+
+    form(method="POST", action=`/ausencias/${ausencia.id}/editar`)
+
+      label Profesional:
+      select(name="profesional_id" required)
+        each p in profesionales
+          option(
+            value=p.id
+            selected=(p.id == ausencia.profesional_id)
+          )= p.nombre_completo
+
+      br
+
+      label Fecha Inicio:
+      input(type="date", name="fecha_inicio", value=ausencia.fecha_inicio required)
+
+      br
+
+      label Fecha Fin:
+      input(type="date", name="fecha_fin", value=ausencia.fecha_fin required)
+
+      br
+
+      label Motivo:
+      input(type="text", name="motivo", value=ausencia.motivo required)
+
+      br
+      br
+
+      button(type="submit") Guardar Cambios
+
+    br
+    a(href="/ausencias") Volver

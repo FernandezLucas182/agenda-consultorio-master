@@ -45,6 +45,8 @@ router.get('/agendas/:id', agendaController.detalleAgenda);
 router.get('/agendas/:id/editar', agendaController.formularioEditarAgenda);
 router.post('/agendas/:id/editar', agendaController.editarAgenda);
 
+
+
 // =====================
 // TURNOS
 // =====================
@@ -72,6 +74,8 @@ router.get('/ausencias', ausenciasController.listarAusencias);
 router.get('/ausencias/nueva', ausenciasController.mostrarFormulario);
 router.post('/ausencias/nueva', ausenciasController.crearAusencia);
 router.get('/confirmar-turno/:token', turnosController.confirmarTurno);
+router.get('/ausencias/:id/editar', ausenciasController.mostrarFormularioEditar);
+router.post('/ausencias/:id/editar', ausenciasController.editarAusencia);
 
 
 // =====================

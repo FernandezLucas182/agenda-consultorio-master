@@ -36,11 +36,11 @@ app.use(session({
 
 app.use(flash());
 
-app.use((req, res, next) => {
-  res.locals.success_msg = req.flash('success_msg');
-  res.locals.error_msg = req.flash('error_msg');
-  res.locals.error = req.flash('error');
-  next();
+app.use((err, req, res, next) => {
+  console.error("ERROR DETECTADO:");
+  console.error(err);
+  res.status(500).send(err.message);
+  console.log(err);
 });
 
 // =====================
@@ -76,7 +76,6 @@ app.use((err, req, res, next) => {
   res.render('error', { message: err.message, error: err });
 });
 
-app.post('/agendas/:id/eliminar', agendaController.eliminarAgenda);
 
 
 // =====================

@@ -14,7 +14,7 @@ html
 
       div 
         label Tipo de turno
-        select(name="tipo_turno")
+        select(name="tipo_turno" id="tipo_turno")
           option(value="normal") Normal
           option(value="sobreturno") Sobreturno
 
@@ -75,7 +75,9 @@ html
         const fecha = document.getElementById('fecha');
         const hora = document.getElementById('hora');
         const slots = document.getElementById('slots');
+        const tipoTurnoSelect = document.getElementById('tipo_turno');
 
+        // Cargar profesionales por especialidad
         especialidad.addEventListener('change', () => {
           fetch(`/profesionales/especialidad/${especialidad.value}`)
             .then(r => r.json())
@@ -100,57 +102,82 @@ html
               slots.innerHTML = '';
               hora.innerHTML = '<option value="">Selecciona un horario</option>';
 
-              const slotsDiv = document.getElementById('slots');
-              slotsDiv.innerHTML = '';
+              if (data.motivo === 'ausente') {
+                slots.innerHTML = "<p style='color:red; font-weight:bold;'>El profesional no atiende en esta fecha (ausencia registrada).</p>";
+                hora.innerHTML = '<option value="">No disponible</option>';
+                return;
+              }
+
+              if (data.motivo === 'sin_agenda') {
+                slots.innerHTML = "<p style='color:orange;'>El profesional no tiene agenda cargada para ese día.</p>";
+                hora.innerHTML = '<option value="">No disponible</option>';
+                return;
+              }
 
               if (data.motivo) {
+                slots.innerHTML = "<p style='color:red;'>Error al obtener horarios.</p>";
                 return;
               }
 
               const libres = data.libres || [];
               const ocupados = data.ocupados || [];
 
-              const todos = [...libres, ...ocupados].sort();
+              const tipoTurno = tipoTurnoSelect.value;
 
+              const todos = [...libres, ...ocupados].sort();
+              
               todos.forEach(h => {
 
-                // 🔵 También mantenemos el select sincronizado
-                if (libres.includes(h)) {
-                  const option = document.createElement('option');
-                  option.value = h;
+                const esOcupado = ocupados.includes(h);
+                const esSobreturno = tipoTurno === 'sobreturno';
+
+                const option = document.createElement('option');
+                option.value = h;
+
+                if (esOcupado && !esSobreturno) {
+                  option.textContent = h + " (Ocupado)";
+                  option.disabled = true;
+                } else if (esOcupado && esSobreturno) {
+                  option.textContent = h + " (Sobreturno)";
+                } else {
                   option.textContent = h;
-                  hora.appendChild(option);
                 }
+
+                hora.appendChild(option);
 
                 const btn = document.createElement('button');
                 btn.type = "button";
                 btn.textContent = h;
                 btn.style.padding = "6px 10px";
                 btn.style.border = "1px solid #ccc";
+                btn.style.color = "white";
 
-                if (ocupados.includes(h)) {
-                  btn.style.backgroundColor = "#ff4d4d";
+                if (esOcupado && !esSobreturno) {
+                  btn.style.backgroundColor = "#f44336"; // 🔴 rojo
                   btn.disabled = true;
+                } else if (esOcupado && esSobreturno) {
+                  btn.style.backgroundColor = "#03a9f4"; // 🔵 celeste
                 } else {
-                  btn.style.backgroundColor = "#4CAF50";
-                  btn.style.color = "white";
-
-                  btn.onclick = () => {
-                    hora.value = h;
-
-                    document.querySelectorAll('#slots button')
-                      .forEach(b => b.style.outline = "none");
-
-                    btn.style.outline = "3px solid black";
-                  };
+                  btn.style.backgroundColor = "#4CAF50"; // 🟢 verde
                 }
 
+                btn.onclick = () => {
+                  hora.value = h;
+                  document.querySelectorAll('#slots button')
+                    .forEach(b => b.style.outline = "none");
+                  btn.style.outline = "3px solid black";
+                };
+
                 slots.appendChild(btn);
+
               });
-            });
+
+            })
+            .catch(err => console.error("Error cargando horarios:", err));
         }
 
         profesional.addEventListener('change', cargarHorarios);
         fecha.addEventListener('change', cargarHorarios);
+        tipoTurnoSelect.addEventListener('change', cargarHorarios);
 
       });

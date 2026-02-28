@@ -29,33 +29,80 @@ exports.crearProfesional = (req, res) => {
     hora_inicio_turno1,
     hora_fin_turno1,
     hora_inicio_turno2,
-    hora_fin_turno2
+    hora_fin_turno2,
+    nueva_especialidad
   } = req.body;
 
   let { especialidades } = req.body;
 
-  if (!Array.isArray(especialidades)) {
+  if (!especialidades) {
+    especialidades = [];
+  } else if (!Array.isArray(especialidades)) {
     especialidades = [especialidades];
   }
 
-  // 🔴 NORMALIZACIÓN DE HORARIOS (ESTO ES LO NUEVO)
-  const datosNormalizados = {
-    nombre: nombre_completo,
-    matricula,
-    especialidades,
-    hora_inicio_turno1: normalizarHora(hora_inicio_turno1),
-    hora_fin_turno1: normalizarHora(hora_fin_turno1),
-    hora_inicio_turno2: normalizarHora(hora_inicio_turno2),
-    hora_fin_turno2: normalizarHora(hora_fin_turno2)
+  const continuarCreacion = (especialidadesFinales) => {
+
+    const datosNormalizados = {
+      nombre: nombre_completo,
+      matricula,
+      especialidades: especialidadesFinales,
+      hora_inicio_turno1: normalizarHora(hora_inicio_turno1),
+      hora_fin_turno1: normalizarHora(hora_fin_turno1),
+      hora_inicio_turno2: normalizarHora(hora_inicio_turno2),
+      hora_fin_turno2: normalizarHora(hora_fin_turno2)
+    };
+
+    Profesional.crear(datosNormalizados, (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Error al crear profesional');
+      }
+      res.redirect('/profesionales');
+    });
   };
 
-  Profesional.crear(datosNormalizados, (err) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).send('Error al crear profesional');
-    }
-    res.redirect('/profesionales');
-  });
+  // 🔴 Si escribió nueva especialidad
+  if (nueva_especialidad && nueva_especialidad.trim() !== '') {
+
+    const nombreLimpio = nueva_especialidad.trim();
+
+    const db = require('../models/Db');
+
+    db.query(
+      'INSERT INTO especialidades (nombre) VALUES (?)',
+      [nombreLimpio],
+      (err, result) => {
+
+        if (err) {
+          // Si es duplicado, buscarla en vez de fallar
+          if (err.code === 'ER_DUP_ENTRY') {
+
+            db.query(
+              'SELECT id FROM especialidades WHERE nombre = ?',
+              [nombreLimpio],
+              (err2, rows) => {
+                if (err2 || !rows.length)
+                  return res.status(500).send('Error especialidad');
+
+                especialidades.push(rows[0].id);
+                continuarCreacion(especialidades);
+              }
+            );
+
+          } else {
+            return res.status(500).send('Error al crear especialidad');
+          }
+        } else {
+          especialidades.push(result.insertId);
+          continuarCreacion(especialidades);
+        }
+      }
+    );
+
+  } else {
+    continuarCreacion(especialidades);
+  }
 };
 
 

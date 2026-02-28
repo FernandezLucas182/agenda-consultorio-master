@@ -1,5 +1,6 @@
 const Ausencia = require('../models/Ausencia');
 const db = require('../models/Db');
+const { formatearFecha } = require('../utils/fechas');
 const { procesarAusencia } = require('../services/reprogramacionService');
 
 exports.mostrarFormulario = (req, res) => {
@@ -32,7 +33,61 @@ exports.crearAusencia = (req, res) => {
 exports.listarAusencias = (req, res) => {
 
   Ausencia.obtenerTodas((err, ausencias) => {
-    res.render('ausencias', { ausencias: ausencias || [] });
+
+    if (err) return res.status(500).send("Error");
+
+    ausencias = (ausencias || []).map(a => ({
+      ...a,
+      fecha_inicio: formatearFecha(a.fecha_inicio),
+      fecha_fin: formatearFecha(a.fecha_fin)
+    }));
+
+    res.render('ausencias', { ausencias });
   });
 
+};
+
+exports.mostrarFormularioEditar = (req, res) => {
+
+  const id = req.params.id;
+
+  Ausencia.obtenerPorId(id, (err, ausencia) => {
+    if (err || !ausencia) {
+      return res.status(404).send("Ausencia no encontrada");
+    }
+
+    db.query(
+      `SELECT id, nombre_completo 
+       FROM profesionales 
+       WHERE estado = 'activo'`,
+      (err2, profesionales) => {
+
+        res.render('editarAusencia', {
+          ausencia,
+          profesionales: profesionales || []
+        });
+      }
+    );
+  });
+};
+
+
+exports.editarAusencia = (req, res) => {
+
+  const id = req.params.id;
+  const { profesional_id, fecha_inicio, fecha_fin, motivo } = req.body;
+
+  Ausencia.actualizar(
+    id,
+    { profesional_id, fecha_inicio, fecha_fin, motivo },
+    (err) => {
+
+      if (err) return res.status(500).send("Error al actualizar ausencia");
+
+      // 🔥 IMPORTANTE: volver a procesar reprogramación
+      procesarAusencia(profesional_id, fecha_inicio, fecha_fin);
+
+      res.redirect('/ausencias');
+    }
+  );
 };

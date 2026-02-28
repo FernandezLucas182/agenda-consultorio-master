@@ -6,16 +6,29 @@ class Turno {
   // CRUD BÁSICO
   // ==========================
 
-  static obtenerTodos(callback) {
-    db.query('SELECT * FROM turnos', callback);
-  }
+ static obtenerTodos(callback) {
 
-  static obtenerPorId(id, callback) {
-    db.query('SELECT * FROM turnos WHERE id = ?', [id], (err, rows) => {
-      if (err) return callback(err);
-      callback(null, rows[0]);
-    });
-  }
+  const sql = `
+    SELECT 
+      t.id,
+      t.fecha,
+      t.hora,
+      t.estado,
+      t.tipo_turno,
+      p.nombre AS paciente_nombre,
+      pr.nombre_completo AS profesional_nombre,
+      e.nombre AS especialidad_nombre,
+      s.nombre AS sucursal_nombre
+    FROM turnos t
+    JOIN pacientes p ON t.paciente_id = p.id
+    JOIN profesionales pr ON t.profesional_id = pr.id
+    JOIN especialidades e ON t.especialidad_id = e.id
+    JOIN sucursales s ON t.sucursal_id = s.id
+    ORDER BY t.fecha DESC, t.hora ASC
+  `;
+
+  db.query(sql, callback);
+}
 
   static crear(data, callback) {
     db.query(
@@ -68,45 +81,36 @@ class Turno {
   // HORARIOS
   // ==========================
 
-  static obtenerHorariosOcupados(profesional_id, fecha, callback) {
-    db.query(
-      `SELECT hora
-       FROM turnos
-       WHERE profesional_id = ?
-         AND fecha = ?
-         AND estado IN ('reservado','confirmado')`,
-      [profesional_id, fecha],
-      (err, rows) => {
-        if (err) return callback(err);
-        callback(null, rows.map(r => r.hora));
-      }
-    );
-  }
+ static obtenerHorariosOcupados(profesional_id, fecha, callback) {
+  db.query(
+    `SELECT DATE_FORMAT(hora, '%H:%i') AS hora
+     FROM turnos
+     WHERE profesional_id = ?
+       AND fecha = ?
+       AND estado IN ('reservado','confirmado')`,
+    [profesional_id, fecha],
+    (err, rows) => {
+      if (err) return callback(err);
+      callback(null, rows.map(r => r.hora));
+    }
+  );
+}
+
+
+
+
+
 
   // ==========================
   // SOBRETURNOS
   // ==========================
 
-  static contarSobreturnos(profesional_id, fecha, callback) {
-    db.query(
-      `SELECT COUNT(*) as total
-       FROM turnos
-       WHERE profesional_id = ?
-         AND fecha = ?
-         AND tipo_turno = 'sobreturno'
-         AND estado IN ('reservado','confirmado')`,
-      [profesional_id, fecha],
-      (err, rows) => {
-        if (err) return callback(err);
-        callback(null, rows[0].total);
-      }
-    );
-  }
+  
 
   static obtenerMaxSobreturnos(profesional_id, especialidad_id, callback) {
     db.query(
       `SELECT max_sobreturnos
-       FROM agendas_nueva
+       FROM agendas
        WHERE profesional_id = ?
          AND especialidad_id = ?
          AND activo = 1`,
@@ -185,6 +189,25 @@ class Turno {
       callback
     );
   }
+
+  static contarSobreturnos(profesional_id, fecha, callback) {
+  const sql = `
+    SELECT COUNT(*) as total
+    FROM turnos
+    WHERE profesional_id = ?
+      AND fecha = ?
+      AND tipo_turno = 'sobreturno'
+      AND estado IN ('reservado','confirmado')
+  `;
+
+  db.query(sql, [profesional_id, fecha], (err, rows) => {
+    if (err) return callback(err);
+    callback(null, rows[0].total);
+  });
+}
+
+
+
 
 }
 

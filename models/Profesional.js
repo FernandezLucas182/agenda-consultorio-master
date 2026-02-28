@@ -64,12 +64,14 @@ class Profesional {
         const profesionalId = result.insertId;
 
         if (especialidades && especialidades.length > 0) {
-          especialidades.forEach(eid => {
-            db.query(
-              'INSERT INTO profesional_especialidad (profesional_id, especialidad_id) VALUES (?, ?)',
-              [profesionalId, eid]
-            );
-          });
+          especialidades
+            .filter(eid => eid) // 🔴 elimina null / undefined
+            .forEach(eid => {
+              db.query(
+                'INSERT INTO profesional_especialidad (profesional_id, especialidad_id) VALUES (?, ?)',
+                [profesionalId, eid]
+              );
+            });
         }
 
         callback(null);

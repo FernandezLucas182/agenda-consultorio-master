@@ -7,7 +7,7 @@ function generarTurnos(horaInicio, horaFin, duracion) {
   const [hf, mf] = horaFin.split(':').map(Number);
   const fin = hf * 60 + mf;
 
-  while (actual + duracion <= fin) {
+  while (actual <= fin) {
     const horas = Math.floor(actual / 60).toString().padStart(2, '0');
     const minutos = (actual % 60).toString().padStart(2, '0');
 

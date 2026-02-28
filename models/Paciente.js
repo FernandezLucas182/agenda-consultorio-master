@@ -1,22 +1,21 @@
-const db = require('./Db'); // Asegúrate de tener una configuración de base de datos
+const db = require('./Db');
 
 class Paciente {
-  static obtenerTodos(callback) {
-  db.query('SELECT * FROM pacientes WHERE activo = 1', (err, resultados) => {
-    if (err) return callback(err);
-    callback(null, resultados);
-  });
-}
 
+  static obtenerTodos(callback) {
+    db.query('SELECT * FROM pacientes', (err, resultados) => {
+      if (err) return callback(err);
+      callback(null, resultados || []);
+    });
+  }
 
   static crear(datos, callback) {
     const { nombre, dni, obra_social, contacto } = datos;
-    db.query('INSERT INTO pacientes (nombre, dni, obra_social, contacto) VALUES (?, ?, ?, ?)', 
-      [nombre, dni, obra_social, contacto], 
-      (err) => {
-        if (err) return callback(err);
-        callback(null);
-      }
+
+    db.query(
+      'INSERT INTO pacientes (nombre, dni, obra_social, contacto) VALUES (?, ?, ?, ?)',
+      [nombre, dni, obra_social || null, contacto || null],
+      callback
     );
   }
 
@@ -28,14 +27,14 @@ class Paciente {
   }
 
   static editar(id, datos, callback) {
-  const { nombre, dni, obra_social, contacto, activo } = datos;
+    const { nombre, dni, obra_social, contacto } = datos;
 
-  db.query(
-    'UPDATE pacientes SET nombre = ?, dni = ?, obra_social = ?, contacto = ?, activo = ? WHERE id = ?',
-    [nombre, dni, obra_social, contacto, activo, id],
-    callback
-  );
-}
+    db.query(
+      'UPDATE pacientes SET nombre = ?, dni = ?, obra_social = ?, contacto = ? WHERE id = ?',
+      [nombre, dni, obra_social || null, contacto || null, id],
+      callback
+    );
+  }
 
 }
 

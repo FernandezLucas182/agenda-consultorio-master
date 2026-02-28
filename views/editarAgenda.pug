@@ -7,6 +7,10 @@ html
   body
     h1 Editar Agenda
 
+    if error
+      .alert.alert-danger
+        | #{error}
+
     form(method="POST", action=`/agendas/${agenda.id}/editar`)
 
       // ===============================
@@ -69,20 +73,26 @@ html
                 input(type="hidden", name=`horarios[${bloque.id}][dia]`, value=dia.id)
 
                 | Desde:
-                input(
-                  type="time"
+                select(
                   name=`horarios[${bloque.id}][desde]`
-                  value=bloque.hora_inicio
                   required
                 )
+                  each hora in horariosDisponibles
+                    option(
+                      value=hora
+                      selected=(hora === bloque.hora_inicio)
+                    )= hora
 
                 | Hasta:
-                input(
-                  type="time"
+                select(
                   name=`horarios[${bloque.id}][hasta]`
-                  value=bloque.hora_fin
                   required
                 )
+                  each hora in horariosDisponibles
+                    option(
+                      value=hora
+                      selected=(hora === bloque.hora_fin)
+                    )= hora
 
                 button(type="button", onclick="this.parentElement.remove()") X
 
@@ -101,6 +111,7 @@ html
     a(href="/agendas") Cancelar
 
     script.
+      const horariosDisponibles = !{JSON.stringify(horariosDisponibles)};
       function agregarBloque(dia) {
         const contenedor = document.getElementById('bloques-' + dia);
 
@@ -109,10 +120,20 @@ html
 
         const key = Date.now();
 
+        const opciones = `
+          ${horariosDisponibles.map(h => `<option value="${h}">${h}</option>`).join('')}
+        `;
+
         div.innerHTML = `
           <input type="hidden" name="horarios[${key}][dia]" value="${dia}">
-          Desde: <input type="time" name="horarios[${key}][desde]" required>
-          Hasta: <input type="time" name="horarios[${key}][hasta]" required>
+          Desde:
+          <select name="horarios[${key}][desde]" required>
+            ${opciones}
+          </select>
+          Hasta:
+          <select name="horarios[${key}][hasta]" required>
+            ${opciones}
+          </select>
           <button type="button" onclick="this.parentElement.remove()">X</button>
         `;
 

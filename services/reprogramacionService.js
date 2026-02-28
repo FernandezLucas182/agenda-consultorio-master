@@ -146,9 +146,15 @@ function buscarOtroProfesional(turno, callback) {
 
     let encontrado = false;
 
-    for (const prof of profesionales) {
+    let index = 0;
 
-      if (encontrado) break;
+    function intentarSiguiente() {
+
+      if (index >= profesionales.length) {
+        return callback(null);
+      }
+
+      const prof = profesionales[index++];
 
       const fechaObj = new Date(turno.fecha);
       let diaJS = fechaObj.getDay();
@@ -159,14 +165,15 @@ function buscarOtroProfesional(turno, callback) {
         turno.fecha,
         (err2, ocupados) => {
 
-          if (err2) return;
+          if (err2) return intentarSiguiente();
 
           Agenda.obtenerHorariosProfesional(
             prof.id,
             diaBD,
             (err3, bloques) => {
 
-              if (!bloques || !bloques.length) return;
+              if (!bloques || !bloques.length)
+                return intentarSiguiente();
 
               let posibles = [];
 
@@ -182,57 +189,51 @@ function buscarOtroProfesional(turno, callback) {
 
               const libres = posibles.filter(h => !ocupados.includes(h));
 
-              if (libres.length > 0 && !encontrado) {
-
-                encontrado = true;
+              if (libres.length > 0) {
 
                 const nuevaHora = libres[0];
                 const token = crypto.randomBytes(32).toString('hex');
 
-                // 🔒 TRANSACCIÓN
                 db.beginTransaction(err => {
-                  if (err) return console.error(err);
+                  if (err) return intentarSiguiente();
 
                   db.query(
                     `UPDATE turnos
-                     SET profesional_id = ?,
-                         hora = ?,
-                         estado = 'reservado',
-                         requiere_confirmacion = 1,
-                         token_confirmacion = ?
-                     WHERE id = ?`,
+                 SET profesional_id = ?,
+                     hora = ?,
+                     estado = 'reservado',
+                     requiere_confirmacion = 1,
+                     token_confirmacion = ?
+                 WHERE id = ?`,
                     [prof.id, nuevaHora, token, turno.id],
                     (err2) => {
 
-                      if (err2) {
-                        return db.rollback(() => {
-                          console.error(err2);
-                        });
-                      }
+                      if (err2)
+                        return db.rollback(() => intentarSiguiente());
 
                       db.commit(err3 => {
-                        if (err3) {
-                          return db.rollback(() => {
-                            console.error(err3);
-                          });
-                        }
+                        if (err3)
+                          return db.rollback(() => intentarSiguiente());
 
                         enviarMail(turno, token);
-                        callback(true);
+                        return callback(true);
                       });
 
                     }
                   );
                 });
 
+              } else {
+                intentarSiguiente();
               }
 
             }
           );
-
         }
       );
     }
+
+    intentarSiguiente();
 
     if (!encontrado) callback(null);
 
@@ -246,7 +247,10 @@ function marcarNoDisponible(turnoId) {
     `UPDATE turnos
      SET estado = 'no_disponible'
      WHERE id = ?`,
-    [turnoId]
+    [turnoId],
+    (err) => {
+      if (err) console.error(err);
+    }
   );
 }
 

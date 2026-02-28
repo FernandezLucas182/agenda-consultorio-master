@@ -3,7 +3,66 @@ const Profesional = require('../models/Profesional');
 const Especialidad = require('../models/Especialidad');
 const db = require('../models/Db');
 
+const dias = [
+  { id: 1, nombre: "Lunes" },
+  { id: 2, nombre: "Martes" },
+  { id: 3, nombre: "Miércoles" },
+  { id: 4, nombre: "Jueves" },
+  { id: 5, nombre: "Viernes" },
+  { id: 6, nombre: "Sábado" },
+  { id: 7, nombre: "Domingo" }
+];
 
+// ==========================
+// Agrupar horarios por dia
+// ==========================
+function agruparHorariosPorDia(horarios) {
+
+  const agrupados = {
+    1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: []
+  };
+
+  horarios.forEach(h => {
+    agrupados[h.dia_semana].push(h);
+  });
+
+  return agrupados;
+}
+
+
+// ==========================
+// GENERADOR HORARIOS CONSULTORIO
+// ==========================
+const generarHorarios = () => {
+
+  const horarios = [];
+
+  const agregarRango = (inicio, fin) => {
+
+    let [h, m] = inicio.split(':').map(Number);
+    const [hFin, mFin] = fin.split(':').map(Number);
+
+    while (h < hFin || (h === hFin && m < mFin)) {
+
+      const hora =
+        `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+
+      horarios.push(hora);
+
+      m += 30; // ← intervalo 30 minutos
+
+      if (m >= 60) {
+        m = 0;
+        h++;
+      }
+    }
+  };
+
+  agregarRango('09:00', '13:00');
+  agregarRango('16:00', '21:30');
+
+  return horarios;
+};
 
 
 // ==========================
@@ -25,6 +84,8 @@ exports.formularioNuevaAgenda = (req, res) => {
 // ==========================
 // CREAR AGENDA + HORARIOS (AHORA LIMPIO)
 // ==========================
+
+
 exports.crearAgendaBase = (req, res) => {
 
   const { profesional_id, especialidad_id, duracion_turno } = req.body;
@@ -44,14 +105,14 @@ exports.crearAgendaBase = (req, res) => {
     horarios: listaHorarios
   };
 
-  Agenda.crearAgendaConHorarios(datos, db, (err) => {
+  // 🔥 AQUÍ FALTABA LA LLAMADA AL MODELO
+  Agenda.crearAgendaConHorarios(datos, (err) => {
 
     if (err) {
-      console.error(err);
-      return res.status(400).send(err.message);
+      return res.status(500).send("Error al crear la agenda: " + err.message);
     }
 
-    res.redirect('/agendas');
+    return res.redirect("/agendas");
   });
 };
 
@@ -63,19 +124,43 @@ exports.formularioNuevoHorario = (req, res) => {
 
   const agendaId = req.query.agenda_id;
 
+  // 🔹 Generamos horarios válidos
+  const horariosDisponibles = generarHorarios();
+
   if (agendaId) {
+
     Agenda.obtenerAgendaBasePorId(agendaId, (err, agenda) => {
+
       if (err || !agenda)
-        return res.render('nuevoHorario', { agendas: [] });
+        return res.render('nuevoHorario', { 
+          agendas: [],
+          horariosDisponibles
+        });
 
-      res.render('nuevoHorario', { agendas: [agenda] });
+      res.render('nuevoHorario', { 
+        agendas: [agenda],
+        horariosDisponibles
+      });
+
     });
+
   } else {
-    Agenda.obtenerAgendasBase(null, (err, agendas) => {
-      if (err) return res.render('nuevoHorario', { agendas: [] });
 
-      res.render('nuevoHorario', { agendas });
+    Agenda.obtenerAgendasBase(null, (err, agendas) => {
+
+      if (err)
+        return res.render('nuevoHorario', { 
+          agendas: [],
+          horariosDisponibles
+        });
+
+      res.render('nuevoHorario', { 
+        agendas,
+        horariosDisponibles
+      });
+
     });
+
   }
 };
 
@@ -173,10 +258,14 @@ exports.formularioEditarAgenda = (req, res) => {
 
       if (err || !horarios) horarios = [];
 
+      const horariosDisponibles = generarHorarios();
+      console.log(generarHorarios());
+
       res.render('editarAgenda', {
         agenda,
-        horarios,
-        dias
+        horarios: agruparHorariosPorDia(horarios),
+        dias,
+        horariosDisponibles
       });
 
     });
@@ -204,6 +293,29 @@ exports.editarAgenda = (req, res) => {
     return res.status(400).send('Debe agregar al menos un horario');
   }
 
+  // 🔥 VALIDACIÓN PRIMERO
+  for (const h of listaHorarios) {
+
+    if (!h.desde || !h.hasta) {
+      return renderEditarConError(
+        req,
+        res,
+        id,
+        "Debe completar todos los horarios"
+      );
+    }
+
+    if (h.desde >= h.hasta) {
+      return renderEditarConError(
+        req,
+        res,
+        id,
+        "Elija un rango de horario válido"
+      );
+    }
+  }
+
+  // 🔥 SI TODO ES VÁLIDO → ACTUALIZAR
   Agenda.actualizarAgendaBase(
     id,
     duracion_turno,
@@ -219,40 +331,37 @@ exports.editarAgenda = (req, res) => {
 
         if (err) {
           console.error(err);
-          return res.status(400).send(err.message);
+          return renderEditarConError(
+            req,
+            res,
+            id,
+            err.message
+          );
         }
 
         res.redirect('/agendas');
       });
-
     }
   );
 };
 
-
-
 // ==========================
-// ELIMINAR AGENDA
+// FUNCIÓN AUXILIAR
 // ==========================
-exports.eliminarAgenda = (req, res) => {
+function renderEditarConError(req, res, id, mensaje) {
+  Agenda.obtenerAgendaBasePorId(id, (err, agenda) => {
+    if (err || !agenda) return res.status(404).send('Agenda no encontrada');
 
-  const id = req.params.id;
+    Agenda.obtenerHorariosPorAgenda(id, (err2, horarios) => {
+      if (err2) horarios = [];
 
-  db.query('DELETE FROM agenda_horarios WHERE agenda_id = ?', [id], (err) => {
-
-    if (err) {
-      console.error(err);
-      return res.status(500).send('Error al eliminar horarios');
-    }
-
-    db.query('DELETE FROM agendas_nueva WHERE id = ?', [id], (err2) => {
-
-      if (err2) {
-        console.error(err2);
-        return res.status(500).send('Error al eliminar agenda');
-      }
-
-      res.redirect('/agendas');
+      res.render("editarAgenda", {
+        agenda,
+        horarios: agruparHorariosPorDia(horarios),
+        dias,
+        horariosDisponibles: generarHorarios(),
+        error: mensaje
+      });
     });
   });
-};
+}
