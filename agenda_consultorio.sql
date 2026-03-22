@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 23-02-2026 a las 09:09:43
+-- Tiempo de generación: 28-02-2026 a las 09:17:20
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -30,31 +30,22 @@ SET time_zone = "+00:00";
 CREATE TABLE `agendas` (
   `id` int(11) NOT NULL,
   `profesional_id` int(11) NOT NULL,
-  `dias` varchar(100) DEFAULT NULL,
-  `horarios` varchar(100) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `agendas_nueva`
---
-
-CREATE TABLE `agendas_nueva` (
-  `id` int(11) NOT NULL,
-  `profesional_id` int(11) NOT NULL,
-  `especialidad_id` int(11) NOT NULL,
   `duracion_turno` int(11) NOT NULL,
-  `activo` tinyint(1) DEFAULT 1,
-  `max_sobreturnos` int(11) DEFAULT 2
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `especialidad_id` int(11) NOT NULL,
+  `max_sobreturnos` int(11) DEFAULT 0,
+  `activo` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `agendas_nueva`
+-- Volcado de datos para la tabla `agendas`
 --
 
-INSERT INTO `agendas_nueva` (`id`, `profesional_id`, `especialidad_id`, `duracion_turno`, `activo`, `max_sobreturnos`) VALUES
-(3, 1, 4, 30, 1, 2);
+INSERT INTO `agendas` (`id`, `profesional_id`, `duracion_turno`, `created_at`, `especialidad_id`, `max_sobreturnos`, `activo`) VALUES
+(1, 1, 30, '2026-02-26 09:38:37', 2, 0, 1),
+(2, 2, 30, '2026-02-26 11:11:40', 5, 0, 1),
+(3, 3, 60, '2026-02-27 22:49:34', 6, 0, 1),
+(4, 4, 30, '2026-02-27 22:50:55', 6, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -65,22 +56,45 @@ INSERT INTO `agendas_nueva` (`id`, `profesional_id`, `especialidad_id`, `duracio
 CREATE TABLE `agenda_horarios` (
   `id` int(11) NOT NULL,
   `agenda_id` int(11) NOT NULL,
-  `dia_semana` int(11) NOT NULL,
+  `dia_semana` tinyint(4) NOT NULL CHECK (`dia_semana` between 1 and 7),
   `hora_inicio` time NOT NULL,
   `hora_fin` time NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `agenda_horarios`
 --
 
 INSERT INTO `agenda_horarios` (`id`, `agenda_id`, `dia_semana`, `hora_inicio`, `hora_fin`) VALUES
-(9, 3, 1, '08:00:00', '13:00:00'),
-(10, 3, 1, '17:00:00', '21:00:00'),
-(11, 3, 2, '08:00:00', '21:00:00'),
-(12, 3, 3, '10:00:00', '17:00:00'),
-(13, 3, 4, '07:00:00', '18:00:00'),
-(14, 3, 5, '09:00:00', '21:00:00');
+(4, 1, 1, '09:00:00', '21:00:00'),
+(5, 2, 1, '09:30:00', '21:00:00'),
+(6, 2, 2, '09:00:00', '21:00:00'),
+(7, 3, 1, '09:00:00', '21:00:00'),
+(8, 3, 2, '09:00:00', '21:00:00'),
+(9, 3, 3, '09:00:00', '21:00:00'),
+(10, 3, 4, '09:00:00', '21:00:00'),
+(11, 3, 5, '09:00:00', '21:00:00'),
+(12, 3, 6, '09:00:00', '13:00:00'),
+(13, 4, 1, '09:00:00', '21:00:00'),
+(14, 4, 2, '09:00:00', '21:00:00'),
+(15, 4, 3, '09:00:00', '21:00:00'),
+(16, 4, 4, '09:00:00', '21:00:00'),
+(17, 4, 5, '09:00:00', '21:00:00');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `ausencias`
+--
+
+CREATE TABLE `ausencias` (
+  `id` int(11) NOT NULL,
+  `agenda_id` int(11) NOT NULL,
+  `fecha_inicio` date NOT NULL,
+  `fecha_fin` date NOT NULL,
+  `motivo` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -91,56 +105,19 @@ INSERT INTO `agenda_horarios` (`id`, `agenda_id`, `dia_semana`, `hora_inicio`, `
 CREATE TABLE `especialidades` (
   `id` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `especialidades`
 --
 
 INSERT INTO `especialidades` (`id`, `nombre`) VALUES
-(1, 'Cardiología'),
-(6, 'Kinesiología'),
-(5, 'Neurología'),
-(14, 'Obstetricia'),
-(3, 'Odontología'),
-(4, 'Pediatría'),
-(7, 'Psicología'),
-(12, 'Psiquiatría'),
-(13, 'Radiología'),
-(2, 'Traumatología');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `feriados`
---
-
-CREATE TABLE `feriados` (
-  `id` int(11) NOT NULL,
-  `fecha` date NOT NULL,
-  `descripcion` varchar(100) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
---
--- Volcado de datos para la tabla `feriados`
---
-
-INSERT INTO `feriados` (`id`, `fecha`, `descripcion`) VALUES
-(1, '2026-01-01', 'Año Nuevo'),
-(2, '2026-03-24', 'Memoria'),
-(3, '2026-04-02', 'Malvinas'),
-(4, '2026-05-01', 'Día del trabajador'),
-(5, '2026-02-16', 'Carnaval'),
-(6, '2026-02-17', 'Carnaval'),
-(7, '2026-04-03', 'Viernes Santo'),
-(8, '2026-05-25', 'Revolución de Mayo'),
-(9, '2026-06-20', 'Día de la Bandera'),
-(10, '2026-07-09', 'Independencia'),
-(11, '2026-08-17', 'San Martín'),
-(12, '2026-10-12', 'Diversidad Cultural'),
-(13, '2026-11-20', 'Soberanía Nacional'),
-(14, '2026-12-08', 'Inmaculada Concepción'),
-(15, '2026-12-25', 'Navidad');
+(3, 'Cardiología'),
+(4, 'Dermatología'),
+(5, 'Kinesiología'),
+(6, 'Odontologia'),
+(2, 'Pediatría'),
+(8, 'Traumatología');
 
 -- --------------------------------------------------------
 
@@ -151,26 +128,18 @@ INSERT INTO `feriados` (`id`, `fecha`, `descripcion`) VALUES
 CREATE TABLE `pacientes` (
   `id` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
-  `dni` varchar(20) NOT NULL,
+  `dni` varchar(20) DEFAULT NULL,
   `obra_social` varchar(100) DEFAULT NULL,
   `contacto` varchar(100) DEFAULT NULL,
-  `activo` tinyint(1) DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `pacientes`
 --
 
-INSERT INTO `pacientes` (`id`, `nombre`, `dni`, `obra_social`, `contacto`, `activo`) VALUES
-(1, '', '', NULL, NULL, NULL),
-(2, 'María Gómez', '33759862', 'Swiss Medical', '11333333', 1),
-(27, 'Carlos Gómez', '33111222', 'OSDE', 'carlos@gmail.com', 1),
-(28, 'María López', '28999444', 'Swiss Medical', 'maria@gmail.com', 1),
-(29, 'Ana Torres', '31222333', 'IOMA', 'ana@gmail.com', 1),
-(30, 'Pedro Fernández', '27555666', 'PAMI', 'pedro@gmail.com', 1),
-(31, 'Lucía Herrera', '33444777', 'Galeno', 'lucia@gmail.com', 1),
-(32, 'Sofía Ramírez', '35666888', 'OSDE', 'sofia@gmail.com', 1),
-(33, 'Susana Alina', '31654788', 'Sacror', '2665859145', 1);
+INSERT INTO `pacientes` (`id`, `nombre`, `dni`, `obra_social`, `contacto`, `created_at`) VALUES
+(1, 'Lucas Fernandez', '33555997', 'Swiss Medical', 'fernandez19lucas13@gmail.com', '2026-02-26 06:55:26');
 
 -- --------------------------------------------------------
 
@@ -180,33 +149,30 @@ INSERT INTO `pacientes` (`id`, `nombre`, `dni`, `obra_social`, `contacto`, `acti
 
 CREATE TABLE `profesionales` (
   `id` int(11) NOT NULL,
-  `nombre_completo` varchar(100) NOT NULL,
-  `matricula` varchar(50) NOT NULL,
+  `nombre_completo` varchar(150) DEFAULT NULL,
+  `matricula` varchar(50) DEFAULT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `apellido` varchar(100) NOT NULL,
+  `especialidad` varchar(100) DEFAULT NULL,
+  `telefono` varchar(30) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
   `estado` enum('activo','inactivo') DEFAULT 'activo',
-  `hora_inicio_turno1` time DEFAULT NULL,
-  `hora_fin_turno1` time DEFAULT NULL,
-  `hora_inicio_turno2` time DEFAULT NULL,
-  `hora_fin_turno2` time DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `profesionales`
 --
 
-INSERT INTO `profesionales` (`id`, `nombre_completo`, `matricula`, `estado`, `hora_inicio_turno1`, `hora_fin_turno1`, `hora_inicio_turno2`, `hora_fin_turno2`) VALUES
-(1, 'Juan Carlos Bodoque', '1234', 'activo', '09:30:00', '13:00:00', '17:30:00', '21:00:00'),
-(3, 'Esteban Aguero', '584236', 'activo', '09:30:00', '13:00:00', NULL, NULL),
-(4, 'Jose Gonzalez', '469873', 'activo', NULL, NULL, '17:00:00', '21:00:00'),
-(5, 'Silvio Rodrigues', '44568', 'activo', '10:00:00', '13:00:00', '16:30:00', '20:00:00'),
-(6, 'Soledad Gil', '8523654', 'activo', '09:00:00', '12:30:00', '18:30:00', '20:30:00'),
-(7, 'Claudia Ruiz', '6458297', 'activo', '09:00:00', '11:00:00', '20:00:00', '21:00:00'),
-(8, 'Miguel Abuelo', '9001', 'activo', NULL, NULL, NULL, NULL),
-(9, 'Marge Simpson', '9002', 'activo', NULL, NULL, NULL, NULL),
-(10, 'Violeta Parra', '9003', 'activo', NULL, NULL, NULL, NULL),
-(12, 'José Roberto', '1913456', 'activo', '09:00:00', '13:00:00', NULL, NULL),
-(13, 'Camaron de la Isla', '6665554', 'activo', '10:00:00', '12:30:00', '19:30:00', '21:00:00'),
-(14, 'Eduardo Caseres', '677592', 'activo', '09:00:00', '12:00:00', '17:00:00', '20:30:00'),
-(15, 'alberto rodriguez', '7777777', 'activo', '09:00:00', '13:00:00', '17:30:00', '20:00:00');
+INSERT INTO `profesionales` (`id`, `nombre_completo`, `matricula`, `nombre`, `apellido`, `especialidad`, `telefono`, `email`, `estado`, `created_at`) VALUES
+(1, 'José Roberto', '2589546', '', '', NULL, NULL, NULL, 'activo', '2026-02-26 06:30:05'),
+(2, 'Juan Carlos Bodoque', '1234', '', '', NULL, NULL, NULL, 'activo', '2026-02-26 06:57:28'),
+(3, 'Laura Montero', '6644979', '', '', NULL, NULL, NULL, 'activo', '2026-02-26 07:16:59'),
+(4, 'Jose Gonzalez', '753159', '', '', NULL, NULL, NULL, 'activo', '2026-02-26 07:17:26'),
+(5, 'tulio tribiño', '7418523', '', '', NULL, NULL, NULL, 'activo', '2026-02-27 22:43:39'),
+(6, 'Esteban Aguero', '32145469', '', '', NULL, NULL, NULL, 'activo', '2026-02-27 22:44:19'),
+(7, 'Silvio Rodrigues', '8523641', '', '', NULL, NULL, NULL, 'activo', '2026-02-27 22:45:33'),
+(8, 'Rosa Quinteros', '95368412', '', '', NULL, NULL, NULL, 'activo', '2026-02-27 22:46:25');
 
 -- --------------------------------------------------------
 
@@ -217,34 +183,21 @@ INSERT INTO `profesionales` (`id`, `nombre_completo`, `matricula`, `estado`, `ho
 CREATE TABLE `profesional_especialidad` (
   `profesional_id` int(11) NOT NULL,
   `especialidad_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `profesional_especialidad`
 --
 
 INSERT INTO `profesional_especialidad` (`profesional_id`, `especialidad_id`) VALUES
-(1, 4),
-(1, 5),
-(1, 6),
-(3, 1),
+(1, 2),
+(2, 5),
 (3, 6),
-(4, 3),
-(4, 5),
-(5, 2),
-(6, 1),
+(4, 6),
+(5, 3),
+(5, 8),
 (6, 4),
-(7, 2),
-(8, 2),
-(8, 13),
-(9, 5),
-(9, 14),
-(10, 12),
-(12, 4),
-(12, 12),
-(13, 1),
-(14, 7),
-(15, 4);
+(7, 3);
 
 -- --------------------------------------------------------
 
@@ -254,16 +207,17 @@ INSERT INTO `profesional_especialidad` (`profesional_id`, `especialidad_id`) VAL
 
 CREATE TABLE `sucursales` (
   `id` int(11) NOT NULL,
-  `nombre` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `nombre` varchar(100) NOT NULL,
+  `direccion` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `sucursales`
 --
 
-INSERT INTO `sucursales` (`id`, `nombre`) VALUES
-(1, 'Consultorio Central'),
-(2, 'Clínica Norte');
+INSERT INTO `sucursales` (`id`, `nombre`, `direccion`) VALUES
+(1, 'Sucursal Norte', 'Zona Norte'),
+(2, 'Sucursal Central', 'Zona Centro');
 
 -- --------------------------------------------------------
 
@@ -273,44 +227,18 @@ INSERT INTO `sucursales` (`id`, `nombre`) VALUES
 
 CREATE TABLE `turnos` (
   `id` int(11) NOT NULL,
+  `agenda_id` int(11) NOT NULL,
   `paciente_id` int(11) NOT NULL,
   `profesional_id` int(11) NOT NULL,
   `especialidad_id` int(11) NOT NULL,
   `sucursal_id` int(11) NOT NULL,
   `fecha` date NOT NULL,
   `hora` time NOT NULL,
-  `estado` enum('no_disponible','libre','reservado','confirmado','cancelado','ausente','presente','en_consulta','atendido') NOT NULL DEFAULT 'libre',
-  `tipo_turno` enum('normal','sobreturno') NOT NULL DEFAULT 'normal'
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `vacaciones`
---
-
-CREATE TABLE `vacaciones` (
-  `id` int(11) NOT NULL,
-  `profesional_id` int(11) DEFAULT NULL,
-  `fecha_inicio` date DEFAULT NULL,
-  `fecha_fin` date DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
---
--- Volcado de datos para la tabla `vacaciones`
---
-
-INSERT INTO `vacaciones` (`id`, `profesional_id`, `fecha_inicio`, `fecha_fin`) VALUES
-(1, 1, '2026-01-15', '2026-01-31'),
-(2, 3, '2026-02-10', '2026-02-20'),
-(3, 4, '2026-03-01', '2026-03-15'),
-(4, 5, '2026-01-05', '2026-01-18'),
-(5, 6, '2026-02-01', '2026-02-11'),
-(6, 7, '2026-03-20', '2026-04-05'),
-(7, 8, '2026-01-10', '2026-01-25'),
-(8, 9, '2026-02-15', '2026-02-28'),
-(9, 10, '2026-03-05', '2026-03-20'),
-(10, 12, '2026-01-20', '2026-02-02');
+  `estado` enum('pendiente','confirmado','cancelado','ausente','reprogramado') DEFAULT 'pendiente',
+  `tipo_turno` varchar(50) DEFAULT NULL,
+  `observaciones` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Índices para tablas volcadas
@@ -324,17 +252,16 @@ ALTER TABLE `agendas`
   ADD KEY `profesional_id` (`profesional_id`);
 
 --
--- Indices de la tabla `agendas_nueva`
---
-ALTER TABLE `agendas_nueva`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_prof_espec` (`profesional_id`,`especialidad_id`),
-  ADD KEY `especialidad_id` (`especialidad_id`);
-
---
 -- Indices de la tabla `agenda_horarios`
 --
 ALTER TABLE `agenda_horarios`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_agenda_horarios_agenda` (`agenda_id`);
+
+--
+-- Indices de la tabla `ausencias`
+--
+ALTER TABLE `ausencias`
   ADD PRIMARY KEY (`id`),
   ADD KEY `agenda_id` (`agenda_id`);
 
@@ -343,28 +270,20 @@ ALTER TABLE `agenda_horarios`
 --
 ALTER TABLE `especialidades`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_nombre` (`nombre`),
   ADD UNIQUE KEY `nombre` (`nombre`);
-
---
--- Indices de la tabla `feriados`
---
-ALTER TABLE `feriados`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `fecha` (`fecha`);
 
 --
 -- Indices de la tabla `pacientes`
 --
 ALTER TABLE `pacientes`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `dni` (`dni`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indices de la tabla `profesionales`
 --
 ALTER TABLE `profesionales`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `matricula` (`matricula`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indices de la tabla `profesional_especialidad`
@@ -384,17 +303,11 @@ ALTER TABLE `sucursales`
 --
 ALTER TABLE `turnos`
   ADD PRIMARY KEY (`id`),
+  ADD KEY `agenda_id` (`agenda_id`),
   ADD KEY `paciente_id` (`paciente_id`),
-  ADD KEY `profesional_id` (`profesional_id`),
-  ADD KEY `especialidad_id` (`especialidad_id`),
-  ADD KEY `sucursal_id` (`sucursal_id`);
-
---
--- Indices de la tabla `vacaciones`
---
-ALTER TABLE `vacaciones`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `profesional_id` (`profesional_id`);
+  ADD KEY `fk_turno_profesional` (`profesional_id`),
+  ADD KEY `fk_turno_especialidad` (`especialidad_id`),
+  ADD KEY `fk_turno_sucursal` (`sucursal_id`);
 
 --
 -- AUTO_INCREMENT de las tablas volcadas
@@ -404,43 +317,37 @@ ALTER TABLE `vacaciones`
 -- AUTO_INCREMENT de la tabla `agendas`
 --
 ALTER TABLE `agendas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `agendas_nueva`
---
-ALTER TABLE `agendas_nueva`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `agenda_horarios`
 --
 ALTER TABLE `agenda_horarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+
+--
+-- AUTO_INCREMENT de la tabla `ausencias`
+--
+ALTER TABLE `ausencias`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `especialidades`
 --
 ALTER TABLE `especialidades`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
-
---
--- AUTO_INCREMENT de la tabla `feriados`
---
-ALTER TABLE `feriados`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de la tabla `pacientes`
 --
 ALTER TABLE `pacientes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `profesionales`
 --
 ALTER TABLE `profesionales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de la tabla `sucursales`
@@ -455,12 +362,6 @@ ALTER TABLE `turnos`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `vacaciones`
---
-ALTER TABLE `vacaciones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
-
---
 -- Restricciones para tablas volcadas
 --
 
@@ -468,42 +369,38 @@ ALTER TABLE `vacaciones`
 -- Filtros para la tabla `agendas`
 --
 ALTER TABLE `agendas`
-  ADD CONSTRAINT `agendas_ibfk_1` FOREIGN KEY (`profesional_id`) REFERENCES `profesionales` (`id`);
-
---
--- Filtros para la tabla `agendas_nueva`
---
-ALTER TABLE `agendas_nueva`
-  ADD CONSTRAINT `agendas_nueva_ibfk_1` FOREIGN KEY (`profesional_id`) REFERENCES `profesionales` (`id`),
-  ADD CONSTRAINT `agendas_nueva_ibfk_2` FOREIGN KEY (`especialidad_id`) REFERENCES `especialidades` (`id`);
+  ADD CONSTRAINT `agendas_ibfk_1` FOREIGN KEY (`profesional_id`) REFERENCES `profesionales` (`id`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `agenda_horarios`
 --
 ALTER TABLE `agenda_horarios`
-  ADD CONSTRAINT `agenda_horarios_ibfk_1` FOREIGN KEY (`agenda_id`) REFERENCES `agendas_nueva` (`id`);
+  ADD CONSTRAINT `agenda_horarios_ibfk_1` FOREIGN KEY (`agenda_id`) REFERENCES `agendas` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_agenda_horarios` FOREIGN KEY (`agenda_id`) REFERENCES `agendas` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_agenda_horarios_agenda` FOREIGN KEY (`agenda_id`) REFERENCES `agendas` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `ausencias`
+--
+ALTER TABLE `ausencias`
+  ADD CONSTRAINT `ausencias_ibfk_1` FOREIGN KEY (`agenda_id`) REFERENCES `agendas` (`id`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `profesional_especialidad`
 --
 ALTER TABLE `profesional_especialidad`
-  ADD CONSTRAINT `profesional_especialidad_ibfk_1` FOREIGN KEY (`profesional_id`) REFERENCES `profesionales` (`id`),
-  ADD CONSTRAINT `profesional_especialidad_ibfk_2` FOREIGN KEY (`especialidad_id`) REFERENCES `especialidades` (`id`);
+  ADD CONSTRAINT `profesional_especialidad_ibfk_1` FOREIGN KEY (`profesional_id`) REFERENCES `profesionales` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `profesional_especialidad_ibfk_2` FOREIGN KEY (`especialidad_id`) REFERENCES `especialidades` (`id`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `turnos`
 --
 ALTER TABLE `turnos`
-  ADD CONSTRAINT `turnos_ibfk_1` FOREIGN KEY (`paciente_id`) REFERENCES `pacientes` (`id`),
-  ADD CONSTRAINT `turnos_ibfk_2` FOREIGN KEY (`profesional_id`) REFERENCES `profesionales` (`id`),
-  ADD CONSTRAINT `turnos_ibfk_3` FOREIGN KEY (`especialidad_id`) REFERENCES `especialidades` (`id`),
-  ADD CONSTRAINT `turnos_ibfk_4` FOREIGN KEY (`sucursal_id`) REFERENCES `sucursales` (`id`);
-
---
--- Filtros para la tabla `vacaciones`
---
-ALTER TABLE `vacaciones`
-  ADD CONSTRAINT `vacaciones_ibfk_1` FOREIGN KEY (`profesional_id`) REFERENCES `profesionales` (`id`);
+  ADD CONSTRAINT `fk_turno_especialidad` FOREIGN KEY (`especialidad_id`) REFERENCES `especialidades` (`id`),
+  ADD CONSTRAINT `fk_turno_profesional` FOREIGN KEY (`profesional_id`) REFERENCES `profesionales` (`id`),
+  ADD CONSTRAINT `fk_turno_sucursal` FOREIGN KEY (`sucursal_id`) REFERENCES `sucursales` (`id`),
+  ADD CONSTRAINT `turnos_ibfk_1` FOREIGN KEY (`agenda_id`) REFERENCES `agendas` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `turnos_ibfk_2` FOREIGN KEY (`paciente_id`) REFERENCES `pacientes` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
