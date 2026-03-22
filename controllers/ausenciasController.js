@@ -34,7 +34,10 @@ exports.listarAusencias = (req, res) => {
 
   Ausencia.obtenerTodas((err, ausencias) => {
 
-    if (err) return res.status(500).send("Error");
+    if (err) {
+      console.error("ERROR EN AUSENCIAS:", err);
+      return res.status(500).send("Error en ausencias");
+    }
 
     ausencias = (ausencias || []).map(a => ({
       ...a,
@@ -55,6 +58,18 @@ exports.mostrarFormularioEditar = (req, res) => {
     if (err || !ausencia) {
       return res.status(404).send("Ausencia no encontrada");
     }
+
+    // 🔥 FORMATEO CORRECTO PARA INPUT DATE
+    const formatearFechaInput = (fecha) => {
+      if (!fecha) return '';
+      const f = new Date(fecha);
+      return f.getFullYear() + '-' +
+        String(f.getMonth() + 1).padStart(2, '0') + '-' +
+        String(f.getDate()).padStart(2, '0');
+    };
+
+    ausencia.fecha_inicio = formatearFechaInput(ausencia.fecha_inicio);
+    ausencia.fecha_fin = formatearFechaInput(ausencia.fecha_fin);
 
     db.query(
       `SELECT id, nombre_completo 

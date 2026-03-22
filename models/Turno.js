@@ -27,15 +27,16 @@ class Turno {
     ORDER BY t.fecha DESC, t.hora ASC
   `;
 
-  db.query(sql, callback);
-}
+    db.query(sql, callback);
+  }
 
   static crear(data, callback) {
     db.query(
       `INSERT INTO turnos
-       (paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora, estado, tipo_turno)
-       VALUES (?, ?, ?, ?, ?, ?, 'reservado', ?)`,
+     (agenda_id, paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora, estado, tipo_turno)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'reservado', ?)`,
       [
+        data.agenda_id,
         data.paciente_id,
         data.profesional_id,
         data.especialidad_id,
@@ -81,20 +82,45 @@ class Turno {
   // HORARIOS
   // ==========================
 
- static obtenerHorariosOcupados(profesional_id, fecha, callback) {
-  db.query(
-    `SELECT DATE_FORMAT(hora, '%H:%i') AS hora
+  static obtenerHorariosOcupados(profesional_id, fecha, callback) {
+
+    console.log("BUSCANDO OCUPADOS:", profesional_id, fecha);
+
+    db.query(
+      `SELECT DATE_FORMAT(hora, '%H:%i') AS hora
      FROM turnos
      WHERE profesional_id = ?
        AND fecha = ?
-       AND estado IN ('reservado','confirmado')`,
-    [profesional_id, fecha],
-    (err, rows) => {
+       AND estado != 'cancelado'`,
+      [profesional_id, fecha],
+      (err, rows) => {
+
+        if (err) return callback(err);
+
+        console.log("RESULTADO BD:", rows); // ✅ ahora sí existe
+
+        const horas = rows.map(r => r.hora);
+
+        callback(null, horas);
+      }
+    );
+  }
+
+  static existeTurnoEnHorario(profesional_id, fecha, hora, callback) {
+    const sql = `
+    SELECT COUNT(*) as total
+    FROM turnos
+    WHERE profesional_id = ?
+      AND fecha = ?
+      AND TIME_FORMAT(hora, '%H:%i') = ?
+      AND estado IN ('reservado', 'confirmado')
+  `;
+
+    db.query(sql, [profesional_id, fecha, hora], (err, rows) => {
       if (err) return callback(err);
-      callback(null, rows.map(r => r.hora));
-    }
-  );
-}
+      callback(null, rows[0].total > 0);
+    });
+  }
 
 
 
@@ -203,6 +229,26 @@ class Turno {
   db.query(sql, [profesional_id, fecha], (err, rows) => {
     if (err) return callback(err);
     callback(null, rows[0].total);
+  });
+}
+
+
+//===========================
+//Obtener Agenda x id
+//===========================
+
+static obtenerAgendaId(profesional_id, callback) {
+  const sql = `
+    SELECT id
+    FROM agendas
+    WHERE profesional_id = ?
+      AND activo = 1
+    LIMIT 1
+  `;
+
+  db.query(sql, [profesional_id], (err, rows) => {
+    if (err) return callback(err);
+    callback(null, rows[0]?.id);
   });
 }
 

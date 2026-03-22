@@ -58,12 +58,10 @@ class Ausencia {
   static existeAusenciaEnFecha(profesionalId, fecha, callback) {
 
     const sql = `
-    SELECT a.id
-    FROM ausencias a
-    JOIN agendas ag ON a.agenda_id = ag.id
-    WHERE ag.profesional_id = ?
-      AND ag.activo = 1
-      AND ? BETWEEN a.fecha_inicio AND a.fecha_fin
+    SELECT id
+    FROM ausencias
+    WHERE profesional_id = ?
+      AND ? BETWEEN fecha_inicio AND fecha_fin
   `;
 
     db.query(sql, [profesionalId, fecha], (err, rows) => {

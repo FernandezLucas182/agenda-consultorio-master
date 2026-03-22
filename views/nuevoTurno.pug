@@ -121,11 +121,14 @@ html
 
               const libres = data.libres || [];
               const ocupados = data.ocupados || [];
-
               const tipoTurno = tipoTurnoSelect.value;
 
-              const todos = [...libres, ...ocupados].sort();
+              const todos = [...new Set([...libres, ...ocupados])].sort();
               
+              console.log("LIBRES:", libres);
+              console.log("OCUPADOS:", ocupados);
+
+
               todos.forEach(h => {
 
                 const esOcupado = ocupados.includes(h);

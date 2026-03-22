@@ -7,6 +7,8 @@ html
   body
     h1 Lista de Ausencias
 
+    <a href="/" class="btn">← Volver al inicio</a>
+    br
     a(href="/ausencias/nueva") Nueva Ausencia
 
     table
@@ -25,3 +27,5 @@ html
           td= a.motivo
           td
             a(href=`/ausencias/${a.id}/editar`) Editar
+
+  <a href="/" class="btn">← Volver al inicio</a>

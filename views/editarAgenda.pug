@@ -45,12 +45,7 @@ html
 
       each dia in dias
 
-        - var bloquesDia = []
-
-        - if (horarios && horarios.length)
-            - for (var i = 0; i < horarios.length; i++)
-                - if (horarios[i] && horarios[i].dia_semana === dia.id)
-                    - bloquesDia.push(horarios[i])
+        - var bloquesDia = (horarios && horarios[dia.id]) ? horarios[dia.id] : []
 
         div(style="margin-bottom:15px; border:1px solid #ccc; padding:10px;")
 
@@ -80,7 +75,7 @@ html
                   each hora in horariosDisponibles
                     option(
                       value=hora
-                      selected=(hora === bloque.hora_inicio)
+                      selected=(hora === bloque.hora_inicio.substring(0,5))
                     )= hora
 
                 | Hasta:
@@ -91,7 +86,7 @@ html
                   each hora in horariosDisponibles
                     option(
                       value=hora
-                      selected=(hora === bloque.hora_fin)
+                      selected=(hora === bloque.hora_fin.substring(0,5))
                     )= hora
 
                 button(type="button", onclick="this.parentElement.remove()") X

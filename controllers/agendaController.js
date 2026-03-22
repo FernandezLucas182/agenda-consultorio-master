@@ -259,8 +259,13 @@ exports.formularioEditarAgenda = (req, res) => {
       if (err || !horarios) horarios = [];
 
       const horariosDisponibles = generarHorarios();
-      console.log(generarHorarios());
-
+      
+      console.log("Horarios disponibles:", horariosDisponibles);
+      
+      console.log("Agenda ID:", id);
+      console.log("Horarios:", horarios);
+      console.log("Agrupados:", agruparHorariosPorDia(horarios));
+      
       res.render('editarAgenda', {
         agenda,
         horarios: agruparHorariosPorDia(horarios),

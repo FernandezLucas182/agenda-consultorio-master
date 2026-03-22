@@ -20,12 +20,22 @@ html
       br
 
       label Fecha Inicio:
-      input(type="date", name="fecha_inicio", value=ausencia.fecha_inicio required)
+      input(
+        type="date",
+        name="fecha_inicio",
+        value=ausencia.fecha_inicio ? new Date(ausencia.fecha_inicio).toISOString().split('T')[0] : ''
+        required
+      )
 
       br
 
       label Fecha Fin:
-      input(type="date", name="fecha_fin", value=ausencia.fecha_fin required)
+      input(
+        type="date",
+        name="fecha_fin",
+        value=ausencia.fecha_fin ? new Date(ausencia.fecha_fin).toISOString().split('T')[0] : ''
+        required
+      )
 
       br
 

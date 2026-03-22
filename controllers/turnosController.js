@@ -117,7 +117,21 @@ exports.crearTurno = (req, res) => {
           return recargarFormularioConError(res, "Ese horario ya está ocupado.");
         }
 
-        insertarTurno();
+        Turno.obtenerAgendaId(profesional_id, (errAgenda, agenda_id) => {
+
+          if (errAgenda) {
+            return res.status(500).send("Error obteniendo agenda");
+          }
+
+          if (!agenda_id) {
+            return res.status(400).send("El profesional no tiene agenda activa");
+          }
+
+          console.log("AGENDA ID:", agenda_id);
+
+          insertarTurno(agenda_id);
+
+        });
 
       });
 
@@ -134,7 +148,21 @@ exports.crearTurno = (req, res) => {
           return recargarFormularioConError(res, "Solo se permiten 2 sobreturnos por día.");
         }
 
-        insertarTurno();
+        Turno.obtenerAgendaId(profesional_id, (errAgenda, agenda_id) => {
+
+          if (errAgenda) {
+            return res.status(500).send("Error obteniendo agenda");
+          }
+
+          if (!agenda_id) {
+            return res.status(400).send("El profesional no tiene agenda activa");
+          }
+
+          console.log("AGENDA ID:", agenda_id);
+
+          insertarTurno(agenda_id);
+
+        });
 
       });
 
@@ -142,23 +170,39 @@ exports.crearTurno = (req, res) => {
 
   });
 
+  
+
+
   // Función interna para insertar
-  function insertarTurno() {
+  function insertarTurno(agenda_id) {
 
     Turno.crear(
-      paciente_id,
-      especialidad_id,
-      profesional_id,
-      sucursal_id,
-      fecha,
-      hora,
-      tipo_turno,
+      {
+        paciente_id,
+        especialidad_id,
+        profesional_id,
+        sucursal_id,
+        fecha,
+        hora,
+        tipo_turno,
+        agenda_id
+      },
       (err) => {
 
-        if (err) return res.status(500).send("Error creando turno");
+        if (err) {
+  console.error("ERROR AL CREAR TURNO:", err);
 
-        res.redirect('/turnos');
+  // 🔴 ERROR DE DUPLICADO (MySQL)
+  if (err.code === 'ER_DUP_ENTRY') {
+            return recargarFormularioConError(
+              res,
+              "Ese horario ya fue tomado por otro turno."
+            );
+          }
 
+          return res.status(500).send("Error creando turno");
+        }
+        return res.redirect('/turnos');
       }
     );
 
@@ -218,7 +262,9 @@ exports.obtenerHorariosDisponibles = (req, res) => {
         return res.json({ motivo: 'sin_agenda' });
       }
 
-      Turno.obtenerHorariosOcupados(profesionalId, fecha, (err2, ocupados) => {
+      const fechaSQL = fecha.split('T')[0];
+
+      Turno.obtenerHorariosOcupados(profesionalId, fechaSQL, (err2, ocupados) => {
 
         if (err2) {
           console.error("ERROR EN TURNOS:", err2);
