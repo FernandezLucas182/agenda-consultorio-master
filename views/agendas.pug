@@ -53,6 +53,7 @@ html
               th Duración (min)
               th Máx. Sobreturnos
               th Acciones
+              th Sucursal
 
           tbody
             tr
@@ -62,6 +63,7 @@ html
               td= item.hora_fin
               td= item.duracion_turno
               td= item.max_sobreturnos
+              td= item.sucursal || 'Sin sucursal'
               td
                 a(href=`/agendas/${item.agenda_id}`) Ver
                 | |

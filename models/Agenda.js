@@ -44,11 +44,13 @@ class Agenda {
         ah.hora_fin,
         a.duracion_turno,
         a.max_sobreturnos,
-        a.id AS agenda_id
+        a.id AS agenda_id,
+        s.nombre AS sucursal
       FROM agenda_horarios ah
       JOIN agendas a ON ah.agenda_id = a.id
       JOIN profesionales p ON a.profesional_id = p.id
       JOIN especialidades e ON a.especialidad_id = e.id
+      LEFT JOIN sucursales s ON a.sucursal_id = s.id
       WHERE a.activo = 1
     `;
 
@@ -94,13 +96,13 @@ class Agenda {
 
   static crearAgendaBase(datos, callback) {
 
-    const { profesional_id, especialidad_id, duracion_turno } = datos;
+    const { profesional_id, especialidad_id, duracion_turno, sucursal_id } = datos;
 
     db.query(
       `INSERT INTO agendas 
-       (profesional_id, especialidad_id, duracion_turno, activo) 
-       VALUES (?, ?, ?, 1)`,
-      [profesional_id, especialidad_id, duracion_turno],
+      (profesional_id, especialidad_id, duracion_turno, sucursal_id, activo)
+      VALUES (?, ?, ?, ?, 1)`,
+      [profesional_id, especialidad_id, duracion_turno, sucursal_id],
       callback
     );
   }
@@ -388,7 +390,7 @@ static actualizarHorarios(agenda_id, listaHorarios, callback) {
   static crearAgendaConHorarios(datos, callback) {
 
     
-    const { profesional_id, especialidad_id, duracion_turno, horarios } = datos;
+    const { profesional_id, especialidad_id, duracion_turno, horarios, sucursal_id } = datos;
 
     const listaHorarios = Array.isArray(horarios) ? horarios : [horarios];
 
@@ -406,11 +408,12 @@ static actualizarHorarios(agenda_id, listaHorarios, callback) {
         // 1️⃣ Verificar si ya existe agenda activa
         connection.query(
           `SELECT id 
-         FROM agendas
-         WHERE profesional_id = ?
-           AND especialidad_id = ?
-           AND activo = 1`,
-          [profesional_id, especialidad_id],
+          FROM agendas
+          WHERE profesional_id = ?
+          AND especialidad_id = ?
+          AND sucursal_id = ?
+          AND activo = 1`,
+          [profesional_id, especialidad_id, sucursal_id],
           (err, existente) => {
 
             if (err) {
@@ -430,9 +433,9 @@ static actualizarHorarios(agenda_id, listaHorarios, callback) {
             // 2️⃣ Insertar agenda
             connection.query(
               `INSERT INTO agendas
-             (profesional_id, especialidad_id, duracion_turno, activo)
-             VALUES (?, ?, ?, 1)`,
-              [profesional_id, especialidad_id, duracion_turno],
+              (profesional_id, especialidad_id, duracion_turno, sucursal_id, activo)
+              VALUES (?, ?, ?, ?, 1)`,
+              [profesional_id, especialidad_id, duracion_turno, sucursal_id],
               (err, result) => {
 
                 if (err) {

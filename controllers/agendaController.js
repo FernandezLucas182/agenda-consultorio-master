@@ -75,7 +75,18 @@ exports.formularioNuevaAgenda = (req, res) => {
     Especialidad.obtenerTodas((err2, especialidades) => {
       if (err2) especialidades = [];
 
-      res.render('nuevaAgenda', { profesionales, especialidades });
+      // 🔥 TRAER SUCURSALES
+      db.query('SELECT * FROM sucursales', (err3, sucursales) => {
+        if (err3) sucursales = [];
+
+        // 🔥 PASAR TODO AL PUG
+        res.render('nuevaAgenda', { 
+          profesionales, 
+          especialidades,
+          sucursales
+        });
+      });
+
     });
   });
 };
@@ -88,7 +99,7 @@ exports.formularioNuevaAgenda = (req, res) => {
 
 exports.crearAgendaBase = (req, res) => {
 
-  const { profesional_id, especialidad_id, duracion_turno } = req.body;
+  const { profesional_id, especialidad_id, duracion_turno, sucursal_id } = req.body;
 
   const horarios = req.body.horarios;
 
@@ -99,11 +110,12 @@ exports.crearAgendaBase = (req, res) => {
   const listaHorarios = Object.values(horarios);
 
   const datos = {
-    profesional_id,
-    especialidad_id,
-    duracion_turno,
-    horarios: listaHorarios
-  };
+  profesional_id,
+  especialidad_id,
+  duracion_turno,
+  sucursal_id,
+  horarios: listaHorarios
+};
 
   // 🔥 AQUÍ FALTABA LA LLAMADA AL MODELO
   Agenda.crearAgendaConHorarios(datos, (err) => {
@@ -203,10 +215,16 @@ exports.mostrarAgendas = (req, res) => {
   const buscar = req.query.buscar || null;
 
   Agenda.obtenerAgendaCompleta(buscar, (err, agenda) => {
-    if (err) agenda = [];
 
-    res.render('agendas', { agenda, buscar });
-  });
+  if (err) {
+    console.error("ERROR EN QUERY AGENDA:", err);
+    return res.status(500).send(err.message);
+  }
+
+  console.log("AGENDA OK:", agenda.length);
+
+  res.render('agendas', { agenda, buscar });
+});
 };
 
 

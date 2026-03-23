@@ -29,6 +29,12 @@ html
 
       br
 
+      label Sucursal
+      select(name="sucursal_id" required)
+        each sucursal in sucursales
+          option(value=sucursal.id)= sucursal.nombre
+      br
+
       label Duración del turno (minutos)
       select(name="duracion_turno" required)
         option(value="" disabled selected) -- Seleccionar duración --
