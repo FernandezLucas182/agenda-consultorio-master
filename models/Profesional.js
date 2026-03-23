@@ -45,19 +45,19 @@ class Profesional {
   // CREAR PROFESIONAL
   // ==========================
   static crear(
-    { nombre, matricula, especialidades, hora_inicio_turno1, hora_fin_turno1, hora_inicio_turno2, hora_fin_turno2 },
+    { nombre, matricula, especialidades },
     callback
   ) {
 
     const profesionalQuery = `
-      INSERT INTO profesionales 
-      (nombre_completo, matricula, hora_inicio_turno1, hora_fin_turno1, hora_inicio_turno2, hora_fin_turno2, estado)
-      VALUES (?, ?, ?, ?, ?, ?, 'activo')
-    `;
+  INSERT INTO profesionales 
+  (nombre_completo, matricula, estado)
+  VALUES (?, ?, 'activo')
+`;
 
     db.query(
       profesionalQuery,
-      [nombre, matricula, hora_inicio_turno1, hora_fin_turno1, hora_inicio_turno2, hora_fin_turno2],
+      [nombre, matricula],
       (err, result) => {
         if (err) return callback(err);
 
@@ -84,46 +84,45 @@ class Profesional {
   // EDITAR PROFESIONAL
   // ==========================
   static editar(
-    id,
-    { nombre, matricula, especialidades, hora_inicio_turno1, hora_fin_turno1, hora_inicio_turno2, hora_fin_turno2 },
-    callback
-  ) {
+  id,
+  { nombre, matricula, especialidades },
+  callback
+) {
 
-    const profesionalQuery = `
-      UPDATE profesionales 
-      SET nombre_completo = ?, matricula = ?, 
-          hora_inicio_turno1 = ?, hora_fin_turno1 = ?, 
-          hora_inicio_turno2 = ?, hora_fin_turno2 = ?
-      WHERE id = ?
-    `;
+  const profesionalQuery = `
+    UPDATE profesionales 
+    SET nombre_completo = ?, matricula = ?
+    WHERE id = ?
+  `;
 
-    db.query(
-      profesionalQuery,
-      [nombre, matricula, hora_inicio_turno1, hora_fin_turno1, hora_inicio_turno2, hora_fin_turno2, id],
-      err => {
-        if (err) return callback(err);
+  db.query(
+    profesionalQuery,
+    [nombre, matricula, id],
+    err => {
+      if (err) return callback(err);
 
-        db.query(
-          'DELETE FROM profesional_especialidad WHERE profesional_id = ?',
-          [id],
-          err => {
-            if (err) return callback(err);
+      db.query(
+        'DELETE FROM profesional_especialidad WHERE profesional_id = ?',
+        [id],
+        err => {
+          if (err) return callback(err);
 
-            if (especialidades && especialidades.length > 0) {
-              const values = especialidades.map(eid => [id, eid]);
-              db.query(
-                'INSERT INTO profesional_especialidad (profesional_id, especialidad_id) VALUES ?',
-                [values],
-                callback
-              );
-            } else {
-              callback(null);
-            }
+          if (especialidades && especialidades.length > 0) {
+            const values = especialidades.map(eid => [id, eid]);
+
+            db.query(
+              'INSERT INTO profesional_especialidad (profesional_id, especialidad_id) VALUES ?',
+              [values],
+              callback
+            );
+          } else {
+            callback(null);
           }
-        );
-      }
-    );
-  }
+        }
+      );
+    }
+  );
+}
 
 
   // ==========================
@@ -170,23 +169,21 @@ class Profesional {
   // ==========================
   static obtenerPorId(id, callback) {
     const query = `
-      SELECT p.id, p.nombre_completo, p.matricula, p.estado, 
-             GROUP_CONCAT(e.nombre) AS especialidades,
-             p.hora_inicio_turno1, p.hora_fin_turno1,
-             p.hora_inicio_turno2, p.hora_fin_turno2
-      FROM profesionales p
-      LEFT JOIN profesional_especialidad pe ON p.id = pe.profesional_id
-      LEFT JOIN especialidades e ON pe.especialidad_id = e.id
-      WHERE p.id = ?
-      GROUP BY p.id
-    `;
+  SELECT p.id, p.nombre_completo, p.matricula, p.estado, 
+         GROUP_CONCAT(e.id) AS especialidades
+  FROM profesionales p
+  LEFT JOIN profesional_especialidad pe ON p.id = pe.profesional_id
+  LEFT JOIN especialidades e ON pe.especialidad_id = e.id
+  WHERE p.id = ?
+  GROUP BY p.id
+`;
 
     db.query(query, [id], (err, resultados) => {
       if (err) return callback(err);
-      if (!resultados.length) return callback(new Error('No encontrado'));
+      if (!resultados.length) return callback(null, null);
 
       const profesional = resultados[0];
-      profesional.especialidades = profesional.especialidades
+      profesional.especialidades = typeof profesional.especialidades === 'string'
         ? profesional.especialidades.split(',')
         : [];
 

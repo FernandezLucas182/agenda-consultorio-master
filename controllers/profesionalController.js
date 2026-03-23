@@ -26,10 +26,6 @@ exports.crearProfesional = (req, res) => {
   const {
     nombre_completo,
     matricula,
-    hora_inicio_turno1,
-    hora_fin_turno1,
-    hora_inicio_turno2,
-    hora_fin_turno2,
     nueva_especialidad
   } = req.body;
 
@@ -47,10 +43,7 @@ exports.crearProfesional = (req, res) => {
       nombre: nombre_completo,
       matricula,
       especialidades: especialidadesFinales,
-      hora_inicio_turno1: normalizarHora(hora_inicio_turno1),
-      hora_fin_turno1: normalizarHora(hora_fin_turno1),
-      hora_inicio_turno2: normalizarHora(hora_inicio_turno2),
-      hora_fin_turno2: normalizarHora(hora_fin_turno2)
+      
     };
 
     Profesional.crear(datosNormalizados, (err) => {
@@ -112,7 +105,12 @@ exports.formularioEditarProfesional = (req, res) => {
   const profesionalId = req.params.id;
 
   Profesional.obtenerPorId(profesionalId, (err, profesional) => {
+    console.error("ERROR OBTENER PROFESIONAL:", err);
+    console.log("PROFESIONAL:", profesional);
     if (err) return res.status(500).send('Error al obtener el profesional');
+
+    if (!profesional)
+      return res.status(404).send('Profesional no encontrado');
 
     Profesional.obtenerEspecialidades((err, especialidades) => {
       if (err) return res.status(500).send('Error al obtener especialidades');
@@ -131,28 +129,23 @@ exports.editarProfesional = (req, res) => {
   const {
     nombre_completo,
     matricula,
-    hora_inicio_turno1,
-    hora_fin_turno1,
-    hora_inicio_turno2,
-    hora_fin_turno2
+    
   } = req.body;
   let { especialidades } = req.body;
 
-  if (!Array.isArray(especialidades)) {
-    especialidades = [especialidades];
-  }
+  if (!especialidades) {
+  especialidades = [];
+} else if (!Array.isArray(especialidades)) {
+  especialidades = [especialidades];
+}
 
   // Actualizar datos del profesional, incluyendo horarios
   Profesional.editar(
     profesionalId,
     {
       nombre: nombre_completo,
-      matricula,
-      especialidades,
-      hora_inicio_turno1: normalizarHora(hora_inicio_turno1),
-      hora_fin_turno1: normalizarHora(hora_fin_turno1),
-      hora_inicio_turno2: normalizarHora(hora_inicio_turno2),
-      hora_fin_turno2: normalizarHora(hora_fin_turno2)
+    matricula,
+    especialidades
     },
 
     (err) => {

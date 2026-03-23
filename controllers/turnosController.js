@@ -3,6 +3,15 @@ const Agenda = require('../models/Agenda');
 const generarTurnos = require('../utils/generarTurnos');
 const Ausencia = require('../models/Ausencia');
 
+
+function sumarSegundos(hora, segundos) {
+  const [h, m, s] = hora.split(':').map(Number);
+  const date = new Date();
+  date.setHours(h, m, s || 0);
+  date.setSeconds(date.getSeconds() + segundos);
+  return date.toTimeString().slice(0, 8);
+}
+
 // ==========================
 // UTILIDAD FECHA
 // ==========================
@@ -140,31 +149,37 @@ exports.crearTurno = (req, res) => {
     // 3️⃣ Si es sobreturno, validar límite (máx 2 por día)
     else {
 
-      Turno.contarSobreturnos(profesional_id, fecha, (err3, cantidad) => {
+  Turno.contarSobreturnosEnHora(profesional_id, fecha, hora, (err3, cantidad) => {
 
-        if (err3) return res.status(500).send("Error validando sobreturnos");
+    if (err3) return res.status(500).send("Error validando sobreturnos");
 
-        if (cantidad >= 2) {
-          return recargarFormularioConError(res, "Solo se permiten 2 sobreturnos por día.");
-        }
+    if (cantidad >= 2) {
+      return recargarFormularioConError(
+        res,
+        "Máximo de sobreturnos alcanzado en este horario."
+      );
+    }
 
-        Turno.obtenerAgendaId(profesional_id, (errAgenda, agenda_id) => {
+    Turno.obtenerAgendaId(profesional_id, (errAgenda, agenda_id) => {
 
-          if (errAgenda) {
-            return res.status(500).send("Error obteniendo agenda");
-          }
+      if (errAgenda) {
+        return res.status(500).send("Error obteniendo agenda");
+      }
 
-          if (!agenda_id) {
-            return res.status(400).send("El profesional no tiene agenda activa");
-          }
+      if (!agenda_id) {
+        return res.status(400).send("El profesional no tiene agenda activa");
+      }
 
-          console.log("AGENDA ID:", agenda_id);
+      console.log("AGENDA ID:", agenda_id);
 
-          insertarTurno(agenda_id);
+      // 🔥 ESTA ES LA CLAVE
+      const nuevaHora = sumarSegundos(hora, cantidad + 1);
 
-        });
+      insertarTurno(agenda_id, nuevaHora);
 
-      });
+    });
+
+  });
 
     }
 
@@ -174,39 +189,38 @@ exports.crearTurno = (req, res) => {
 
 
   // Función interna para insertar
-  function insertarTurno(agenda_id) {
+  function insertarTurno(agenda_id, horaFinal = hora) {
 
-    Turno.crear(
-      {
-        paciente_id,
-        especialidad_id,
-        profesional_id,
-        sucursal_id,
-        fecha,
-        hora,
-        tipo_turno,
-        agenda_id
-      },
-      (err) => {
+  Turno.crear(
+    {
+      paciente_id,
+      especialidad_id,
+      profesional_id,
+      sucursal_id,
+      fecha,
+      hora: horaFinal,
+      tipo_turno,
+      agenda_id
+    },
+    (err) => {
 
-        if (err) {
-  console.error("ERROR AL CREAR TURNO:", err);
+      if (err) {
+        console.error("ERROR AL CREAR TURNO:", err);
 
-  // 🔴 ERROR DE DUPLICADO (MySQL)
-  if (err.code === 'ER_DUP_ENTRY') {
-            return recargarFormularioConError(
-              res,
-              "Ese horario ya fue tomado por otro turno."
-            );
-          }
-
-          return res.status(500).send("Error creando turno");
+        if (err.code === 'ER_DUP_ENTRY') {
+          return recargarFormularioConError(
+            res,
+            "Ese horario ya fue tomado por otro turno."
+          );
         }
-        return res.redirect('/turnos');
-      }
-    );
 
-  }
+        return res.status(500).send("Error creando turno");
+      }
+
+      return res.redirect('/turnos');
+    }
+  );
+}
 
 };
 

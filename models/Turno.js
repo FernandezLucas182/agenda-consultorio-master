@@ -252,7 +252,25 @@ static obtenerAgendaId(profesional_id, callback) {
   });
 }
 
+//============================
+//SOBRETURNOS
+//============================
+static contarSobreturnosEnHora(profesional_id, fecha, hora, callback) {
+  const sql = `
+    SELECT COUNT(*) as total
+    FROM turnos
+    WHERE profesional_id = ?
+      AND fecha = ?
+      AND TIME_FORMAT(hora, '%H:%i') = ?
+      AND tipo_turno = 'sobreturno'
+      AND estado IN ('reservado','confirmado')
+  `;
 
+  db.query(sql, [profesional_id, fecha, hora], (err, rows) => {
+    if (err) return callback(err);
+    callback(null, rows[0].total);
+  });
+}
 
 
 }
