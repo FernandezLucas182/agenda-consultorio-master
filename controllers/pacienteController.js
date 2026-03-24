@@ -28,7 +28,7 @@ exports.mostrarPaciente = (req, res) => {
     if (err || !paciente) {
       return res.status(404).send('Paciente no encontrado.');
     }
-    res.render('paciente', { paciente });
+    res.render('detallePaciente', { paciente });
   });
 };
 

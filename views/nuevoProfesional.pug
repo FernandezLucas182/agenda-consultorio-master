@@ -1,49 +1,30 @@
-doctype html
-html
-  head
-    title Agregar Nuevo Profesional
-    link(rel='stylesheet', href='/styles.css')
-    script.
-      function toggleHorarioFin(inicioId, finId) {
-        const inicioSelect = document.getElementById(inicioId);
-        const finSelect = document.getElementById(finId);
-        if (inicioSelect.value === "no") {
-          finSelect.disabled = true;
-          finSelect.value = "no";  // Selecciona automáticamente "No disponible"
-        } else {
-          finSelect.disabled = false;
-          if (finSelect.value === "no") {
-            finSelect.value = "";  // Restablece el valor si estaba en "No disponible"
-          }
-        }
-      }
-  body
-    .container
-      h1 Agregar Nuevo Profesional
+extends layout
 
-      form(action="/profesionales/nuevo", method="POST")
-        div
-          label(for="nombre_completo") Nombre Completo
-          input(type="text" name="nombre_completo" required)
+block title
+  | Agregar Nuevo Profesional
 
-        div
-          label(for="matricula") Matrícula
-          input(type="text" name="matricula" required)
+block content
+  h1 Agregar Nuevo Profesional
 
-        div
-          label Especialidades:
-          select(name="especialidades" multiple)
-            each especialidad in especialidades
-              option(value=especialidad.id)= especialidad.nombre
+  form(action="/profesionales/nuevo", method="POST")
+    div.mb-3
+      label.form-label(for="nombre_completo") Nombre Completo
+      input.form-control(type="text" id="nombre_completo" name="nombre_completo" required)
 
-        div
-          label Nueva Especialidad:
-          input(type="text", name="nueva_especialidad", placeholder="Ej: Traumatología")
-          
+    div.mb-3
+      label.form-label(for="matricula") Matrícula
+      input.form-control(type="text" id="matricula" name="matricula" required)
 
-        
+    div.mb-3
+      label.form-label(for="especialidades") Especialidades existentes
+      select.form-select(name="especialidades" id="especialidades" multiple size="5")
+        each especialidad in especialidades
+          option(value=especialidad.id)= especialidad.nombre
 
-        div
-          button(type="submit" class="button") Guardar
+    div.mb-3
+      label.form-label(for="nueva_especialidad") O agregar nueva especialidad
+      input.form-control(type="text", id="nueva_especialidad" name="nueva_especialidad", placeholder="Ej: Traumatología")
 
-      a(href="/profesionales" class="button") Volver a la Lista
+    div.mt-4
+      button(type="submit" class="btn btn-primary") Guardar Profesional
+      a(href="/profesionales" class="btn btn-secondary ms-2") Volver a la Lista

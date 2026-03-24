@@ -1,107 +1,62 @@
-doctype html
-html
-  head
-    title Editar Turno
-    link(rel='stylesheet', href='/styles.css')
+extends layout
 
-  body
-    h1 Editar Turno
+block title
+  | Editar Turno
 
-    form(action=`/turnos/${turno.id}/editar`, method='POST')
+block content
+  h1 Editar Turno
 
-      div
-        label Paciente:
-        select(name='paciente_id' required)
-          each p in pacientes
-            option(
-              value=p.id
-              selected=(p.id == turno.paciente_id)
-            )= p.nombre
+  form(action=`/turnos/${turno.id}/editar` method="POST")
+    div.row.g-3
+      div.col-md-6
+        label.form-label(for="paciente_id") Paciente
+        select.form-select(name="paciente_id" id="paciente_id")
+          each paciente in pacientes
+            option(value=paciente.id selected=(paciente.id == turno.paciente_id))= paciente.nombre
 
-      div
-        label Profesional:
-        select(name='profesional_id' id='profesionalSelect' required)
-          each pr in profesionales
-            option(
-              value=pr.id
-              selected=(pr.id == turno.profesional_id)
-            )= pr.nombre_completo
+      div.col-md-6
+        label.form-label(for="profesional_id") Profesional
+        select.form-select(disabled)
+          each profesional in profesionales
+            option(value=profesional.id selected=(profesional.id == turno.profesional_id))= profesional.nombre_completo
 
-      div
-        label Especialidad:
-        select(name='especialidad_id' id='especialidadSelect' required)
-          each e in especialidades
-            option(
-              value=e.id
-              selected=(e.id == turno.especialidad_id)
-            )= e.nombre
+        input(type="hidden" name="profesional_id" value=turno.profesional_id)
 
+      div.col-md-6
+        label.form-label(for="especialidad_id") Especialidad
+        select.form-select(disabled)
+          each especialidad in especialidades
+            option(value=especialidad.id selected=(especialidad.id == turno.especialidad_id))= especialidad.nombre
 
-      div
-        label Sucursal:
-        select(name='sucursal_id' required)
-          each s in sucursales
-            option(
-              value=s.id
-              selected=(s.id == turno.sucursal_id)
-            )= s.nombre
+        input(type="hidden" name="especialidad_id" value=turno.especialidad_id)
 
-      div
-        label Fecha:
-        input(type='date', name='fecha', value=turno.fecha, required)
+      div.col-md-6
+        label.form-label(for="sucursal_id") Sucursal
+        select.form-select(name="sucursal_id" id="sucursal_id" disabled)
+          each sucursal in sucursales
+            option(value=sucursal.id selected=(sucursal.id == turno.sucursal_id))= sucursal.nombre
 
-      div
-        label Hora:
-        select(name="hora" required)
-          each h in ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","16:00","16:30","17:00","17:30"]
-            option(value=h selected=(h == turno.hora))= h
+      div.col-md-6
+        label.form-label(for="fecha") Fecha
+        input.form-control(type="date" name="fecha" value=turno.fecha required)
 
+      div.col-md-6
+        label.form-label(for="hora") Hora
+        input.form-control(type="time" name="hora" value=turno.hora required)
 
-      div
-        label Estado:
-        select(name='estado')
-          option(value='reservado' selected=turno.estado=='reservado') Reservado 
-          option(value='confirmado' selected=turno.estado=='confirmado') Confirmado
-          option(value='cancelado' selected=turno.estado=='cancelado') Cancelado
+      div.col-md-6
+        label.form-label(for="tipo_turno") Tipo de Turno
+        select.form-select(name="tipo_turno")
+          option(value="normal" selected=(turno.tipo_turno == 'normal')) Normal
+          option(value="sobreturno" selected=(turno.tipo_turno == 'sobreturno')) Sobreturno
 
-      button(type='submit') Guardar Cambios
+      div.col-md-6
+        label.form-label(for="estado") Estado
+        select.form-select(name="estado")
+          option(value="confirmado" selected=(turno.estado == 'confirmado')) Confirmado
+          option(value="cancelado" selected=(turno.estado == 'cancelado')) Cancelado
+          option(value="pendiente" selected=(turno.estado == 'pendiente')) Pendiente
 
-    a(href='/turnos') Volver
-
-
-    script.
-      const profesionalSelect = document.getElementById('profesionalSelect');
-      const especialidadSelect = document.getElementById('especialidadSelect');
-
-      const especialidadActual = parseInt("#{turno.especialidad_id}");
-
-      async function cargarEspecialidades(profesionalId) {
-        if (!profesionalId) return;
-
-        especialidadSelect.innerHTML = '<option>Cargando...</option>';
-
-        const res = await fetch(`/profesionales/${profesionalId}/especialidades`);
-        const data = await res.json();
-
-        especialidadSelect.innerHTML = '<option value="">Selecciona especialidad</option>';
-
-        data.forEach(e => {
-          const option = document.createElement('option');
-          option.value = e.id;
-          option.textContent = e.nombre;
-
-          if (e.id === especialidadActual) {
-            option.selected = true;
-          }
-
-          especialidadSelect.appendChild(option);
-        });
-      }
-
-      // carga inicial
-      cargarEspecialidades(profesionalSelect.value);
-
-      // cambio dinámico
-      profesionalSelect.addEventListener('change', () => {
-        cargarEspecialidades(profesionalSelect.value);
-      });
+    div.mt-4
+      button.btn.btn-warning(type="submit") Actualizar Turno
+      a.btn.btn-secondary.ms-2(href="/turnos") Cancelar

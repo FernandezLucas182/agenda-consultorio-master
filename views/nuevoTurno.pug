@@ -1,186 +1,166 @@
-doctype html
-html
-  head
-    title Crear Nuevo Turno
-    link(rel='stylesheet', href='/styles.css')
-  body
-    h1 Crear Nuevo Turno
+extends layout
 
-    if error
-      div(style="color:red; margin-bottom:15px; font-weight:bold;")
-        | #{error}
+block title
+  | Nuevo Turno
 
-    form(action='/turnos', method='POST')
+block content
+  h1 Nuevo Turno
 
-      div 
-        label Tipo de turno
-        select(name="tipo_turno" id="tipo_turno")
+  //- Bloque para mostrar errores si el controlador los envía
+  if error
+    div.alert.alert-danger= error
+
+  form(action="/turnos" method="POST")
+    div.row.g-3
+      //- Paciente
+      div.col-md-6
+        label.form-label(for="paciente_id") Paciente
+        select.form-select(name="paciente_id" id="paciente_id" required)
+          option(value="" disabled selected) -- Seleccione Paciente --
+          each paciente in pacientes
+            option(value=paciente.id)= paciente.nombre
+
+      //- Especialidad
+      div.col-md-6
+        label.form-label(for="especialidad_id") Especialidad
+        select.form-select(name="especialidad_id" id="especialidad_id" required)
+          option(value="" disabled selected) -- Seleccione Especialidad --
+          each especialidad in especialidades
+             option(value=especialidad.id)= especialidad.nombre
+
+      //- Profesional (Se carga dinámicamente)
+      div.col-md-6
+        label.form-label(for="profesional_id") Profesional
+        select.form-select(name="profesional_id" id="profesional_id" required disabled)
+          option(value="" disabled selected) -- Primero seleccione especialidad --
+
+      //- Sucursal
+      div.col-md-6
+        label.form-label(for="sucursal_id") Sucursal
+        select.form-select(name="sucursal_id" id="sucursal_id" required)
+          each sucursal in sucursales
+             option(value=sucursal.id)= sucursal.nombre
+
+      //- Fecha
+      div.col-md-6
+        label.form-label(for="fecha") Fecha
+        input.form-control(type="date" name="fecha" id="fecha" required)
+
+      //- Hora (Se carga dinámicamente)
+      div.col-md-6
+        label.form-label(for="hora") Horarios Disponibles
+        select.form-select(name="hora" id="hora" required disabled)
+          option(value="" disabled selected) -- Seleccione fecha y profesional --
+        div#mensajeTurno.mt-2
+
+      //- Tipo de Turno
+      div.col-md-6
+        label.form-label(for="tipo_turno") Tipo de Turno
+        select.form-select(name="tipo_turno" id="tipo_turno")
           option(value="normal") Normal
           option(value="sobreturno") Sobreturno
 
-      div
-        label Paciente:
-        select(name='paciente_id' required)
-          option(value='') Selecciona un paciente
-          each p in pacientes
-            option(value=p.id)= p.nombre
+    div.mt-4
+      button.btn.btn-primary(type="submit") Crear Turno
+      a.btn.btn-secondary.ms-2(href="/turnos") Cancelar
 
-      div
-        label Especialidad:
-        select(name='especialidad_id' id='especialidad_id' required)
-          option(value='') Selecciona una especialidad
-          each especialidad in especialidades
-            option(value=especialidad.id)= especialidad.nombre
+  //- Scripts para la lógica dinámica
+  script.
+    const especialidadSelect = document.getElementById('especialidad_id');
+    const profesionalSelect = document.getElementById('profesional_id');
+    const fechaInput = document.getElementById('fecha');
+    const horaSelect = document.getElementById('hora');
+    const pacienteSelect = document.getElementById('paciente_id');
+    const mensajeDiv = document.getElementById('mensajeTurno');
+    
 
-      div
-        label Profesional:
-        select(name='profesional_id' id='profesional_id' required)
-          option(value='') Selecciona un profesional
+    // 1. Pre-seleccionar paciente si viene en la URL (desde detallePaciente)
+    const urlParams = new URLSearchParams(window.location.search);
+    const pacienteIdParam = urlParams.get('paciente_id');
+    if (pacienteIdParam && pacienteSelect) {
+      pacienteSelect.value = pacienteIdParam;
+    }
 
-      div
-        label Sucursal:
-        select(name='sucursal_id' required)
-          option(value='') Selecciona una sucursal
-          each sucursal in sucursales
-            option(value=sucursal.id)= sucursal.nombre
+    // 2. Cargar Profesionales al cambiar Especialidad
+    especialidadSelect.addEventListener('change', async () => {
+      const especialidadId = especialidadSelect.value;
+      profesionalSelect.innerHTML = '<option>Cargando...</option>';
+      profesionalSelect.disabled = true;
+      
+      // Resetear horarios también
+      horaSelect.innerHTML = '<option value="" disabled selected>-- Seleccione fecha y profesional --</option>';
+      horaSelect.disabled = true;
 
-      div
-        label Fecha:
-        input(type='date', name='fecha', id='fecha', required)
+      try {
+        const res = await fetch(`/profesionales/especialidad/${especialidadId}`);
+        const data = await res.json();
 
-      div
-        label Hora:
-        select(name='hora', id='hora', required)
-          option(value='') Selecciona un horario
-
-      // 🔵 SECCIÓN VISUAL NUEVA (NO ROMPE NADA)
-      div
-        label Selección visual:
-        div#slots(style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;")
-
-      div
-        button(type='submit') Crear Turno
-
-    a(href='/turnos') Volver a la lista de turnos
-
-
-    // ======================
-    // JS
-    // ======================
-    script.
-      document.addEventListener('DOMContentLoaded', () => {
-
-        const especialidad = document.getElementById('especialidad_id');
-        const profesional = document.getElementById('profesional_id');
-        const fecha = document.getElementById('fecha');
-        const hora = document.getElementById('hora');
-        const slots = document.getElementById('slots');
-        const tipoTurnoSelect = document.getElementById('tipo_turno');
-
-        // Cargar profesionales por especialidad
-        especialidad.addEventListener('change', () => {
-          fetch(`/profesionales/especialidad/${especialidad.value}`)
-            .then(r => r.json())
-            .then(data => {
-              profesional.innerHTML = '<option value="">Selecciona un profesional</option>';
-              data.forEach(p => {
-                profesional.innerHTML += `<option value="${p.id}">${p.nombre_completo}</option>`;
-              });
-            });
+        profesionalSelect.innerHTML = '<option value="" disabled selected>-- Seleccione Profesional --</option>';
+        data.forEach(p => {
+          const option = document.createElement('option');
+          option.value = p.id;
+          option.textContent = p.nombre_completo; 
+          profesionalSelect.appendChild(option);
         });
+        profesionalSelect.disabled = false;
+      } catch (err) {
+        console.error(err);
+        profesionalSelect.innerHTML = '<option>Error al cargar</option>';
+      }
+    });
 
-        function cargarHorarios() {
+    // 3. Cargar Horarios al cambiar Profesional o Fecha
+    async function cargarHorarios() {
+      const profesionalId = profesionalSelect.value;
+      const fecha = fechaInput.value;
 
-          if (!profesional.value || !fecha.value) return;
+      mensajeDiv.innerHTML = ''; // 👈 ESTE ES EL PASO 2
 
-          fetch(`/turnos/horarios-disponibles/${profesional.value}/${fecha.value}`, {
-            cache: "no-store"
-          })
-            .then(r => r.json())
-            .then(data => {
+      if (!profesionalId || !fecha) return;
 
-              slots.innerHTML = '';
-              hora.innerHTML = '<option value="">Selecciona un horario</option>';
+      horaSelect.innerHTML = '<option>Cargando...</option>';
+      horaSelect.disabled = true;
 
-              if (data.motivo === 'ausente') {
-                slots.innerHTML = "<p style='color:red; font-weight:bold;'>El profesional no atiende en esta fecha (ausencia registrada).</p>";
-                hora.innerHTML = '<option value="">No disponible</option>';
-                return;
-              }
+      try {
+        const res = await fetch(`/turnos/horarios-disponibles/${profesionalId}/${fecha}`);
+        const data = await res.json();
 
-              if (data.motivo === 'sin_agenda') {
-                slots.innerHTML = "<p style='color:orange;'>El profesional no tiene agenda cargada para ese día.</p>";
-                hora.innerHTML = '<option value="">No disponible</option>';
-                return;
-              }
+        horaSelect.innerHTML = '<option value="" disabled selected>-- Seleccione Hora --</option>';
 
-              if (data.motivo) {
-                slots.innerHTML = "<p style='color:red;'>Error al obtener horarios.</p>";
-                return;
-              }
+        if (data.motivo === 'ausente') {
+          const option = document.createElement('option');
+          option.text = "Profesional ausente en esta fecha";
+          option.disabled = true;
+          option.classList.add('text-danger');
+          horaSelect.appendChild(option);
 
-              const libres = data.libres || [];
-              const ocupados = data.ocupados || [];
-              const tipoTurno = tipoTurnoSelect.value;
+        } else if (data.motivo === 'no_trabaja') {
+          const option = document.createElement('option');
+          option.text = "El profesional no trabaja este día";
+          option.disabled = true;
+          option.classList.add('text-warning');
+          horaSelect.appendChild(option);
 
-              const todos = [...new Set([...libres, ...ocupados])].sort();
-              
-              console.log("LIBRES:", libres);
-              console.log("OCUPADOS:", ocupados);
+        } else if (data.libres && data.libres.length > 0) {
+          data.libres.forEach(h => {
+            const option = document.createElement('option');
+            option.value = h;
+            option.textContent = h;
+            horaSelect.appendChild(option);
+          });
+          horaSelect.disabled = false;
 
-
-              todos.forEach(h => {
-
-                const esOcupado = ocupados.includes(h);
-                const esSobreturno = tipoTurno === 'sobreturno';
-
-                const option = document.createElement('option');
-                option.value = h;
-
-                if (esOcupado && !esSobreturno) {
-                  option.textContent = h + " (Ocupado)";
-                  option.disabled = true;
-                } else if (esOcupado && esSobreturno) {
-                  option.textContent = h + " (Sobreturno)";
-                } else {
-                  option.textContent = h;
-                }
-
-                hora.appendChild(option);
-
-                const btn = document.createElement('button');
-                btn.type = "button";
-                btn.textContent = h;
-                btn.style.padding = "6px 10px";
-                btn.style.border = "1px solid #ccc";
-                btn.style.color = "white";
-
-                if (esOcupado && !esSobreturno) {
-                  btn.style.backgroundColor = "#f44336"; // 🔴 rojo
-                  btn.disabled = true;
-                } else if (esOcupado && esSobreturno) {
-                  btn.style.backgroundColor = "#03a9f4"; // 🔵 celeste
-                } else {
-                  btn.style.backgroundColor = "#4CAF50"; // 🟢 verde
-                }
-
-                btn.onclick = () => {
-                  hora.value = h;
-                  document.querySelectorAll('#slots button')
-                    .forEach(b => b.style.outline = "none");
-                  btn.style.outline = "3px solid black";
-                };
-
-                slots.appendChild(btn);
-
-              });
-
-            })
-            .catch(err => console.error("Error cargando horarios:", err));
+        } else {
+          const option = document.createElement('option');
+          option.text = "No hay horarios disponibles";
+          option.disabled = true;
+          horaSelect.appendChild(option);
         }
+      } catch (err) {
+        console.error(err);
+        horaSelect.innerHTML = '<option>Error al cargar</option>';
+      }
+    }
 
-        profesional.addEventListener('change', cargarHorarios);
-        fecha.addEventListener('change', cargarHorarios);
-        tipoTurnoSelect.addEventListener('change', cargarHorarios);
-
-      });
+    profesionalSelect.addEventListener('change', cargarHorarios);
+    fechaInput.addEventListener('change', cargarHorarios);

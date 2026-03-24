@@ -105,22 +105,26 @@ exports.formularioEditarProfesional = (req, res) => {
   const profesionalId = req.params.id;
 
   Profesional.obtenerPorId(profesionalId, (err, profesional) => {
-    console.error("ERROR OBTENER PROFESIONAL:", err);
-    console.log("PROFESIONAL:", profesional);
     if (err) return res.status(500).send('Error al obtener el profesional');
+    if (!profesional) return res.status(404).send('Profesional no encontrado');
 
-    if (!profesional)
-      return res.status(404).send('Profesional no encontrado');
+    Profesional.obtenerEspecialidades((err2, especialidades) => {
+      if (err2) return res.status(500).send('Error al obtener especialidades');
 
-    Profesional.obtenerEspecialidades((err, especialidades) => {
-      if (err) return res.status(500).send('Error al obtener especialidades');
+      Profesional.obtenerEspecialidadesPorProfesional(profesionalId, (err3, especialidadesAsignadas) => {
+        if (err3) return res.status(500).send('Error al obtener especialidades del profesional');
 
-      // Obtener los horarios guardados para este profesional
-      res.render('editarProfesional', {
-        profesional,
-        especialidades
+        // 🔥 ACÁ SÍ existe profesional
+        res.render('editarProfesional', {
+          profesional,
+          especialidades,
+          especialidadesAsignadas
+        });
+
       });
+
     });
+
   });
 };
 

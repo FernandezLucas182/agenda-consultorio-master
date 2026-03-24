@@ -1,45 +1,45 @@
-doctype html
-html
-  head
-    title Lista de Profesionales
-    link(rel='stylesheet', href='/styles.css')
-  body
-    .container
-      h1 Lista de Profesionales
+extends layout
 
-      if profesionales.length > 0
-        table
-          thead
+block title
+  | Lista de Profesionales
+
+block content
+  h1 Lista de Profesionales
+
+  .actions.mb-3
+    a(href="/profesionales/nuevo" class="btn btn-primary") Agregar Nuevo Profesional
+    a(href="/" class="btn btn-secondary ms-2") Volver a pagina principal
+
+  if profesionales.length > 0
+    div.table-responsive
+      table.table.table-striped.table-bordered.table-hover
+        thead
+          tr
+            th Matrícula
+            th Nombre Completo
+            th Estado
+            th Especialidades
+            th Acciones
+        tbody
+          each profesional in profesionales
             tr
-              th Matrícula
-              th Nombre Completo
-              th Estado
-              th Especialidades
-              th Acciones
-          tbody
-            each profesional in profesionales
-              tr
-                td= profesional.matricula
-                td= profesional.nombre_completo
-                td= profesional.estado
-                td
-                  if profesional.especialidades
-                    ul
-                      each especialidad in profesional.especialidades.split(',')
-                        li= especialidad
-                  else
-                    | No tiene especialidades
-                td
-                  a(href=`/profesionales/${profesional.id}/editar`, class='button') Editar
-                  form(action=`/profesionales/${profesional.id}/${profesional.estado === 'activo' ? 'inactivar' : 'activar'}`, method="POST", style="display:inline")
-                    button(type="submit" class="button button-danger") #{profesional.estado === 'activo' ? 'Inactivar' : 'Activar'}
-      else
-        p No hay profesionales registrados.
+              td= profesional.matricula
+              td= profesional.nombre_completo
+              td
+                span(class=`badge ${profesional.estado === 'activo' ? 'bg-success' : 'bg-danger'}`)= profesional.estado
+              td
+                if profesional.especialidades
+                  ul.list-unstyled.mb-0
+                    each especialidad in profesional.especialidades.split(',')
+                      li= especialidad.trim()
+                else
+                  span.text-muted No tiene
+              td
+                a(href=`/profesionales/${profesional.id}/editar`, class='btn btn-warning btn-sm me-1') Editar
+                form(action=`/profesionales/${profesional.id}/${profesional.estado === 'activo' ? 'inactivar' : 'activar'}`, method="POST", style="display:inline")
+                  button(type="submit" class=`btn btn-sm ${profesional.estado === 'activo' ? 'btn-danger' : 'btn-success'}`) #{profesional.estado === 'activo' ? 'Inactivar' : 'Activar'}
+  else
+    p.alert.alert-info No hay profesionales registrados.
 
-      .actions
-        a(href="/profesionales/nuevo" class="button") Agregar Nuevo Profesional
-        a(href="/" class="button") Volver a pagina principal
-
-
-    .footer
-      p © 2024 Agenda Médica. Isaias Felippo-Lucas fernandez.
+  .footer.mt-5.text-muted
+    p © 2024 Agenda Médica. Isaias Felippo-Lucas fernandez.

@@ -1,136 +1,113 @@
-doctype html
-html
-  head
-    title Editar Agenda
-    link(rel='stylesheet', href='/styles.css')
+extends layout
 
-  body
-    h1 Editar Agenda
+block title
+  | Editar Agenda
 
-    if error
-      .alert.alert-danger
-        | #{error}
+block content
+  h1 Editar Agenda: #{agenda.nombre_completo}
+  p.text-muted Especialidad: #{agenda.especialidad} | Sucursal: #{agenda.sucursal_nombre || 'N/A'}
 
-    form(method="POST", action=`/agendas/${agenda.id}/editar`)
+  if error
+    div.alert.alert-danger= error
 
-      // ===============================
-      // DATOS GENERALES
-      // ===============================
+  form(action=`/agendas/${agenda.id}/editar` method="POST")
+    
+    // CONFIGURACIÓN GENERAL
+    div.row.g-3.mb-4.p-3.bg-light.border.rounded
+      div.col-md-6
+        label.form-label(for="duracion_turno") Duración del Turno (minutos)
+        input.form-control(type="number" name="duracion_turno" value=agenda.duracion_turno required)
+      div.col-md-6
+        label.form-label(for="max_sobreturnos") Máx. Sobreturnos
+        input.form-control(type="number" name="max_sobreturnos" value=agenda.max_sobreturnos required)
 
-      label Profesional
-      p #{agenda.nombre_completo}
+    // DISPONIBILIDAD
+    h3.mb-3 Disponibilidad Semanal
 
-      label Especialidad
-      p #{agenda.especialidad}
+    // Iteramos sobre los días de la semana
+    each dia in dias
+      div.card.mb-3
+        div.card-header
+          strong= dia.nombre
+        
+        div.card-body(id=`bloques-${dia.id}`)
+          //- Si existen horarios para este día, los renderizamos
+          if horarios[dia.id] && horarios[dia.id].length > 0
+            each h, index in horarios[dia.id]
+              div.row.g-2.align-items-center.mb-2.bloque-existente
+                input(type="hidden" name=`horarios[${dia.id}_${index}][dia]` value=dia.id)
+                
+                div.col-auto
+                  label.col-form-label Desde:
+                div.col-auto
+                  select.form-select.form-select-sm(name=`horarios[${dia.id}_${index}][desde]` required)
+                    each hora in horariosDisponibles
+                      option(value=hora selected=(hora == h.hora_inicio.slice(0,5)))= hora
+                
+                div.col-auto
+                  label.col-form-label Hasta:
+                div.col-auto
+                  select.form-select.form-select-sm(name=`horarios[${dia.id}_${index}][hasta]` required)
+                    each hora in horariosDisponibles
+                      option(value=hora selected=(hora == h.hora_fin.slice(0,5)))= hora
+                
+                div.col-auto
+                  button.btn.btn-danger.btn-sm(type="button" onclick="this.parentElement.parentElement.remove()") X
 
-      br
+        div.card-footer
+          button.btn.btn-outline-primary.btn-sm(type="button" onclick=`agregarBloque(${dia.id})`) + Agregar bloque horario
 
-      label Duración del turno (minutos)
-      input(type="number", name="duracion_turno", value=agenda.duracion_turno required)
+    div.mt-4
+      button.btn.btn-success.btn-lg(type="submit") Guardar Cambios
+      a.btn.btn-secondary.btn-lg.ms-2(href="/agendas") Cancelar
 
-      br
-      br
+  // SCRIPT PARA AGREGAR BLOQUES DINÁMICAMENTE
+  script.
+    // Traemos los horarios disponibles desde el servidor (pug variable) a JS
+    const horariosDisponibles = !{JSON.stringify(horariosDisponibles)};
+    
+    // Generamos un índice único grande para evitar colisiones con los existentes
+    let bloqueIndex = 1000;
 
-      label Máx. sobreturnos
-      input(type="number", name="max_sobreturnos", value=agenda.max_sobreturnos min="0")
+    function agregarBloque(dia) {
+      const contenedor = document.getElementById('bloques-' + dia);
 
-      br
-      br
+      const div = document.createElement('div');
+      div.className = 'row g-2 align-items-center mb-2';
 
-      // ===============================
-      // DISPONIBILIDAD SEMANAL
-      // ===============================
+      // Construir opciones del select
+      const options = horariosDisponibles
+        .map(h => `<option value="${h}">${h}</option>`)
+        .join('');
 
-      h3 Disponibilidad semanal
-
-      each dia in dias
-
-        - var bloquesDia = (horarios && horarios[dia.id]) ? horarios[dia.id] : []
-
-        div(style="margin-bottom:15px; border:1px solid #ccc; padding:10px;")
-
-          label
-            - var estaActivo = bloquesDia.length > 0
-
-            input(
-              type="checkbox"
-              class="check-dia"
-              data-dia=dia.id
-              checked=estaActivo
-            )
-            | #{dia.nombre}
-
-          div(id=`bloques-${dia.id}` style="margin-top:10px; margin-left:20px;")
-
-            each bloque in bloquesDia
-              div(style="margin-bottom:5px;")
-                input(type="hidden", name=`horarios[${bloque.id}][id]`, value=bloque.id)
-                input(type="hidden", name=`horarios[${bloque.id}][dia]`, value=dia.id)
-
-                | Desde:
-                select(
-                  name=`horarios[${bloque.id}][desde]`
-                  required
-                )
-                  each hora in horariosDisponibles
-                    option(
-                      value=hora
-                      selected=(hora === bloque.hora_inicio.substring(0,5))
-                    )= hora
-
-                | Hasta:
-                select(
-                  name=`horarios[${bloque.id}][hasta]`
-                  required
-                )
-                  each hora in horariosDisponibles
-                    option(
-                      value=hora
-                      selected=(hora === bloque.hora_fin.substring(0,5))
-                    )= hora
-
-                button(type="button", onclick="this.parentElement.remove()") X
-
-          button(
-            type="button"
-            onclick=`agregarBloque(${dia.id})`
-            style="margin-top:5px;"
-          ) + Agregar bloque
-
-      br
-      br
-
-      button(type="submit") Guardar cambios
-
-    br
-    a(href="/agendas") Cancelar
-
-    script.
-      const horariosDisponibles = !{JSON.stringify(horariosDisponibles)};
-      function agregarBloque(dia) {
-        const contenedor = document.getElementById('bloques-' + dia);
-
-        const div = document.createElement('div');
-        div.style.marginBottom = "5px";
-
-        const key = Date.now();
-
-        const opciones = `
-          ${horariosDisponibles.map(h => `<option value="${h}">${h}</option>`).join('')}
-        `;
-
-        div.innerHTML = `
-          <input type="hidden" name="horarios[${key}][dia]" value="${dia}">
-          Desde:
-          <select name="horarios[${key}][desde]" required>
-            ${opciones}
+      div.innerHTML = `
+        <input type="hidden" name="horarios[new_${bloqueIndex}][dia]" value="${dia}">
+        
+        <div class="col-auto">
+          <label class="col-form-label">Desde:</label>
+        </div>
+        <div class="col-auto">
+          <select class="form-select form-select-sm" name="horarios[new_${bloqueIndex}][desde]" required>
+            <option value="">--</option>
+            ${options}
           </select>
-          Hasta:
-          <select name="horarios[${key}][hasta]" required>
-            ${opciones}
-          </select>
-          <button type="button" onclick="this.parentElement.remove()">X</button>
-        `;
+        </div>
 
-        contenedor.appendChild(div);
-      }
+        <div class="col-auto">
+          <label class="col-form-label">Hasta:</label>
+        </div>
+        <div class="col-auto">
+          <select class="form-select form-select-sm" name="horarios[new_${bloqueIndex}][hasta]" required>
+            <option value="">--</option>
+            ${options}
+          </select>
+        </div>
+
+        <div class="col-auto">
+          <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">X</button>
+        </div>
+      `;
+
+      contenedor.appendChild(div);
+      bloqueIndex++;
+    }

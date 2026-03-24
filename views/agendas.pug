@@ -1,78 +1,62 @@
-doctype html
-html
-  head
-    title Agenda de Consultorios
-    link(rel='stylesheet', href='/styles.css')
+extends layout
 
-  body
-    h1 Agenda de Atención
+block title
+  | Agenda de Consultorios
 
-    br
-    a(href='/agendas/nueva') + Crear Agenda
-    br
-    a(href='/') + Volver al inicio
-    br
-    br
+block content
+  h1.mb-4 Agenda de Atención
 
-    form(action='/agendas', method='GET', style="margin-bottom:20px;")
-      input(
-        type='text',
-        name='buscar',
-        placeholder='Buscar por profesional o especialidad',
-        value=buscar
-      )
-      button(type='submit') Buscar
+  div.mb-3
+    a(href='/agendas/nueva' class="btn btn-primary") + Crear Agenda
+    a(href='/' class="btn btn-secondary ms-2") Volver al inicio
 
-    br
+  form(action='/agendas', method='GET', class="d-flex mb-4")
+    input.form-control.me-2(
+      type='text',
+      name='buscar',
+      placeholder='Buscar por profesional o especialidad',
+      value=buscar
+    )
+    button.btn.btn-outline-success(type='submit') Buscar
 
-    if agenda.length > 0
+  if agenda.length > 0
 
-      - let agendaActual = null
-      - const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
+    - let agendaActual = null
+    - const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
 
-      each item in agenda
+    each item in agenda
 
-        // 🔹 Cuando cambia la agenda (no el profesional)
-        if agendaActual !== item.agenda_id
-          - agendaActual = item.agenda_id
+      // 🔹 Cuando cambia la agenda (no el profesional)
+      if agendaActual !== item.agenda_id
+        - agendaActual = item.agenda_id
 
-          h2(style="margin-top:30px; border-bottom:2px solid #ccc; padding-bottom:5px;")
-            = item.nombre_completo
-
+        div.d-flex.justify-content-between.align-items-center.mt-4.border-bottom.pb-2
+          h2.h4= item.nombre_completo
           // 🔥 BOTÓN EDITAR AGENDA COMPLETA
-          a(href=`/agendas/${item.agenda_id}/editar`)
-            button(type="button", style="margin-bottom:10px;") Editar Agenda Completa
+          a.btn.btn-warning.btn-sm(href=`/agendas/${item.agenda_id}/editar`) Editar Agenda Completa
 
-        table(style="margin-bottom:15px;")
-          thead
-            tr
-              th Especialidad
-              th Día
-              th Desde
-              th Hasta
-              th Duración (min)
-              th Máx. Sobreturnos
-              th Acciones
-              th Sucursal
-
-          tbody
-            tr
-              td= item.especialidad
-              td= dias[item.dia_semana - 1]
-              td= item.hora_inicio
-              td= item.hora_fin
-              td= item.duracion_turno
-              td= item.max_sobreturnos
-              td= item.sucursal || 'Sin sucursal'
-              td
-                a(href=`/agendas/${item.agenda_id}`) Ver
-                | |
-                a(href=`/horarios/${item.horario_id}/editar`) Editar Línea
-
-    else
-      p No hay agendas cargadas.
-
-    br
-    a(href='/agendas/nueva') + Crear Agenda
-    br
-    a(href='/') + Volver al inicio
+      table.table.table-hover.mt-2
+        thead
+          tr
+            th Especialidad
+            th Día
+            th Desde
+            th Hasta
+            th Duración (min)
+            th Máx. Sobreturnos
+            th Sucursal
+            th Acciones
+        tbody
+          tr
+            td= item.especialidad
+            td= dias[item.dia_semana - 1]
+            td= item.hora_inicio
+            td= item.hora_fin
+            td= item.duracion_turno
+            td= item.max_sobreturnos
+            td= item.sucursal || 'Sin sucursal'
+            td
+              a(href=`/agendas/${item.agenda_id}` class="btn btn-info btn-sm me-1") Ver
+              
+  else
+    p.alert.alert-info No hay agendas cargadas.

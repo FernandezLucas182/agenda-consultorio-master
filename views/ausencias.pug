@@ -1,24 +1,24 @@
-doctype html
-html
-  head
-    title Ausencias
-    link(rel='stylesheet', href='/styles.css')
+extends layout
 
-  body
-    h1 Lista de Ausencias
+block title
+  | Ausencias
 
-    <a href="/" class="btn">← Volver al inicio</a>
-    br
-    a(href="/ausencias/nueva") Nueva Ausencia
+block content
+  h1 Lista de Ausencias
 
-    table
+  div.mb-3
+    a(href="/" class="btn btn-secondary me-2") ← Volver al inicio
+    a(href="/ausencias/nueva" class="btn btn-primary") Nueva Ausencia
+
+  table.table.table-striped
+    thead
       tr
         th Profesional
         th Desde
         th Hasta
         th Motivo
         th Acciones
-
+    tbody
       each a in ausencias
         tr
           td= a.nombre_completo
@@ -26,6 +26,4 @@ html
           td= a.fecha_fin
           td= a.motivo
           td
-            a(href=`/ausencias/${a.id}/editar`) Editar
-
-  <a href="/" class="btn">← Volver al inicio</a>
+            a(href=`/ausencias/${a.id}/editar` class="btn btn-sm btn-warning") Editar

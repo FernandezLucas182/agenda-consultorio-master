@@ -1,150 +1,135 @@
-doctype html
-html
-  head
-    title Nueva Agenda
-    link(rel='stylesheet', href='/styles.css')
+extends layout
 
-  body
-    h1 Crear Agenda de Atención
+block title
+  | Nueva Agenda
 
-    form(action="/agendas/nueva" method="POST")
+block content
+  h1 Crear Agenda de Atención
 
-      // ===============================
-      // DATOS GENERALES
-      // ===============================
+  form(action="/agendas/nueva" method="POST")
+    // DATOS GENERALES
+    h3.mt-4.mb-3 Datos Generales
+    div.row.g-3
+      div.col-md-6
+        label.form-label(for="profesionalSelect") Profesional
+        select.form-select(name="profesional_id" id="profesionalSelect" required)
+          option(value="" disabled selected) -- Selecciona profesional --
+          each prof in profesionales
+            option(value=prof.id)= prof.nombre_completo
 
-      label Profesional
-      select(name="profesional_id" id="profesionalSelect" required)
-        option(value="" disabled selected) -- Selecciona profesional --
-        each prof in profesionales
-          option(value=prof.id)= prof.nombre_completo
+      div.col-md-6
+        label.form-label(for="especialidadSelect") Especialidad
+        select.form-select(name="especialidad_id" id="especialidadSelect" required)
+          option(value="" disabled selected) -- Selecciona especialidad --
+          each esp in especialidades
+            option(value=esp.id)= esp.nombre
 
-      br
+      div.col-md-6
+        label.form-label(for="sucursal_id") Sucursal
+        select.form-select(name="sucursal_id" id="sucursal_id" required)
+          each sucursal in sucursales
+            option(value=sucursal.id)= sucursal.nombre
 
-      label Especialidad
-      select(name="especialidad_id" id="especialidadSelect" required)
-        option(value="" disabled selected) -- Selecciona especialidad --
-        each esp in especialidades
-          option(value=esp.id)= esp.nombre
+      div.col-md-6
+        label.form-label(for="duracion_turno") Duración del turno (minutos)
+        select.form-select(name="duracion_turno" id="duracion_turno" required)
+          option(value="" disabled selected) -- Seleccionar duración --
+          option(value="10") 10 minutos
+          option(value="20") 20 minutos
+          option(value="30") 30 minutos
+          option(value="40") 40 minutos
+          option(value="50") 50 minutos
+          option(value="60") 60 minutos
 
-      br
+    // DISPONIBILIDAD SEMANAL
+    h3.mt-5.mb-3 Disponibilidad semanal
 
-      label Sucursal
-      select(name="sucursal_id" required)
-        each sucursal in sucursales
-          option(value=sucursal.id)= sucursal.nombre
-      br
+    - const dias = [{id:1,nombre:"Lunes"},{id:2,nombre:"Martes"},{id:3,nombre:"Miércoles"},{id:4,nombre:"Jueves"},{id:5,nombre:"Viernes"},{id:6,nombre:"Sábado"},{id:7,nombre:"Domingo"}]
 
-      label Duración del turno (minutos)
-      select(name="duracion_turno" required)
-        option(value="" disabled selected) -- Seleccionar duración --
-        option(value="10") 10 minutos
-        option(value="20") 20 minutos
-        option(value="30") 30 minutos
-        option(value="40") 40 minutos
-        option(value="50") 50 minutos
-        option(value="60") 60 minutos
+    each dia in dias
+      div.card.mb-3
+        div.card-header
+          div.form-check
+            input.form-check-input.check-dia(type="checkbox" data-dia=dia.id id=`check-${dia.id}`)
+            label.form-check-label(for=`check-${dia.id}`)
+              strong #{dia.nombre}
 
-      br
-      br
+        div.card-body(id=`bloques-${dia.id}`)
+          //- Los bloques se agregarán aquí
 
-      // ===============================
-      // DISPONIBILIDAD SEMANAL
-      // ===============================
+        div.card-footer
+          button.btn.btn-outline-primary.btn-sm(type="button" onclick=`agregarBloque(${dia.id})`) + Agregar bloque horario
 
-      h3 Disponibilidad semanal
+    div.mt-4
+      button.btn.btn-success.btn-lg(type="submit") Guardar Agenda Completa
+      a.btn.btn-secondary.btn-lg.ms-2(href="/agendas") Volver
 
-      - const dias = [{id:1,nombre:"Lunes"},{id:2,nombre:"Martes"},{id:3,nombre:"Miércoles"},{id:4,nombre:"Jueves"},{id:5,nombre:"Viernes"},{id:6,nombre:"Sábado"},{id:7,nombre:"Domingo"}]
+  // SCRIPT
+  script.
+    const horariosDisponibles = [
+      "09:00","09:30","10:00","10:30","11:00","11:30",
+      "12:00","12:30","13:00",
+      "16:00","16:30","17:00","17:30","18:00","18:30",
+      "19:00","19:30","20:00","20:30","21:00"
+    ];
+    let bloqueIndex = 0;
 
-      each dia in dias
-        div(style="margin-bottom:15px; border:1px solid #ccc; padding:10px;")
-          label
-            input(type="checkbox" class="check-dia" data-dia=dia.id)
-            | #{dia.nombre}
+    const profesionalSelect = document.getElementById('profesionalSelect');
+    const especialidadSelect = document.getElementById('especialidadSelect');
 
-          div(id=`bloques-${dia.id}` style="margin-top:10px; margin-left:20px;")
+    profesionalSelect.addEventListener('change', async () => {
+      const profesionalId = profesionalSelect.value;
 
-          button(
-            type="button"
-            onclick="agregarBloque(" + dia.id + ")"
-            style="margin-top:5px;"
-          ) + Agregar bloque
+      especialidadSelect.innerHTML = '<option disabled selected>Cargando...</option>';
 
-      br
-      br
+      try {
+        const res = await fetch(`/profesionales/${profesionalId}/especialidades`);
+        const data = await res.json();
 
-      button(type="submit") Guardar Agenda Completa
+        especialidadSelect.innerHTML = '<option disabled selected>Selecciona especialidad</option>';
 
-    br
-    a(href="/agendas") Volver
+        data.forEach(e => {
+          const option = document.createElement('option');
+          option.value = e.id;
+          option.textContent = e.nombre;
+          especialidadSelect.appendChild(option);
+        });
 
-      // ===============================
-    // SCRIPT
-    // ===============================
-
-    script.
-      const horariosDisponibles = [
-        "09:00","09:30","10:00","10:30","11:00","11:30",
-        "12:00","12:30","13:00",
-        "16:00","16:30","17:00","17:30","18:00","18:30",
-        "19:00","19:30","20:00","20:30","21:00"
-      ];
-      let bloqueIndex = 0;
-
-      const profesionalSelect = document.getElementById('profesionalSelect');
-      const especialidadSelect = document.getElementById('especialidadSelect');
-
-      profesionalSelect.addEventListener('change', async () => {
-        const profesionalId = profesionalSelect.value;
-
-        especialidadSelect.innerHTML = '<option disabled selected>Cargando...</option>';
-
-        try {
-          const res = await fetch(`/profesionales/${profesionalId}/especialidades`);
-          const data = await res.json();
-
-          especialidadSelect.innerHTML = '<option disabled selected>Selecciona especialidad</option>';
-
-          data.forEach(e => {
-            const option = document.createElement('option');
-            option.value = e.id;
-            option.textContent = e.nombre;
-            especialidadSelect.appendChild(option);
-          });
-
-        } catch (err) {
-          console.error(err);
-          especialidadSelect.innerHTML = '<option disabled>Error cargando</option>';
-        }
-      });
-
-      function agregarBloque(dia) {
-        const contenedor = document.getElementById('bloques-' + dia);
-
-        const div = document.createElement('div');
-        div.style.marginBottom = "5px";
-
-        const options = horariosDisponibles
-          .map(h => `<option value="${h}">${h}</option>`)
-          .join('');
-
-        div.innerHTML = `
-          <input type="hidden" name="horarios[${bloqueIndex}][dia]" value="${dia}">
-          Desde:
-          <select name="horarios[${bloqueIndex}][desde]" required>
-            <option value="">--</option>
-            ${options}
-          </select>
-
-          Hasta:
-          <select name="horarios[${bloqueIndex}][hasta]" required>
-            <option value="">--</option>
-            ${options}
-          </select>
-
-          <button type="button" onclick="this.parentElement.remove()">X</button>
-        `;
-
-        contenedor.appendChild(div);
-        bloqueIndex++;
+      } catch (err) {
+        console.error(err);
+        especialidadSelect.innerHTML = '<option disabled>Error cargando</option>';
       }
+    });
+
+    function agregarBloque(dia) {
+      const contenedor = document.getElementById('bloques-' + dia);
+
+      const div = document.createElement('div');
+      div.className = 'row g-2 align-items-center mb-2';
+
+      const options = horariosDisponibles
+        .map(h => `<option value="${h}">${h}</option>`)
+        .join('');
+
+      div.innerHTML = `
+        <input type="hidden" name="horarios[${bloqueIndex}][dia]" value="${dia}">
+        <div class="col-auto"><label class="col-form-label">Desde:</label></div>
+        <div class="col-auto">
+          <select class="form-select form-select-sm" name="horarios[${bloqueIndex}][desde]" required>
+            <option value="">--</option>${options}
+          </select>
+        </div>
+        <div class="col-auto"><label class="col-form-label">Hasta:</label></div>
+        <div class="col-auto">
+          <select class="form-select form-select-sm" name="horarios[${bloqueIndex}][hasta]" required>
+            <option value="">--</option>${options}
+          </select>
+        </div>
+        <div class="col-auto">
+          <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">X</button>
+        </div>
+      `;
+
+      contenedor.appendChild(div);
+      bloqueIndex++;
+    }

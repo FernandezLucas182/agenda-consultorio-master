@@ -1,34 +1,30 @@
-doctype html
-html
-  head
-    title Nueva Ausencia
-    link(rel='stylesheet', href='/styles.css')
+extends layout
 
-  body
-    h1 Registrar Ausencia
+block title
+  | Nueva Ausencia
 
-    form(action="/ausencias/nueva" method="POST")
+block content
+  h1 Registrar Nueva Ausencia
 
-      label Profesional:
-      select(name="profesional_id" required)
+  form(action="/ausencias/nueva" method="POST")
+    div.mb-3
+      label.form-label(for="profesional_id") Profesional
+      select.form-select(name="profesional_id" id="profesional_id" required)
+        option(value="" disabled selected) -- Seleccione Profesional --
         each prof in profesionales
           option(value=prof.id)= prof.nombre_completo
 
-      br
+    div.row.g-3.mb-3
+      div.col-md-6
+        label.form-label(for="fecha_inicio") Fecha Inicio
+        input.form-control(type="date" name="fecha_inicio" id="fecha_inicio" required)
+      div.col-md-6
+        label.form-label(for="fecha_fin") Fecha Fin
+        input.form-control(type="date" name="fecha_fin" id="fecha_fin" required)
 
-      label Fecha Inicio:
-      input(type="date" name="fecha_inicio" required)
+    div.mb-3
+      label.form-label(for="motivo") Motivo
+      input.form-control(type="text" name="motivo" id="motivo" placeholder="Ej: Vacaciones, Enfermedad, Congreso")
 
-      br
-
-      label Fecha Fin:
-      input(type="date" name="fecha_fin" required)
-
-      br
-
-      label Motivo:
-      input(type="text" name="motivo")
-
-      br
-
-      button(type="submit") Guardar Ausencia
+    button.btn.btn-primary(type="submit") Registrar Ausencia
+    a.btn.btn-secondary.ms-2(href="/ausencias") Cancelar

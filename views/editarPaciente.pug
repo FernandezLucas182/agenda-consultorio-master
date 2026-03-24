@@ -1,41 +1,28 @@
-doctype html
-html
-  head
-    title Editar Paciente
-    link(rel='stylesheet', href='/styles.css')
-  body
-    h1 Editar Paciente
+extends layout
 
-    if paciente
-      form(action=`/pacientes/${paciente.id}/editar`, method='POST')
-        
-        div
-          label(for="nombre") Nombre:
-          input(type="text", name="nombre", value=paciente.nombre, required)
+block title
+  | Editar Paciente
 
-        div
-          label(for="dni") DNI:
-          input(type="text", name="dni", value=paciente.dni, required)
+block content
+  h1 Editar Paciente
 
-        div
-          label(for="obra_social") Obra Social:
-          input(type="text", name="obra_social", value=paciente.obra_social)
+  form(action=`/pacientes/${paciente.id}/editar` method="POST")
+    div.mb-3
+      label.form-label(for="nombre") Nombre Completo
+      input.form-control(type="text" id="nombre" name="nombre" value=paciente.nombre required)
 
-        div
-          label(for="contacto") Contacto:
-          input(type="text", name="contacto", value=paciente.contacto)
+    div.mb-3
+      label.form-label(for="dni") DNI
+      input.form-control(type="text" id="dni" name="dni" value=paciente.dni required)
 
-        div
-          label(for="activo") Estado:
-          select(name="activo")
-            option(value="1", selected=paciente.activo == 1) Activo
-            option(value="0", selected=paciente.activo == 0) Inactivo
+    div.mb-3
+      label.form-label(for="obra_social") Obra Social
+      input.form-control(type="text" id="obra_social" name="obra_social" value=paciente.obra_social)
 
-        br
-        button(type="submit") Guardar cambios
+    div.mb-3
+      label.form-label(for="contacto") Contacto (Teléfono/Email)
+      input.form-control(type="text" id="contacto" name="contacto" value=paciente.contacto)
 
-      br
-      a(href='/pacientes') Volver a la lista
-
-    else
-      p Paciente no encontrado.
+    div.mt-4
+      button.btn.btn-success(type="submit") Guardar Cambios
+      a.btn.btn-secondary.ms-2(href="/pacientes") Cancelar

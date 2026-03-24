@@ -1,19 +1,46 @@
-doctype html
-html
-  head
-    title Detalle Agenda
-    link(rel='stylesheet', href='/styles.css')
+extends layout
 
-  body
-    h1 Detalle de Agenda
+block title
+  | Detalle de Agenda
 
-    each item in agenda
-      h2 #{item.nombre_completo} - #{item.especialidad}
-      p Duración turno: #{item.duracion_turno} minutos
-      p Día: #{item.dia_semana}
-      p Horario: #{item.hora_inicio} - #{item.hora_fin}
-      hr
+block content
+  if agenda && agenda.length > 0
+    - const datos = agenda[0]
+    - const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
 
-    br
-    a(href="/agendas")
-      button(type="button") Volver
+    div.d-flex.justify-content-between.align-items-center.mb-4
+      h1 Agenda de #{datos.nombre_completo}
+      div
+        a.btn.btn-warning(href=`/agendas/${datos.agenda_id}/editar`) Editar Configuración
+        a.btn.btn-secondary.ms-2(href="/agendas") Volver
+
+    div.card.mb-4
+      div.card-body
+        div.row
+          div.col-md-4
+            strong Especialidad: 
+            | #{datos.especialidad}
+          div.col-md-4
+            strong Sucursal: 
+            | #{datos.sucursal || 'No asignada'}
+          div.col-md-4
+            strong Duración Turno: 
+            | #{datos.duracion_turno} min
+
+    h3.mb-3 Horarios Configurados
+    div.table-responsive
+      table.table.table-bordered.table-striped
+        thead.table-dark
+          tr
+            th Día
+            th Hora Inicio
+            th Hora Fin
+        tbody
+          each item in agenda
+            tr
+              td= dias[item.dia_semana - 1]
+              td= item.hora_inicio
+              td= item.hora_fin
+  else
+    div.alert.alert-warning No se encontró información para esta agenda.
+    a.btn.btn-secondary(href="/agendas") Volver

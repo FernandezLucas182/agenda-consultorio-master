@@ -94,7 +94,6 @@ class Profesional {
     SET nombre_completo = ?, matricula = ?
     WHERE id = ?
   `;
-
   db.query(
     profesionalQuery,
     [nombre, matricula, id],
@@ -168,28 +167,32 @@ class Profesional {
   // PROFESIONAL POR ID
   // ==========================
   static obtenerPorId(id, callback) {
-    const query = `
-  SELECT p.id, p.nombre_completo, p.matricula, p.estado, 
-         GROUP_CONCAT(e.id) AS especialidades
-  FROM profesionales p
-  LEFT JOIN profesional_especialidad pe ON p.id = pe.profesional_id
-  LEFT JOIN especialidades e ON pe.especialidad_id = e.id
-  WHERE p.id = ?
-  GROUP BY p.id
-`;
 
-    db.query(query, [id], (err, resultados) => {
-      if (err) return callback(err);
-      if (!resultados.length) return callback(null, null);
+  console.log("🟡 ID RECIBIDO EN obtenerPorId:", id); // 👈 LOG 1
 
-      const profesional = resultados[0];
-      profesional.especialidades = typeof profesional.especialidades === 'string'
-        ? profesional.especialidades.split(',')
-        : [];
+  const query = `
+    SELECT p.id, p.nombre_completo, p.matricula, p.estado
+    FROM profesionales p
+    WHERE p.id = ?
+  `;
 
-      callback(null, profesional);
-    });
-  }
+  db.query(query, [id], (err, resultados) => {
+
+    if (err) {
+      console.error("🔴 ERROR EN QUERY:", err); // 👈 LOG 2
+      return callback(err);
+    }
+
+    console.log("🟢 RESULTADOS QUERY:", resultados); // 👈 LOG 3
+
+    if (!resultados.length) {
+      console.log("⚠️ NO SE ENCONTRÓ PROFESIONAL"); // 👈 LOG 4
+      return callback(null, null);
+    }
+
+    callback(null, resultados[0]);
+  });
+}
 
 }
 

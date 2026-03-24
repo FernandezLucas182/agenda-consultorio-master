@@ -1,0 +1,30 @@
+extends layout
+
+block title
+  | Detalle del Paciente
+
+block content
+  div.card
+    div.card-header
+      h2.h4.mb-0 Detalle del Paciente
+    div.card-body
+      div.row.mb-3
+        div.col-sm-3.fw-bold ID:
+        div.col-sm-9= paciente.id
+      div.row.mb-3
+        div.col-sm-3.fw-bold Nombre:
+        div.col-sm-9= paciente.nombre
+      div.row.mb-3
+        div.col-sm-3.fw-bold DNI:
+        div.col-sm-9= paciente.dni
+      div.row.mb-3
+        div.col-sm-3.fw-bold Obra Social:
+        div.col-sm-9= paciente.obra_social
+      div.row.mb-3
+        div.col-sm-3.fw-bold Contacto:
+        div.col-sm-9= paciente.contacto
+      
+    div.card-footer
+      a.btn.btn-warning(href=`/pacientes/${paciente.id}/editar`) Editar
+      a.btn.btn-secondary.ms-2(href="/pacientes") Volver a la lista
+      a.btn.btn-primary.ms-2(href=`/turnos/nuevo?paciente_id=${paciente.id}`) Asignar Turno

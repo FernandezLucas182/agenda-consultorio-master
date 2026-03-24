@@ -1,51 +1,33 @@
-doctype html
-html
-  head
-    title Editar Ausencia
-    link(rel='stylesheet', href='/styles.css')
+extends layout
 
-  body
-    h1 Editar Ausencia
+block title
+  | Editar Ausencia
 
-    form(method="POST", action=`/ausencias/${ausencia.id}/editar`)
+block content
+  h1 Editar Ausencia
 
-      label Profesional:
-      select(name="profesional_id" required)
-        each p in profesionales
-          option(
-            value=p.id
-            selected=(p.id == ausencia.profesional_id)
-          )= p.nombre_completo
+  form(action=`/ausencias/${ausencia.id}/editar` method="POST")
+    div.mb-3
+      label.form-label(for="profesional_id") Profesional
+      select.form-select(name="profesional_id" id="profesional_id" required)
+        each prof in profesionales
+          option(value=prof.id selected=(prof.id == ausencia.profesional_id))= prof.nombre_completo
 
-      br
+    div.row.g-3.mb-3
+      div.col-md-6
+        label.form-label(for="fecha_inicio") Fecha Inicio
+        //- Asumiendo que el controlador envía la fecha en formato YYYY-MM-DD
+        input.form-control(type="date" name="fecha_inicio" id="fecha_inicio" value=ausencia.fecha_inicio required)
+      
+      div.col-md-6
+        label.form-label(for="fecha_fin") Fecha Fin
+        //- Asumiendo que el controlador envía la fecha en formato YYYY-MM-DD
+        input.form-control(type="date" name="fecha_fin" id="fecha_fin" value=ausencia.fecha_fin required)
 
-      label Fecha Inicio:
-      input(
-        type="date",
-        name="fecha_inicio",
-        value=ausencia.fecha_inicio ? new Date(ausencia.fecha_inicio).toISOString().split('T')[0] : ''
-        required
-      )
+    div.mb-3
+      label.form-label(for="motivo") Motivo
+      input.form-control(type="text" name="motivo" id="motivo" value=ausencia.motivo)
 
-      br
-
-      label Fecha Fin:
-      input(
-        type="date",
-        name="fecha_fin",
-        value=ausencia.fecha_fin ? new Date(ausencia.fecha_fin).toISOString().split('T')[0] : ''
-        required
-      )
-
-      br
-
-      label Motivo:
-      input(type="text", name="motivo", value=ausencia.motivo required)
-
-      br
-      br
-
-      button(type="submit") Guardar Cambios
-
-    br
-    a(href="/ausencias") Volver
+    div.mt-4
+      button.btn.btn-warning(type="submit") Actualizar Ausencia
+      a.btn.btn-secondary.ms-2(href="/ausencias") Cancelar

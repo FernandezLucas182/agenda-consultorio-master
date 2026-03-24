@@ -1,37 +1,28 @@
-doctype html
-html
-  head
-    title Editar Profesional
-    link(rel='stylesheet', href='/styles.css')
-    
-  body
-    .container
-      h1 Editar Profesional
+extends layout
 
-      form(action=`/profesionales/${profesional.id}/editar` method="POST")
-        div
-          label(for="nombre_completo") Nombre Completo
-          input(type="text" name="nombre_completo" value=profesional.nombre_completo required)
+block title
+  | Editar Profesional
 
-        div
-          label(for="matricula") Matrícula
-          input(type="text" name="matricula" value=profesional.matricula required)
+block content
+  h1 Editar Profesional
 
-        div
-          label Especialidades
-          .checkbox-group
-            each especialidad in especialidades
-              div
-                label
-                  input(
-                    type="checkbox"
-                    name="especialidades"
-                    value=especialidad.id
-                    checked=profesional.especialidades.includes(String(especialidad.id))
-                  )
-                  | #{especialidad.nombre}
+  form(action=`/profesionales/${profesional.id}/editar` method="POST")
+    div.mb-3
+      label.form-label(for="nombre_completo") Nombre Completo
+      input.form-control(type="text" id="nombre_completo" name="nombre_completo" value=profesional.nombre_completo required)
 
-        div
-          button(type="submit" class="button") Guardar Cambios
+    div.mb-3
+      label.form-label(for="matricula") Matrícula
+      input.form-control(type="text" id="matricula" name="matricula" value=profesional.matricula required)
 
-      a(href="/profesionales" class="button") Volver a la Lista
+    div.mb-3
+      label.form-label Especialidades
+      select.form-select(name="especialidades[]" multiple size="5")
+        each especialidad in especialidades
+          - const selected = especialidadesAsignadas.some(e => e.id === especialidad.id)
+          option(value=especialidad.id selected=selected)= especialidad.nombre
+      div.form-text Mantén presionada la tecla Ctrl (o Cmd) para seleccionar múltiples.
+
+    div.mt-4
+      button.btn.btn-primary(type="submit") Guardar Cambios
+      a.btn.btn-secondary.ms-2(href="/profesionales") Cancelar

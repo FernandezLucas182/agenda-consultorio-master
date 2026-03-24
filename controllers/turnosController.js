@@ -273,7 +273,7 @@ exports.obtenerHorariosDisponibles = (req, res) => {
       }
 
       if (!bloques || !bloques.length) {
-        return res.json({ motivo: 'sin_agenda' });
+        return res.json({ motivo: 'no_trabaja' });
       }
 
       const fechaSQL = fecha.split('T')[0];
@@ -360,6 +360,8 @@ exports.mostrarFormularioEditarTurno = (req, res) => {
                 return res.status(500).send('Error cargando formulario');
               }
 
+              turno.fecha = new Date(turno.fecha).toISOString().split('T')[0];
+              turno.hora = turno.hora.slice(0,5);
               res.render('editarTurno', {
                 turno,
                 pacientes: pacientes || [],
@@ -384,8 +386,10 @@ exports.mostrarFormularioEditarTurno = (req, res) => {
 exports.editarTurno = (req, res) => {
 
   Turno.actualizar(req.params.id, req.body, (err) => {
-    if (err) return res.status(500).send('Error actualizando turno');
-    res.redirect('/turnos');
+    if (err) {
+      console.error("ERROR REAL AL ACTUALIZAR:", err);
+      return res.status(500).send(err.message);
+    }
   });
 
 };

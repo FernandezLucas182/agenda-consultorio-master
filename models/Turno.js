@@ -30,6 +30,32 @@ class Turno {
     db.query(sql, callback);
   }
 
+  //=======================
+  //Obtener Por Id
+  //=======================
+  static obtenerPorId(id, callback) {
+    const sql = `
+    SELECT 
+      t.*,
+      p.nombre AS paciente_nombre,
+      pr.nombre_completo AS profesional_nombre,
+      e.nombre AS especialidad_nombre,
+      s.nombre AS sucursal_nombre
+    FROM turnos t
+    JOIN pacientes p ON t.paciente_id = p.id
+    JOIN profesionales pr ON t.profesional_id = pr.id
+    JOIN especialidades e ON t.especialidad_id = e.id
+    JOIN sucursales s ON t.sucursal_id = s.id
+    WHERE t.id = ?
+  `;
+
+    db.query(sql, [id], (err, rows) => {
+      if (err) return callback(err);
+      callback(null, rows[0]);
+    });
+  }
+
+
   static crear(data, callback) {
     db.query(
       `INSERT INTO turnos
