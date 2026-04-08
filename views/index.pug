@@ -4,13 +4,46 @@ block title
   = title
 
 block content
+
+  // Header superior
+  header.main-header
+    .container.text-center
+      h1.titulo-sistema Bienvenido al Sistema de Gestión de Consultas Médicas
+
+  // Contenido existente
   div.text-center.mt-5
     h1= message
-    p.lead Bienvenido al sistema de gestión de consultas médicas.
     
-    div.list-group.d-inline-flex.flex-column.mt-4.w-50
-      a.list-group-item.list-group-item-action(href='/turnos') Gestionar Turnos
-      a.list-group-item.list-group-item-action(href='/profesionales') Gestionar Profesionales
-      a.list-group-item.list-group-item-action(href='/pacientes') Gestionar Pacientes
-      a.list-group-item.list-group-item-action(href='/agendas') Gestionar Agendas
-      a.list-group-item.list-group-item-action(href="/ausencias") Gestionar Ausencias
+    
+    .container.mt-5
+  .row.justify-content-center.g-4
+
+    // Turnos
+    .col-md-4
+      a.card.dashboard-card.text-center(href='/turnos')
+        h5 Gestionar Turnos
+        img.icono.mt-3(src='/img/turnos.png')
+
+    // Profesionales
+    .col-md-4
+      a.card.dashboard-card.text-center(href='/profesionales')
+        h5 Gestionar Profesionales
+        img.icono.mt-3(src='/img/profesionales.png')
+
+    // Pacientes
+    .col-md-4
+      a.card.dashboard-card.text-center(href='/pacientes')
+        h5 Gestionar Pacientes
+        img.icono.mt-3(src='/img/pacientes.png')
+
+    // Agendas
+    .col-md-4
+      a.card.dashboard-card.text-center(href='/agendas')
+        h5 Gestionar Agendas
+        img.icono.mt-3(src='/img/agendas.png')
+
+    // Ausencias
+    .col-md-4
+      a.card.dashboard-card.text-center(href='/ausencias')
+        h5 Gestionar Ausencias
+        img.icono.mt-3(src='/img/ausencias.png')

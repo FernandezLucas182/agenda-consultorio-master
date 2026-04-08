@@ -194,6 +194,23 @@ class Profesional {
   });
 }
 
+// ==========================
+// SUCURSALES POR PROFESIONAL ✅ NUEVO
+// ==========================
+static obtenerSucursales(profesionalId, callback) {
+  const query = `
+    SELECT s.id, s.nombre
+    FROM profesional_sucursal ps
+    JOIN sucursales s ON ps.sucursal_id = s.id
+    WHERE ps.profesional_id = ?
+  `;
+
+  db.query(query, [profesionalId], (err, resultados) => {
+    if (err) return callback(err);
+    callback(null, resultados || []);
+  });
+}
+
 }
 
 module.exports = Profesional;

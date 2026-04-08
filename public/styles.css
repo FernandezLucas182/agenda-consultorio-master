@@ -1,7 +1,27 @@
 /* General styles */
+/* General styles */
 body {
   background-color: #f0f0f5;
   padding: 20px;
+
+  /* 👇 AGREGADO */
+  background-image: url('img/fondo.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+
+  position: relative;
+  z-index: 0;
+}
+
+/* 👇 AGREGAR ESTO (no reemplaza nada) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: -1;
 }
 
 /* Estilos personalizados que quieras mantener o sobreescribir de Bootstrap */
@@ -32,4 +52,84 @@ h1 {
 .btn-success:hover {
   background-color: #27ae60;
   border-color: #27ae60;
+}
+
+/* ========================= */
+/* HEADER (AGREGADO NUEVO) */
+/* ========================= */
+
+.main-header {
+  background: rgba(44, 62, 80, 0.85);
+  backdrop-filter: blur(6px);
+  padding: 20px 0;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.titulo-sistema {
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Navbar personalizada */
+.navbar {
+  background: rgba(0, 0, 0, 0.9) !important; /* negro elegante */
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.navbar-brand {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.nav-link {
+  transition: 0.2s;
+}
+
+.nav-link:hover {
+  color: #2ecc71 !important;
+}
+
+.logo-navbar {
+  width: 60px;          /* tamaño del logo */
+  height: 60px;
+  object-fit: contain;
+
+  position: relative;
+  top: 10px;            /* hace que sobresalga hacia abajo */
+}
+
+
+/* Cards del dashboard */
+.dashboard-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 30px 20px;
+  text-decoration: none;
+  color: #2c3e50;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+/* Hover (efecto pro) */
+.dashboard-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+  color: #2ecc71;
+}
+
+/* Iconos */
+.icono {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
 }
