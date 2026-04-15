@@ -11,6 +11,7 @@ const profesionalController = require('../controllers/profesionalController');
 const authController = require('../controllers/authController');
 const pacienteController = require('../controllers/pacienteController');
 const ausenciasController = require('../controllers/ausenciasController');
+const profesionalesController = require('../controllers/profesionalController');
 
 console.log("Agenda:", Object.keys(agendaController));
 console.log("Turnos:", Object.keys(turnosController));
@@ -119,6 +120,16 @@ router.post('/profesionales/:id/editar', profesionalController.editarProfesional
 
 router.post('/profesionales/:id/inactivar', profesionalController.inactivarProfesional);
 router.post('/profesionales/:id/activar', profesionalController.activarProfesional);
+
+
+//==========================
+//SUCURSALES-PROFESIONAL
+//==========================
+
+router.get('/profesionales/:id/sucursales', profesionalController.obtenerSucursalesPorProfesional);
+
+
+
 
 //=======================
 //PACIENTES

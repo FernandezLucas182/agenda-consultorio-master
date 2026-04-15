@@ -15,10 +15,25 @@ block content
       //- Paciente
       div.col-md-6
         label.form-label(for="paciente_id") Paciente
-        select.form-select(name="paciente_id" id="paciente_id" required)
-          option(value="" disabled selected) -- Seleccione Paciente --
+
+        select.form-select(
+          name="paciente_id"
+          id="paciente_id"
+          required
+          disabled=(pacienteSeleccionado ? true : false)
+        )
+          if !pacienteSeleccionado
+            option(value="" disabled selected) -- Seleccione Paciente --
+
           each paciente in pacientes
-            option(value=paciente.id)= paciente.nombre
+            option(
+              value=paciente.id
+              selected=(pacienteSeleccionado && paciente.id == pacienteSeleccionado.id)
+            )= paciente.nombre
+
+        //- 🔴 Esto asegura que se envíe el dato aunque esté disabled
+        if pacienteSeleccionado
+          input(type="hidden" name="paciente_id" value=pacienteSeleccionado.id)
 
       //- Especialidad
       div.col-md-6
@@ -34,13 +49,7 @@ block content
         select.form-select(name="profesional_id" id="profesional_id" required disabled)
           option(value="" disabled selected) -- Primero seleccione especialidad --
 
-      //- Sucursal
-      div.col-md-6
-        label.form-label(for="sucursal_id") Sucursal
-        select.form-select(name="sucursal_id" id="sucursal_id" required)
-          each sucursal in sucursales
-             option(value=sucursal.id)= sucursal.nombre
-
+      
       //- Fecha
       div.col-md-6
         label.form-label(for="fecha") Fecha
@@ -77,7 +86,7 @@ block content
     // 1. Pre-seleccionar paciente si viene en la URL (desde detallePaciente)
     const urlParams = new URLSearchParams(window.location.search);
     const pacienteIdParam = urlParams.get('paciente_id');
-    if (pacienteIdParam && pacienteSelect) {
+    if (pacienteIdParam && pacienteSelect && !pacienteSelect.disabled) {
       pacienteSelect.value = pacienteIdParam;
     }
 
@@ -114,7 +123,7 @@ block content
       const profesionalId = profesionalSelect.value;
       const fecha = fechaInput.value;
 
-      mensajeDiv.innerHTML = ''; // 👈 ESTE ES EL PASO 2
+      mensajeDiv.innerHTML = '';
 
       if (!profesionalId || !fecha) return;
 

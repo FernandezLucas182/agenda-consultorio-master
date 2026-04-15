@@ -35,6 +35,18 @@ class Paciente {
       callback
     );
   }
+  
+  
+  static buscarPorDni(dni, callback) {
+  db.query(
+    'SELECT * FROM pacientes WHERE dni LIKE ?',
+    [`%${dni}%`],
+    (err, resultados) => {
+      if (err) return callback(err);
+      callback(null, resultados);
+    }
+  );
+}
 
 }
 

@@ -5,12 +5,23 @@ block title
 
 block content
   h1 Pacientes
-  if pacientes.length > 0
+
+  form(method="GET" action="/pacientes")
+    .row.mb-3
+      .col-md-4
+        input.form-control(type="text" name="dni" placeholder="Buscar por DNI")
+      .col-md-2
+        button.btn.btn-primary(type="submit") Buscar
+
+  if pacientes.length === 0
+    p.alert.alert-warning Paciente no encontrado.
+    a.btn.btn-primary(href="/pacientes/nuevo") Crear nuevo paciente
+  else
     table.table.table-striped
       thead
         tr
           th ID
-          th Nombre
+          th Nombre Completo
           th DNI
           th Obra Social
           th Contacto
@@ -25,10 +36,9 @@ block content
             td= paciente.contacto
             td
               a(href=`/pacientes/${paciente.id}` class="btn btn-info btn-sm me-1") Ver Detalle
-              a(href=`/pacientes/${paciente.id}/editar` class="btn btn-warning btn-sm") Editar
-  else
-    p.alert.alert-info No hay pacientes disponibles.
-  
+              a(href=`/pacientes/${paciente.id}/editar` class="btn btn-warning btn-sm me-1") Editar
+              a(href=`/turnos/nuevo?paciente_id=${paciente.id}` class="btn btn-success btn-sm") Asignar Turno
+
   div.mt-3
     a(href='/pacientes/nuevo' class="btn btn-primary") Crear nuevo paciente
     a(href='/' class="btn btn-secondary ms-2") Volver al inicio

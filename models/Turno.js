@@ -263,8 +263,8 @@ class Turno {
 //Obtener Agenda x id
 //===========================
 
-static obtenerAgendaId(profesional_id, callback) {
-  const sql = `
+  static obtenerAgendaId(profesional_id, callback) {
+    const sql = `
     SELECT id
     FROM agendas
     WHERE profesional_id = ?
@@ -272,17 +272,77 @@ static obtenerAgendaId(profesional_id, callback) {
     LIMIT 1
   `;
 
-  db.query(sql, [profesional_id], (err, rows) => {
-    if (err) return callback(err);
-    callback(null, rows[0]?.id);
-  });
-}
+    db.query(sql, [profesional_id], (err, rows) => {
+      if (err) return callback(err);
+      callback(null, rows[0]?.id);
+    });
+  }
 
-//============================
-//SOBRETURNOS
-//============================
-static contarSobreturnosEnHora(profesional_id, fecha, hora, callback) {
-  const sql = `
+  
+  //============================
+  // OBTENER SUCURSAL POR AGENDA
+  //============================
+  static obtenerSucursalPorAgenda(agenda_id, callback) {
+    const sql = `
+    SELECT sucursal_id
+    FROM agendas
+    WHERE id = ?
+  `;
+
+    db.query(sql, [agenda_id], (err, rows) => {
+      if (err) return callback(err);
+
+      if (!rows.length || !rows[0].sucursal_id) {
+        return callback(null, null);
+      }
+
+      callback(null, rows[0].sucursal_id);
+    });
+  }
+
+
+  //============================
+  // VALIDAR HORA DENTRO DE AGENDA
+  //============================
+  static validarHoraEnAgenda(profesional_id, fecha, hora, callback) {
+
+    const fechaObj = new Date(fecha);
+    let diaJS = fechaObj.getDay();
+    let diaBD = diaJS === 0 ? 7 : diaJS;
+
+    const sql = `
+    SELECT ah.hora_inicio, ah.hora_fin
+    FROM agenda_horarios ah
+    INNER JOIN agendas a ON a.id = ah.agenda_id
+    WHERE a.profesional_id = ?
+      AND ah.dia_semana = ?
+  `;
+
+    db.query(sql, [profesional_id, diaBD], (err, rows) => {
+
+      if (err) return callback(err);
+
+      if (!rows.length) {
+        return callback(null, false);
+      }
+
+      const dentro = rows.some(bloque => {
+        return hora >= bloque.hora_inicio && hora < bloque.hora_fin;
+      });
+
+      callback(null, dentro);
+
+    });
+
+  }
+
+
+
+  //============================
+  //SOBRETURNOS
+  //============================
+  static contarSobreturnosEnHora(profesional_id, fecha, hora, callback) {
+    const sql = `
     SELECT COUNT(*) as total
     FROM turnos
     WHERE profesional_id = ?
@@ -292,12 +352,56 @@ static contarSobreturnosEnHora(profesional_id, fecha, hora, callback) {
       AND estado IN ('reservado','confirmado')
   `;
 
-  db.query(sql, [profesional_id, fecha, hora], (err, rows) => {
-    if (err) return callback(err);
-    callback(null, rows[0].total);
-  });
-}
+    db.query(sql, [profesional_id, fecha, hora], (err, rows) => {
+      if (err) return callback(err);
+      callback(null, rows[0].total);
+    });
+  }
 
+  //============================
+  //OBTENER SUCURSAL DEL PROFESIONAL
+  //============================
+  static obtenerSucursalPorProfesional(profesional_id, callback) {
+    const sql = `
+    SELECT sucursal_id
+    FROM profesional_sucursal
+    WHERE profesional_id = ?
+    LIMIT 1
+  `;
+
+    db.query(sql, [profesional_id], (err, rows) => {
+      if (err) return callback(err);
+
+      if (!rows.length) {
+        return callback(null, null);
+      }
+
+      callback(null, rows[0].sucursal_id);
+    });
+  }
+
+  //============================
+  // VALIDAR AGENDA DEL PROFESIONAL
+  //============================
+  static validarAgendaDeProfesional(agenda_id, profesional_id, callback) {
+    const sql = `
+    SELECT id
+    FROM agendas
+    WHERE id = ?
+      AND profesional_id = ?
+      AND activo = 1
+  `;
+
+    db.query(sql, [agenda_id, profesional_id], (err, rows) => {
+      if (err) return callback(err);
+
+      if (!rows.length) {
+        return callback(null, false);
+      }
+
+      callback(null, true);
+    });
+  }
 
 }
 

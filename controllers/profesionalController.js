@@ -174,3 +174,20 @@ exports.activarProfesional = (req, res) => {
     res.redirect('/profesionales');
   });
 };
+
+
+// ==========================
+// DEVOLVER SUCURSALES POR PROFESIONAL (API) 🔥
+// ==========================
+exports.obtenerSucursalesPorProfesional = (req, res) => {
+  const profesionalId = req.params.id;
+
+  Profesional.obtenerSucursalesPorProfesional(profesionalId, (err, sucursales) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Error al obtener sucursales' });
+    }
+
+    res.json(sucursales);
+  });
+};

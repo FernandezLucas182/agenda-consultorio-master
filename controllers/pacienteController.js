@@ -1,23 +1,35 @@
 const Paciente = require('../models/Paciente');
 
-// Mostrar todos los pacientes
+// Mostrar todos los pacientes //Busqueda por dni
 exports.mostrarPacientes = (req, res) => {
-  Paciente.obtenerTodos((err, pacientes) => {
-    if (err) {
-      return res.status(500).send('Error al obtener pacientes.');
-    }
-    res.render('pacientes', { pacientes });
-  });
+  const dni = req.query.dni;
+
+  if (dni) {
+    Paciente.buscarPorDni(dni, (err, pacientes) => {
+      if (err) return res.status(500).send('Error');
+
+      res.render('pacientes', { pacientes });
+    });
+  } else {
+    Paciente.obtenerTodos((err, pacientes) => {
+      if (err) return res.status(500).send('Error');
+
+      res.render('pacientes', { pacientes });
+    });
+  }
 };
 
 // Crear un nuevo paciente
 exports.crearPaciente = (req, res) => {
   const pacienteData = req.body;
-  Paciente.crear(pacienteData, (err) => {
-    if (err) {
-      return res.status(500).send('Error al crear paciente.');
-    }
-    res.redirect('/pacientes');
+
+  Paciente.crear(pacienteData, (err, result) => {
+    if (err) return res.status(500).send('Error');
+
+    const pacienteId = result.insertId;
+
+    // 🔥 redirigir directo a turno
+    res.redirect(`/turnos/nuevo?paciente_id=${pacienteId}`);
   });
 };
 

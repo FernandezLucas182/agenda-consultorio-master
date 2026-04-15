@@ -197,11 +197,15 @@ class Profesional {
 // ==========================
 // SUCURSALES POR PROFESIONAL ✅ NUEVO
 // ==========================
-static obtenerSucursales(profesionalId, callback) {
+// ==========================
+// SUCURSALES POR PROFESIONAL 🔥 NUEVO
+// ==========================
+static obtenerSucursalesPorProfesional(profesionalId, callback) {
   const query = `
     SELECT s.id, s.nombre
-    FROM profesional_sucursal ps
-    JOIN sucursales s ON ps.sucursal_id = s.id
+    FROM sucursales s
+    JOIN profesional_sucursal ps 
+      ON s.id = ps.sucursal_id
     WHERE ps.profesional_id = ?
   `;
 
