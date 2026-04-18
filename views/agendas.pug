@@ -14,7 +14,7 @@ block content
     input.form-control.me-2(
       type='text',
       name='buscar',
-      placeholder='Buscar por profesional o especialidad',
+      placeholder='Buscar por profesional, especialidad o sucursal',
       value=buscar
     )
     button.btn.btn-outline-success(type='submit') Buscar
@@ -31,7 +31,7 @@ block content
         - agendaActual = item.agenda_id
 
         div.d-flex.justify-content-between.align-items-center.mt-4.border-bottom.pb-2
-          h2.h4= item.nombre_completo
+          h2.h4= item.nombre + ' ' + item.apellido
           // 🔥 BOTÓN EDITAR AGENDA COMPLETA
           a.btn.btn-warning.btn-sm(href=`/agendas/${item.agenda_id}/editar`) Editar Agenda Completa
 

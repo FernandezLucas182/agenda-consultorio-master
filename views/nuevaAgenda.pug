@@ -12,10 +12,13 @@ block content
     div.row.g-3
       div.col-md-6
         label.form-label(for="profesionalSelect") Profesional
-        select.form-select(name="profesional_id" id="profesionalSelect" required)
+        select.form-select(name="agenda_id") id="profesionalSelect" required)
           option(value="" disabled selected) -- Selecciona profesional --
-          each prof in profesionales
-            option(value=prof.id)= prof.nombre_completo
+          each agenda in agendas
+            option(
+              value=agenda.id
+              selected=(agenda.id == ausencia.agenda_id)
+            )= agenda.nombre
 
       div.col-md-6
         label.form-label(for="especialidadSelect") Especialidad

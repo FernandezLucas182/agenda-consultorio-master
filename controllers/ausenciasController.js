@@ -5,25 +5,30 @@ const { procesarAusencia } = require('../services/reprogramacionService');
 
 exports.mostrarFormulario = (req, res) => {
   db.query(
-    `SELECT id, nombre_completo FROM profesionales WHERE estado = 'activo'`,
+    `SELECT 
+      ag.id,
+      CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo
+    FROM agendas ag
+    JOIN profesionales p ON ag.profesional_id = p.id
+    WHERE ag.activo = 1`,
     (err, profesionales) => {
-      res.render('nuevaAusencia', { profesionales: profesionales || [] });
+      res.render('nuevaAusencia', { agendas: profesionales || [] });
     }
   );
 };
 
 exports.crearAusencia = (req, res) => {
 
-  const { profesional_id, fecha_inicio, fecha_fin, motivo } = req.body;
+  const { agenda_id, fecha_inicio, fecha_fin, motivo } = req.body;
 
   Ausencia.crear(
-    { profesional_id, fecha_inicio, fecha_fin, motivo },
+    { agenda_id, fecha_inicio, fecha_fin, motivo },
     (err) => {
 
       if (err) return res.status(500).send('Error al guardar ausencia');
 
-      // 🔥 EJECUCIÓN AUTOMÁTICA
-      procesarAusencia(profesional_id, fecha_inicio, fecha_fin);
+      // 🔥 IMPORTANTE: ahora pasás agenda_id
+      procesarAusencia(agenda_id, fecha_inicio, fecha_fin);
 
       res.redirect('/ausencias');
     }
@@ -72,14 +77,17 @@ exports.mostrarFormularioEditar = (req, res) => {
     ausencia.fecha_fin = formatearFechaInput(ausencia.fecha_fin);
 
     db.query(
-      `SELECT id, nombre_completo 
-       FROM profesionales 
-       WHERE estado = 'activo'`,
-      (err2, profesionales) => {
+      `SELECT 
+    ag.id,
+    CONCAT(p.nombre, ' ', p.apellido) AS nombre
+   FROM agendas ag
+   JOIN profesionales p ON ag.profesional_id = p.id
+   WHERE ag.activo = 1`,
+      (err2, agendas) => {
 
         res.render('editarAusencia', {
           ausencia,
-          profesionales: profesionales || []
+          agendas: agendas || []   // 🔥 CAMBIO CLAVE
         });
       }
     );
@@ -90,17 +98,17 @@ exports.mostrarFormularioEditar = (req, res) => {
 exports.editarAusencia = (req, res) => {
 
   const id = req.params.id;
-  const { profesional_id, fecha_inicio, fecha_fin, motivo } = req.body;
+  const { agenda_id, fecha_inicio, fecha_fin, motivo } = req.body;
 
   Ausencia.actualizar(
     id,
-    { profesional_id, fecha_inicio, fecha_fin, motivo },
+    { agenda_id, fecha_inicio, fecha_fin, motivo },
     (err) => {
 
       if (err) return res.status(500).send("Error al actualizar ausencia");
 
       // 🔥 IMPORTANTE: volver a procesar reprogramación
-      procesarAusencia(profesional_id, fecha_inicio, fecha_fin);
+      procesarAusencia(agenda_id, fecha_inicio, fecha_fin);
 
       res.redirect('/ausencias');
     }

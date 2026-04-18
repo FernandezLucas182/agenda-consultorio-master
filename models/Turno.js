@@ -6,9 +6,9 @@ class Turno {
   // CRUD BÁSICO
   // ==========================
 
- static obtenerTodos(callback) {
+  static obtenerTodos(callback) {
 
-  const sql = `
+    const sql = `
     SELECT 
       t.id,
       t.fecha,
@@ -16,7 +16,7 @@ class Turno {
       t.estado,
       t.tipo_turno,
       p.nombre AS paciente_nombre,
-      pr.nombre_completo AS profesional_nombre,
+      CONCAT(pr.nombre, ' ', pr.apellido) AS profesional_nombre,
       e.nombre AS especialidad_nombre,
       s.nombre AS sucursal_nombre
     FROM turnos t
@@ -38,7 +38,7 @@ class Turno {
     SELECT 
       t.*,
       p.nombre AS paciente_nombre,
-      pr.nombre_completo AS profesional_nombre,
+      CONCAT(pr.nombre, ' ', pr.apellido) AS profesional_nombre,
       e.nombre AS especialidad_nombre,
       s.nombre AS sucursal_nombre
     FROM turnos t
@@ -231,12 +231,14 @@ class Turno {
 
   static obtenerProfesionalesPorEspecialidad(especialidadId, callback) {
     db.query(
-      `SELECT p.id, p.nombre_completo
-       FROM profesionales p
-       JOIN profesional_especialidad pe
-         ON p.id = pe.profesional_id
-       WHERE pe.especialidad_id = ?
-         AND p.estado = 'activo'`,
+      `SELECT 
+       p.id, 
+       CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo
+     FROM profesionales p
+     JOIN profesional_especialidad pe
+       ON p.id = pe.profesional_id
+     WHERE pe.especialidad_id = ?
+       AND p.estado = 'activo'`,
       [especialidadId],
       callback
     );

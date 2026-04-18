@@ -3,23 +3,26 @@ const db = require('./Db');
 class Ausencia {
 
   static crear(datos, callback) {
-    const { profesional_id, fecha_inicio, fecha_fin, motivo } = datos;
+    const { agenda_id, fecha_inicio, fecha_fin, motivo } = datos;
 
     const sql = `
-      INSERT INTO ausencias
-      (profesional_id, fecha_inicio, fecha_fin, motivo)
-      VALUES (?, ?, ?, ?)
-    `;
+    INSERT INTO ausencias
+    (agenda_id, fecha_inicio, fecha_fin, motivo)
+    VALUES (?, ?, ?, ?)
+  `;
 
-    db.query(sql, [profesional_id, fecha_inicio, fecha_fin, motivo], callback);
+    db.query(sql, [agenda_id, fecha_inicio, fecha_fin, motivo], callback);
   }
 
   static obtenerTodas(callback) {
     db.query(
-      `SELECT a.*, p.nombre_completo
-       FROM ausencias a
-       JOIN profesionales p ON a.profesional_id = p.id
-       ORDER BY a.fecha_inicio DESC`,
+      `SELECT 
+      a.*, 
+      CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo
+    FROM ausencias a
+    JOIN agendas ag ON a.agenda_id = ag.id
+    JOIN profesionales p ON ag.profesional_id = p.id
+    ORDER BY a.fecha_inicio DESC`,
       callback
     );
   }
@@ -27,7 +30,15 @@ class Ausencia {
 
   static obtenerPorId(id, callback) {
     db.query(
-      `SELECT * FROM ausencias WHERE id = ?`,
+      `SELECT 
+      a.*,
+      ag.id AS agenda_id,
+      p.id AS profesional_id,
+      CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo
+    FROM ausencias a
+    JOIN agendas ag ON a.agenda_id = ag.id
+    JOIN profesionales p ON ag.profesional_id = p.id
+    WHERE a.id = ?`,
       [id],
       (err, rows) => {
         if (err) return callback(err);
@@ -37,38 +48,35 @@ class Ausencia {
   }
 
   static actualizar(id, datos, callback) {
-    const { profesional_id, fecha_inicio, fecha_fin, motivo } = datos;
+    const { agenda_id, fecha_inicio, fecha_fin, motivo } = datos;
 
     const sql = `
-    UPDATE ausencias
-    SET profesional_id = ?, 
-        fecha_inicio = ?, 
-        fecha_fin = ?, 
-        motivo = ?
-    WHERE id = ?
-  `;
+  UPDATE ausencias
+  SET agenda_id = ?, 
+      fecha_inicio = ?, 
+      fecha_fin = ?, 
+      motivo = ?
+  WHERE id = ?
+`;
 
     db.query(
       sql,
-      [profesional_id, fecha_inicio, fecha_fin, motivo, id],
+      [agenda_id, fecha_inicio, fecha_fin, motivo, id],
       callback
     );
   }
-
-  static existeAusenciaEnFecha(profesionalId, fecha, callback) {
-
+  static existeAusenciaEnFecha(agenda_id, fecha, callback) {
     const sql = `
-    SELECT id
-    FROM ausencias
-    WHERE profesional_id = ?
-      AND ? BETWEEN fecha_inicio AND fecha_fin
-  `;
+  SELECT id
+  FROM ausencias
+  WHERE agenda_id = ?
+    AND ? BETWEEN fecha_inicio AND fecha_fin
+`;
 
-    db.query(sql, [profesionalId, fecha], (err, rows) => {
+    db.query(sql, [agenda_id, fecha], (err, rows) => {
       if (err) return callback(err);
       callback(null, rows.length > 0);
     });
-
   }
 
 }

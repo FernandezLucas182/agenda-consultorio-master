@@ -6,6 +6,16 @@ block title
 block content
   h1 Lista de Profesionales
 
+  form(method="GET" action="/profesionales" class="mb-3")
+    .input-group
+      input.form-control(
+        type="text",
+        name="buscar",
+        placeholder="Buscar por nombre, apellido, DNI o matrícula...",
+        value=filtro
+      )
+      button.btn.btn-primary(type="submit") Buscar
+
   .actions.mb-3
     a(href="/profesionales/nuevo" class="btn btn-primary") Agregar Nuevo Profesional
     a(href="/" class="btn btn-secondary ms-2") Volver a pagina principal
@@ -16,7 +26,11 @@ block content
         thead
           tr
             th Matrícula
-            th Nombre Completo
+            th Nombre
+            th Apellido
+            th DNI
+            th Teléfono
+            th Email
             th Estado
             th Especialidades
             th Acciones
@@ -24,7 +38,11 @@ block content
           each profesional in profesionales
             tr
               td= profesional.matricula
-              td= profesional.nombre_completo
+              td= profesional.nombre
+              td= profesional.apellido
+              td= profesional.dni
+              td= profesional.telefono || '-'
+              td= profesional.email || '-'
               td
                 span(class=`badge ${profesional.estado === 'activo' ? 'bg-success' : 'bg-danger'}`)= profesional.estado
               td

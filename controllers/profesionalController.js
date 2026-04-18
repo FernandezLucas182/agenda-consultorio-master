@@ -3,9 +3,16 @@ const Profesional = require('../models/Profesional');
 
 // Mostrar todos los profesionales
 exports.mostrarProfesional = (req, res) => {
-  Profesional.obtenerTodos((err, profesionales) => {
+
+  const filtro = req.query.buscar || '';
+
+  Profesional.obtenerTodos(filtro, (err, profesionales) => {
     if (err) return res.status(500).send('Error al obtener los profesionales');
-    res.render('listaProfesional', { profesionales });
+
+    res.render('listaProfesional', {
+      profesionales,
+      filtro
+    });
   });
 };
 
@@ -24,10 +31,19 @@ const normalizarHora = (valor) => {
 
 exports.crearProfesional = (req, res) => {
   const {
-    nombre_completo,
+    nombre,
+    apellido,
+    dni,
+    telefono,
+    email,
     matricula,
     nueva_especialidad
   } = req.body;
+
+  // 🔴 VALIDACIÓN ACÁ
+  if (!nombre || !apellido) {
+    return res.status(400).send('Nombre y apellido son obligatorios');
+  }
 
   let { especialidades } = req.body;
 
@@ -40,10 +56,13 @@ exports.crearProfesional = (req, res) => {
   const continuarCreacion = (especialidadesFinales) => {
 
     const datosNormalizados = {
-      nombre: nombre_completo,
+      nombre,
+      apellido,
+      dni,
+      telefono,
+      email,
       matricula,
       especialidades: especialidadesFinales,
-      
     };
 
     Profesional.crear(datosNormalizados, (err) => {
@@ -130,30 +149,45 @@ exports.formularioEditarProfesional = (req, res) => {
 
 exports.editarProfesional = (req, res) => {
   const profesionalId = req.params.id;
+
   const {
-    nombre_completo,
-    matricula,
-    
+    nombre,
+    apellido,
+    dni,
+    telefono,
+    email,
+    matricula
   } = req.body;
+
+  // 🔴 VALIDACIÓN
+  if (!nombre || !apellido) {
+    return res.status(400).send('Nombre y apellido son obligatorios');
+  }
   let { especialidades } = req.body;
 
   if (!especialidades) {
-  especialidades = [];
-} else if (!Array.isArray(especialidades)) {
-  especialidades = [especialidades];
-}
+    especialidades = [];
+  } else if (!Array.isArray(especialidades)) {
+    especialidades = [especialidades];
+  }
 
-  // Actualizar datos del profesional, incluyendo horarios
   Profesional.editar(
     profesionalId,
     {
-      nombre: nombre_completo,
-    matricula,
-    especialidades
+      nombre,
+      apellido,
+      dni,
+      telefono,
+      email,
+      matricula,
+      especialidades
     },
-
     (err) => {
-      if (err) return res.status(500).send('Error al editar el profesional');
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Error al editar el profesional');
+      }
+
       res.redirect('/profesionales');
     }
   );

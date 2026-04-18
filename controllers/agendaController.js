@@ -69,19 +69,17 @@ const generarHorarios = () => {
 // FORM CREAR AGENDA BASE
 // ==========================
 exports.formularioNuevaAgenda = (req, res) => {
-  Profesional.obtenerTodos((err, profesionales) => {
+  Profesional.obtenerTodos(null, (err, profesionales) => {
     if (err) profesionales = [];
 
     Especialidad.obtenerTodas((err2, especialidades) => {
       if (err2) especialidades = [];
 
-      // 🔥 TRAER SUCURSALES
       db.query('SELECT * FROM sucursales', (err3, sucursales) => {
         if (err3) sucursales = [];
 
-        // 🔥 PASAR TODO AL PUG
-        res.render('nuevaAgenda', { 
-          profesionales, 
+        res.render('nuevaAgenda', {
+          profesionales,
           especialidades,
           sucursales
         });

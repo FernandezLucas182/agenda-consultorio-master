@@ -8,8 +8,24 @@ block content
 
   form(action="/profesionales/nuevo", method="POST")
     div.mb-3
-      label.form-label(for="nombre_completo") Nombre Completo
-      input.form-control(type="text" id="nombre_completo" name="nombre_completo" required)
+      label.form-label(for="nombre") Nombre
+      input.form-control(type="text" id="nombre" name="nombre" required)
+
+    div.mb-3
+      label.form-label(for="apellido") Apellido
+      input.form-control(type="text" id="apellido" name="apellido" required)
+
+    div.mb-3
+      label.form-label(for="dni") DNI
+      input.form-control(type="text" id="dni" name="dni" required)
+
+    div.mb-3
+      label.form-label(for="telefono") Teléfono
+      input.form-control(type="text" id="telefono" name="telefono")
+
+    div.mb-3
+      label.form-label(for="email") Email
+      input.form-control(type="email" id="email" name="email")
 
     div.mb-3
       label.form-label(for="matricula") Matrícula

@@ -7,7 +7,7 @@ class Agenda {
     let sql = `
       SELECT 
         a.id,
-        p.nombre_completo AS nombre_completo,
+        CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo,
         e.nombre AS especialidad,
         a.max_sobreturnos
       FROM agendas a
@@ -19,7 +19,7 @@ class Agenda {
     let params = [];
 
     if (buscar) {
-      sql += ` AND (p.nombre_completo LIKE ? OR e.nombre LIKE ?)`;
+      sql += ` AND (CONCAT(p.nombre, ' ', p.apellido) LIKE ? OR e.nombre LIKE ?)`;
       params.push(`%${buscar}%`, `%${buscar}%`);
     }
 
@@ -36,7 +36,11 @@ class Agenda {
     let sql = `
       SELECT 
         a.profesional_id,
-        p.nombre_completo,
+        p.nombre,
+        p.apellido,
+        p.dni,
+        p.telefono,
+        p.email,
         e.nombre AS especialidad,
         ah.id AS horario_id,
         ah.dia_semana,
@@ -57,12 +61,27 @@ class Agenda {
     let params = [];
 
     if (buscar) {
-      sql += ` AND (p.nombre_completo LIKE ? OR e.nombre LIKE ?)`;
-      params.push(`%${buscar}%`, `%${buscar}%`);
+      sql += `
+    AND (
+      p.nombre LIKE ?
+      OR p.apellido LIKE ?
+      OR CONCAT(p.nombre, ' ', p.apellido) LIKE ?
+      OR e.nombre LIKE ?
+      OR s.nombre LIKE ?
+    )
+  `;
+
+      params.push(
+        `%${buscar}%`,
+        `%${buscar}%`,
+        `%${buscar}%`,
+        `%${buscar}%`,
+        `%${buscar}%`
+      );
     }
 
     sql += `
-      ORDER BY p.nombre_completo, e.nombre, ah.dia_semana, ah.hora_inicio
+      ORDER BY p.nombre, p.apellido, e.nombre, ah.dia_semana, ah.hora_inicio
     `;
 
     db.query(sql, params, (err, resultados) => {
@@ -91,7 +110,7 @@ class Agenda {
   }
 
 
-  
+
 
 
   static crearAgendaBase(datos, callback) {
@@ -148,7 +167,7 @@ class Agenda {
     const sql = `
       SELECT 
         a.id,
-        p.nombre_completo,
+        CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo,
         e.nombre AS especialidad,
         a.duracion_turno,
         a.max_sobreturnos
@@ -166,230 +185,230 @@ class Agenda {
 
 
   // ==========================
-// OBTENER HORARIOS POR AGENDA
-// ==========================
-static obtenerHorariosPorAgenda(agenda_id, callback) {
+  // OBTENER HORARIOS POR AGENDA
+  // ==========================
+  static obtenerHorariosPorAgenda(agenda_id, callback) {
 
-  const sql = `
+    const sql = `
     SELECT id, dia_semana, hora_inicio, hora_fin
     FROM agenda_horarios
     WHERE agenda_id = ?
     ORDER BY dia_semana, hora_inicio
   `;
 
-  db.query(sql, [agenda_id], (err, resultados) => {
-    if (err) return callback(err);
-    callback(null, resultados || []);
-  });
-}
-
-
-
-
-
-
-// ==========================
-// REEMPLAZAR HORARIOS COMPLETOS
-// ==========================
-static reemplazarHorarios(agenda_id, listaHorarios, callback) {
-
-  if (!listaHorarios || listaHorarios.length === 0) {
-    return callback(new Error("Debe existir al menos un horario"));
+    db.query(sql, [agenda_id], (err, resultados) => {
+      if (err) return callback(err);
+      callback(null, resultados || []);
+    });
   }
 
-  db.getConnection((err, connection) => {
-
-    if (err) return callback(err);
-
-    connection.beginTransaction(err => {
-
-      if (err) {
-        connection.release();
-        return callback(err);
-      }
-
-      // 1️⃣ Borrar horarios actuales
-      connection.query(
-        "DELETE FROM agenda_horarios WHERE agenda_id = ?",
-        [agenda_id],
-        (err) => {
-
-          if (err) {
-            return connection.rollback(() => {
-              connection.release();
-              callback(err);
-            });
-          }
-
-          let pendientes = listaHorarios.length;
-
-          listaHorarios.forEach(h => {
-
-            if (h.dia == 7) {
-              return connection.rollback(() => {
-                connection.release();
-                callback(new Error("Domingos no habilitados"));
-              });
-            }
-
-            if (h.desde >= h.hasta) {
-              return connection.rollback(() => {
-                connection.release();
-                callback(new Error("Hora inicio debe ser menor que hora fin"));
-              });
-            }
-
-            connection.query(
-              `INSERT INTO agenda_horarios
-               (agenda_id, dia_semana, hora_inicio, hora_fin)
-               VALUES (?, ?, ?, ?)`,
-              [agenda_id, h.dia, h.desde, h.hasta],
-              (err) => {
-
-                if (err) {
-                  return connection.rollback(() => {
-                    connection.release();
-                    callback(err);
-                  });
-                }
-
-                pendientes--;
-
-                if (pendientes === 0) {
-
-                  connection.commit(err => {
-
-                    if (err) {
-                      return connection.rollback(() => {
-                        connection.release();
-                        callback(err);
-                      });
-                    }
-
-                    connection.release();
-                    callback(null);
-                  });
-                }
-              }
-            );
-          });
-        }
-      );
-    });
-  });
-}
 
 
 
 
 
-// ==========================
-// ACTUALIZAR HORARIOS AGENDA
-// ==========================
-static actualizarHorarios(agenda_id, listaHorarios, callback) {
-
-  db.beginTransaction(err => {
-
-    if (err) return callback(err);
+  // ==========================
+  // REEMPLAZAR HORARIOS COMPLETOS
+  // ==========================
+  static reemplazarHorarios(agenda_id, listaHorarios, callback) {
 
     if (!listaHorarios || listaHorarios.length === 0) {
-      return db.rollback(() =>
-        callback(new Error("Debe existir al menos un horario"))
-      );
+      return callback(new Error("Debe existir al menos un horario"));
     }
 
-    const idsFinales = [];
+    db.getConnection((err, connection) => {
 
-    let pendientes = listaHorarios.length;
-    let errorEncontrado = false;
+      if (err) return callback(err);
 
-    listaHorarios.forEach(h => {
+      connection.beginTransaction(err => {
 
-      if (h.dia == 7) {
-        errorEncontrado = true;
-        return db.rollback(() =>
-          callback(new Error("Domingos no habilitados"))
-        );
-      }
+        if (err) {
+          connection.release();
+          return callback(err);
+        }
 
-      if (h.desde >= h.hasta) {
-        errorEncontrado = true;
-        return db.rollback(() =>
-          callback(new Error("Hora inicio debe ser menor que hora fin"))
-        );
-      }
-
-      // UPDATE si tiene id
-      if (h.id) {
-
-        db.query(
-          `UPDATE agenda_horarios
-           SET hora_inicio = ?, hora_fin = ?
-           WHERE id = ?`,
-          [h.desde, h.hasta, h.id],
+        // 1️⃣ Borrar horarios actuales
+        connection.query(
+          "DELETE FROM agenda_horarios WHERE agenda_id = ?",
+          [agenda_id],
           (err) => {
 
-            if (err && !errorEncontrado) {
-              errorEncontrado = true;
-              return db.rollback(() => callback(err));
+            if (err) {
+              return connection.rollback(() => {
+                connection.release();
+                callback(err);
+              });
             }
 
-            idsFinales.push(h.id);
-            finalizar();
+            let pendientes = listaHorarios.length;
+
+            listaHorarios.forEach(h => {
+
+              if (h.dia == 7) {
+                return connection.rollback(() => {
+                  connection.release();
+                  callback(new Error("Domingos no habilitados"));
+                });
+              }
+
+              if (h.desde >= h.hasta) {
+                return connection.rollback(() => {
+                  connection.release();
+                  callback(new Error("Hora inicio debe ser menor que hora fin"));
+                });
+              }
+
+              connection.query(
+                `INSERT INTO agenda_horarios
+               (agenda_id, dia_semana, hora_inicio, hora_fin)
+               VALUES (?, ?, ?, ?)`,
+                [agenda_id, h.dia, h.desde, h.hasta],
+                (err) => {
+
+                  if (err) {
+                    return connection.rollback(() => {
+                      connection.release();
+                      callback(err);
+                    });
+                  }
+
+                  pendientes--;
+
+                  if (pendientes === 0) {
+
+                    connection.commit(err => {
+
+                      if (err) {
+                        return connection.rollback(() => {
+                          connection.release();
+                          callback(err);
+                        });
+                      }
+
+                      connection.release();
+                      callback(null);
+                    });
+                  }
+                }
+              );
+            });
           }
         );
+      });
+    });
+  }
 
-      } else {
 
-        // INSERT nuevo
-        db.query(
-          `INSERT INTO agenda_horarios
-           (agenda_id, dia_semana, hora_inicio, hora_fin)
-           VALUES (?, ?, ?, ?)`,
-          [agenda_id, h.dia, h.desde, h.hasta],
-          (err, result) => {
 
-            if (err && !errorEncontrado) {
-              errorEncontrado = true;
-              return db.rollback(() => callback(err));
-            }
 
-            idsFinales.push(result.insertId);
-            finalizar();
-          }
+
+  // ==========================
+  // ACTUALIZAR HORARIOS AGENDA
+  // ==========================
+  static actualizarHorarios(agenda_id, listaHorarios, callback) {
+
+    db.beginTransaction(err => {
+
+      if (err) return callback(err);
+
+      if (!listaHorarios || listaHorarios.length === 0) {
+        return db.rollback(() =>
+          callback(new Error("Debe existir al menos un horario"))
         );
       }
 
-      function finalizar() {
+      const idsFinales = [];
 
-        pendientes--;
+      let pendientes = listaHorarios.length;
+      let errorEncontrado = false;
 
-        if (pendientes === 0 && !errorEncontrado) {
+      listaHorarios.forEach(h => {
+
+        if (h.dia == 7) {
+          errorEncontrado = true;
+          return db.rollback(() =>
+            callback(new Error("Domingos no habilitados"))
+          );
+        }
+
+        if (h.desde >= h.hasta) {
+          errorEncontrado = true;
+          return db.rollback(() =>
+            callback(new Error("Hora inicio debe ser menor que hora fin"))
+          );
+        }
+
+        // UPDATE si tiene id
+        if (h.id) {
 
           db.query(
-            `DELETE FROM agenda_horarios
-             WHERE agenda_id = ?
-             AND id NOT IN (?)`,
-            [agenda_id, idsFinales],
+            `UPDATE agenda_horarios
+           SET hora_inicio = ?, hora_fin = ?
+           WHERE id = ?`,
+            [h.desde, h.hasta, h.id],
             (err) => {
 
-              if (err) return db.rollback(() => callback(err));
+              if (err && !errorEncontrado) {
+                errorEncontrado = true;
+                return db.rollback(() => callback(err));
+              }
 
-              db.commit(callback);
+              idsFinales.push(h.id);
+              finalizar();
+            }
+          );
+
+        } else {
+
+          // INSERT nuevo
+          db.query(
+            `INSERT INTO agenda_horarios
+           (agenda_id, dia_semana, hora_inicio, hora_fin)
+           VALUES (?, ?, ?, ?)`,
+            [agenda_id, h.dia, h.desde, h.hasta],
+            (err, result) => {
+
+              if (err && !errorEncontrado) {
+                errorEncontrado = true;
+                return db.rollback(() => callback(err));
+              }
+
+              idsFinales.push(result.insertId);
+              finalizar();
             }
           );
         }
-      }
-    });
 
-  });
+        function finalizar() {
+
+          pendientes--;
+
+          if (pendientes === 0 && !errorEncontrado) {
+
+            db.query(
+              `DELETE FROM agenda_horarios
+             WHERE agenda_id = ?
+             AND id NOT IN (?)`,
+              [agenda_id, idsFinales],
+              (err) => {
+
+                if (err) return db.rollback(() => callback(err));
+
+                db.commit(callback);
+              }
+            );
+          }
+        }
+      });
+
+    });
   }
 
 
 
   static crearAgendaConHorarios(datos, callback) {
 
-    
+
     const { profesional_id, especialidad_id, duracion_turno, horarios, sucursal_id } = datos;
 
     const listaHorarios = Array.isArray(horarios) ? horarios : [horarios];
@@ -500,9 +519,9 @@ static actualizarHorarios(agenda_id, listaHorarios, callback) {
     });
   }
 
-static obtenerHorariosProfesional(profesional_id, dia_semana, callback) {
+  static obtenerHorariosProfesional(profesional_id, dia_semana, callback) {
 
-  const sql = `
+    const sql = `
     SELECT ah.hora_inicio, ah.hora_fin, a.duracion_turno
     FROM agendas a
     JOIN agenda_horarios ah ON ah.agenda_id = a.id
@@ -511,11 +530,11 @@ static obtenerHorariosProfesional(profesional_id, dia_semana, callback) {
       AND ah.dia_semana = ?
   `;
 
-  db.query(sql, [profesional_id, dia_semana], (err, resultados) => {
-    if (err) return callback(err);
-    callback(null, resultados || []);
-  });
-}
+    db.query(sql, [profesional_id, dia_semana], (err, resultados) => {
+      if (err) return callback(err);
+      callback(null, resultados || []);
+    });
+  }
 
 }
 

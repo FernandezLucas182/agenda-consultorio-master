@@ -5,18 +5,48 @@ class Profesional {
   // ==========================
   // LISTAR TODOS (para gestión)
   // ==========================
-  static obtenerTodos(callback) {
-    const query = `
-      SELECT p.id, p.nombre_completo, p.estado, p.matricula, 
-             GROUP_CONCAT(e.nombre) AS especialidades
-      FROM profesionales p
-      LEFT JOIN profesional_especialidad pe ON p.id = pe.profesional_id
-      LEFT JOIN especialidades e ON pe.especialidad_id = e.id
-      GROUP BY p.id
-    `;
+  static obtenerTodos(filtro, callback) {
 
-    db.query(query, (err, resultados) => {
-      if (err) return callback(err);
+    let where = '';
+    let params = [];
+
+    if (filtro && filtro.trim() !== '') {
+      where = `
+      WHERE 
+        p.nombre LIKE ? OR
+        p.apellido LIKE ? OR
+        p.dni LIKE ? OR
+        p.matricula LIKE ?
+    `;
+      const like = `%${filtro}%`;
+      params = [like, like, like, like];
+    }
+
+    const query = `
+    SELECT 
+      p.id, 
+      p.nombre, 
+      p.apellido,
+      p.dni,
+      p.telefono,
+      p.email,
+      p.estado, 
+      p.matricula,
+      GROUP_CONCAT(e.nombre) AS especialidades
+    FROM profesionales p
+    LEFT JOIN profesional_especialidad pe 
+      ON p.id = pe.profesional_id
+    LEFT JOIN especialidades e 
+      ON pe.especialidad_id = e.id
+    ${where}
+    GROUP BY p.id
+  `;
+
+    db.query(query, params, (err, resultados) => {
+      if (err) {
+        console.error("ERROR SQL:", err);
+        return callback(err);
+      }
       callback(null, resultados || []);
     });
   }
@@ -27,7 +57,9 @@ class Profesional {
   // ==========================
   static obtenerConEspecialidades(callback) {
     const query = `
-      SELECT DISTINCT p.id, p.nombre_completo
+      SELECT DISTINCT 
+        p.id, 
+        CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo
       FROM profesionales p
       JOIN profesional_especialidad pe
         ON p.id = pe.profesional_id
@@ -45,19 +77,19 @@ class Profesional {
   // CREAR PROFESIONAL
   // ==========================
   static crear(
-    { nombre, matricula, especialidades },
+    { nombre, apellido, dni, telefono, email, matricula, especialidades },
     callback
   ) {
 
     const profesionalQuery = `
-  INSERT INTO profesionales 
-  (nombre_completo, matricula, estado)
-  VALUES (?, ?, 'activo')
+  INSERT INTO profesionales
+  (nombre, apellido, dni, telefono, email, matricula, estado)
+  VALUES (?, ?, ?, ?, ?, ?, 'activo')
 `;
 
     db.query(
       profesionalQuery,
-      [nombre, matricula],
+      [nombre, apellido, dni, telefono, email, matricula],
       (err, result) => {
         if (err) return callback(err);
 
@@ -84,44 +116,44 @@ class Profesional {
   // EDITAR PROFESIONAL
   // ==========================
   static editar(
-  id,
-  { nombre, matricula, especialidades },
-  callback
-) {
+    id,
+    { nombre, apellido, dni, telefono, email, matricula, especialidades },
+    callback
+  ) {
 
-  const profesionalQuery = `
+    const profesionalQuery = `
     UPDATE profesionales 
-    SET nombre_completo = ?, matricula = ?
+    SET nombre = ?, apellido = ?, dni = ?, telefono = ?, email = ?, matricula = ?
     WHERE id = ?
   `;
-  db.query(
-    profesionalQuery,
-    [nombre, matricula, id],
-    err => {
-      if (err) return callback(err);
+    db.query(
+      profesionalQuery,
+      [nombre, apellido, dni, telefono, email, matricula, id],
+      err => {
+        if (err) return callback(err);
 
-      db.query(
-        'DELETE FROM profesional_especialidad WHERE profesional_id = ?',
-        [id],
-        err => {
-          if (err) return callback(err);
+        db.query(
+          'DELETE FROM profesional_especialidad WHERE profesional_id = ?',
+          [id],
+          err => {
+            if (err) return callback(err);
 
-          if (especialidades && especialidades.length > 0) {
-            const values = especialidades.map(eid => [id, eid]);
+            if (especialidades && especialidades.length > 0) {
+              const values = especialidades.map(eid => [id, eid]);
 
-            db.query(
-              'INSERT INTO profesional_especialidad (profesional_id, especialidad_id) VALUES ?',
-              [values],
-              callback
-            );
-          } else {
-            callback(null);
+              db.query(
+                'INSERT INTO profesional_especialidad (profesional_id, especialidad_id) VALUES ?',
+                [values],
+                callback
+              );
+            } else {
+              callback(null);
+            }
           }
-        }
-      );
-    }
-  );
-}
+        );
+      }
+    );
+  }
 
 
   // ==========================
@@ -168,40 +200,40 @@ class Profesional {
   // ==========================
   static obtenerPorId(id, callback) {
 
-  console.log("🟡 ID RECIBIDO EN obtenerPorId:", id); // 👈 LOG 1
+    console.log("🟡 ID RECIBIDO EN obtenerPorId:", id); // 👈 LOG 1
 
-  const query = `
-    SELECT p.id, p.nombre_completo, p.matricula, p.estado
+    const query = `
+    SELECT p.id, p.nombre, p.apellido, p.dni, p.telefono, p.email, p.matricula, p.estado
     FROM profesionales p
     WHERE p.id = ?
   `;
 
-  db.query(query, [id], (err, resultados) => {
+    db.query(query, [id], (err, resultados) => {
 
-    if (err) {
-      console.error("🔴 ERROR EN QUERY:", err); // 👈 LOG 2
-      return callback(err);
-    }
+      if (err) {
+        console.error("🔴 ERROR EN QUERY:", err); // 👈 LOG 2
+        return callback(err);
+      }
 
-    console.log("🟢 RESULTADOS QUERY:", resultados); // 👈 LOG 3
+      console.log("🟢 RESULTADOS QUERY:", resultados); // 👈 LOG 3
 
-    if (!resultados.length) {
-      console.log("⚠️ NO SE ENCONTRÓ PROFESIONAL"); // 👈 LOG 4
-      return callback(null, null);
-    }
+      if (!resultados.length) {
+        console.log("⚠️ NO SE ENCONTRÓ PROFESIONAL"); // 👈 LOG 4
+        return callback(null, null);
+      }
 
-    callback(null, resultados[0]);
-  });
-}
+      callback(null, resultados[0]);
+    });
+  }
 
-// ==========================
-// SUCURSALES POR PROFESIONAL ✅ NUEVO
-// ==========================
-// ==========================
-// SUCURSALES POR PROFESIONAL 🔥 NUEVO
-// ==========================
-static obtenerSucursalesPorProfesional(profesionalId, callback) {
-  const query = `
+  // ==========================
+  // SUCURSALES POR PROFESIONAL ✅ NUEVO
+  // ==========================
+  // ==========================
+  // SUCURSALES POR PROFESIONAL 🔥 NUEVO
+  // ==========================
+  static obtenerSucursalesPorProfesional(profesionalId, callback) {
+    const query = `
     SELECT s.id, s.nombre
     FROM sucursales s
     JOIN profesional_sucursal ps 
@@ -209,11 +241,11 @@ static obtenerSucursalesPorProfesional(profesionalId, callback) {
     WHERE ps.profesional_id = ?
   `;
 
-  db.query(query, [profesionalId], (err, resultados) => {
-    if (err) return callback(err);
-    callback(null, resultados || []);
-  });
-}
+    db.query(query, [profesionalId], (err, resultados) => {
+      if (err) return callback(err);
+      callback(null, resultados || []);
+    });
+  }
 
 }
 

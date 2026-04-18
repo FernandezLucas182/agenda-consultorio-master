@@ -9,7 +9,7 @@ block content
     - const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
 
     div.d-flex.justify-content-between.align-items-center.mb-4
-      h1 Agenda de #{datos.nombre_completo}
+      h1 Agenda de #{datos.nombre} #{datos.apellido}
       div
         a.btn.btn-warning(href=`/agendas/${datos.agenda_id}/editar`) Editar Configuración
         a.btn.btn-secondary.ms-2(href="/agendas") Volver
