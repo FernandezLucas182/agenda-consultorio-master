@@ -37,7 +37,9 @@ exports.crearAusencia = (req, res) => {
 
 exports.listarAusencias = (req, res) => {
 
-  Ausencia.obtenerTodas((err, ausencias) => {
+  const buscar = req.query.buscar || '';
+
+  Ausencia.obtenerTodas(buscar, (err, ausencias) => {
 
     if (err) {
       console.error("ERROR EN AUSENCIAS:", err);
@@ -50,7 +52,7 @@ exports.listarAusencias = (req, res) => {
       fecha_fin: formatearFecha(a.fecha_fin)
     }));
 
-    res.render('ausencias', { ausencias });
+    res.render('ausencias', { ausencias, buscar });
   });
 
 };

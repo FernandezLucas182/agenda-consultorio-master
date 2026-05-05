@@ -1,15 +1,21 @@
 function generarTurnos(horaInicio, horaFin, duracion) {
   const turnos = [];
 
-  let [h, m] = horaInicio.split(':').map(Number);
-  let actual = h * 60 + m;
+  const toMin = (hora) => {
+    const [h, m, s] = hora.split(':').map(Number);
+    return h * 60 + m + (s ? s / 60 : 0);
+  };
 
-  const [hf, mf] = horaFin.split(':').map(Number);
-  const fin = hf * 60 + mf;
+  let actual = toMin(horaInicio);
+  const fin = toMin(horaFin);
 
-  while (actual <= fin) {
+  while (actual + duracion <= fin) {
+
+    console.log("MINUTOS INICIO:", actual);
+    console.log("MINUTOS FIN:", fin);
+    console.log("DURACION:", duracion);
     const horas = Math.floor(actual / 60).toString().padStart(2, '0');
-    const minutos = (actual % 60).toString().padStart(2, '0');
+    const minutos = Math.floor(actual % 60).toString().padStart(2, '0');
 
     turnos.push(`${horas}:${minutos}`);
     actual += duracion;

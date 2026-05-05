@@ -11,7 +11,11 @@ const profesionalController = require('../controllers/profesionalController');
 const authController = require('../controllers/authController');
 const pacienteController = require('../controllers/pacienteController');
 const ausenciasController = require('../controllers/ausenciasController');
-const profesionalesController = require('../controllers/profesionalController');
+
+
+
+console.log("Agenda controller keys:", Object.keys(agendaController));
+console.log("Turnos controller keys:", Object.keys(turnosController));
 
 console.log("Agenda:", Object.keys(agendaController));
 console.log("Turnos:", Object.keys(turnosController));
@@ -52,12 +56,15 @@ router.post('/agendas/:id/editar', agendaController.editarAgenda);
 // TURNOS
 // =====================
 
+console.log("confirmarTurno:", typeof turnosController.confirmarTurno);
+
 router.get('/turnos', turnosController.mostrarTurnos);
 
 router.get('/turnos/nuevo', turnosController.mostrarFormularioNuevoTurno);
 router.post('/turnos', turnosController.crearTurno);
 
-router.get('/turnos/:id', turnosController.mostrarTurno);
+router.get('/turnos/:id', turnosController.mostrarTurno); 
+
 router.get('/turnos/:id/editar', turnosController.mostrarFormularioEditarTurno);
 router.post('/turnos/:id/editar', turnosController.editarTurno);
 router.post('/turnos/:id/eliminar', turnosController.eliminarTurno);

@@ -6,57 +6,56 @@ block title
 block content
   h1.mb-4 Agenda de Atención
 
-  div.mb-3
-    a(href='/agendas/nueva' class="btn btn-primary") + Crear Agenda
-    a(href='/' class="btn btn-secondary ms-2") Volver al inicio
+  // 🔍 BUSCADOR
+  div.d-flex.gap-2.mb-3
+    form(method="GET" action="/agendas" style="flex:1; display:flex; gap:8px;")
+      input.form-control(
+        type="text"
+        name="buscar"
+        placeholder="Buscar por profesional, especialidad o sucursal"
+        value=buscar
+      )
+      button.btn.btn-primary(type="submit") Buscar
 
-  form(action='/agendas', method='GET', class="d-flex mb-4")
-    input.form-control.me-2(
-      type='text',
-      name='buscar',
-      placeholder='Buscar por profesional, especialidad o sucursal',
-      value=buscar
-    )
-    button.btn.btn-outline-success(type='submit') Buscar
+    a.btn.btn-secondary(href="/agendas") Mostrar todos
 
-  if agenda.length > 0
+  div.d-flex.gap-2.mb-4
+    a.btn.btn-primary(href="/agendas/nueva") + Crear Agenda
+    a.btn.btn-secondary(href="/") Volver al inicio
 
-    - let agendaActual = null
-    - const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
+  - const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
 
-    each item in agenda
+  if agendas.length > 0
 
-      // 🔹 Cuando cambia la agenda (no el profesional)
-      if agendaActual !== item.agenda_id
-        - agendaActual = item.agenda_id
+    each ag in agendas
 
-        div.d-flex.justify-content-between.align-items-center.mt-4.border-bottom.pb-2
-          h2.h4= item.nombre + ' ' + item.apellido
-          // 🔥 BOTÓN EDITAR AGENDA COMPLETA
-          a.btn.btn-warning.btn-sm(href=`/agendas/${item.agenda_id}/editar`) Editar Agenda Completa
+      div.mt-3.px-2.py-1.rounded(style="background:#e8f1ff; border-left:3px solid #0d6efd; margin-bottom:1px;")
+        span.fw-semibold= ag.profesional
 
-      table.table.table-hover.mt-2
-        thead
+      table.table.table-striped.table-bordered.table-sm.mt-0
+        thead.table-dark
           tr
             th Especialidad
             th Día
             th Desde
             th Hasta
-            th Duración (min)
+            th Duración
             th Máx. Sobreturnos
             th Sucursal
             th Acciones
+
         tbody
-          tr
-            td= item.especialidad
-            td= dias[item.dia_semana - 1]
-            td= item.hora_inicio
-            td= item.hora_fin
-            td= item.duracion_turno
-            td= item.max_sobreturnos
-            td= item.sucursal || 'Sin sucursal'
-            td
-              a(href=`/agendas/${item.agenda_id}` class="btn btn-info btn-sm me-1") Ver
-              
+          each item in ag.filas
+            tr
+              td= item.especialidad
+              td= dias[item.dia_semana - 1]
+              td= item.hora_inicio
+              td= item.hora_fin
+              td= item.duracion_turno
+              td= item.max_sobreturnos
+              td= item.sucursal || 'Sin sucursal'
+              td
+                a.btn.btn-info.btn-sm(href=`/agendas/${item.agenda_id}`) Ver
+
   else
     p.alert.alert-info No hay agendas cargadas.

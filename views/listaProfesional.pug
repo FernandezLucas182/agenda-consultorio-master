@@ -6,15 +6,20 @@ block title
 block content
   h1 Lista de Profesionales
 
-  form(method="GET" action="/profesionales" class="mb-3")
-    .input-group
+  div.d-flex.gap-2.mb-3
+    form(method="GET" action="/profesionales" style="flex:1")
       input.form-control(
-        type="text",
-        name="buscar",
-        placeholder="Buscar por nombre, apellido, DNI o matrícula...",
+        type="text"
+        name="buscar"
+        placeholder="Buscar por nombre, apellido, DNI o matrícula..."
         value=filtro
       )
-      button.btn.btn-primary(type="submit") Buscar
+
+    button.btn.btn-primary(type="submit" formmethod="GET" formaction="/profesionales") Buscar
+    a.btn.btn-secondary(href="/profesionales") Mostrar todos
+  
+
+    
 
   .actions.mb-3
     a(href="/profesionales/nuevo" class="btn btn-primary") Agregar Nuevo Profesional
@@ -59,5 +64,7 @@ block content
   else
     p.alert.alert-info No hay profesionales registrados.
 
-  .footer.mt-5.text-muted
-    p © 2024 Agenda Médica. Isaias Felippo-Lucas fernandez.
+  div.mt-4
+    a(href="/profesionales/nuevo" class="btn btn-primary") Agregar Nuevo Profesional
+    a(href="/" class="btn btn-secondary ms-2") Volver a pagina principal
+      

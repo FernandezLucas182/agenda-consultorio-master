@@ -3,6 +3,9 @@ const Agenda = require('../models/Agenda');
 const generarTurnos = require('../utils/generarTurnos');
 const Ausencia = require('../models/Ausencia');
 
+// ==========================
+// UTILIDADES
+// ==========================
 
 function sumarSegundos(hora, segundos) {
   const [h, m, s] = hora.split(':').map(Number);
@@ -11,10 +14,6 @@ function sumarSegundos(hora, segundos) {
   date.setSeconds(date.getSeconds() + segundos);
   return date.toTimeString().slice(0, 8);
 }
-
-// ==========================
-// UTILIDAD FECHA
-// ==========================
 
 function formatearFecha(fecha) {
   return new Date(fecha).toLocaleDateString('es-ES', {
@@ -30,10 +29,26 @@ function formatearFecha(fecha) {
 
 exports.mostrarTurnos = (req, res) => {
 
+  const q = req.query.q?.toLowerCase() || "";
+
   Turno.obtenerTodos((err, turnos) => {
     if (err) {
       console.error("ERROR REAL:", err);
       return res.status(500).send(err.message);
+    }
+
+    if (q) {
+      turnos = turnos.filter(t => {
+
+        return (
+          (t.paciente_nombre || "").toLowerCase().includes(q) ||
+          (t.profesional_nombre || "").toLowerCase().includes(q) ||
+          (t.especialidad_nombre || "").toLowerCase().includes(q) ||
+          (t.fecha || "").toString().toLowerCase().includes(q) ||
+          (t.hora || "").toString().toLowerCase().includes(q)
+        );
+
+      });
     }
 
     turnos = turnos.map(t => ({
@@ -41,7 +56,7 @@ exports.mostrarTurnos = (req, res) => {
       fecha: formatearFecha(t.fecha)
     }));
 
-    res.render('turnos', { turnos });
+    res.render('turnos', { turnos, q });
   });
 
 };
@@ -55,8 +70,8 @@ exports.mostrarTurno = (req, res) => {
     }
 
     turno.fecha = formatearFecha(turno.fecha);
-
     res.render('turno', { turno });
+
   });
 
 };
@@ -96,10 +111,6 @@ exports.mostrarFormularioNuevoTurno = (req, res) => {
 // CREAR TURNO
 // ==========================
 
-// ==========================
-// CREAR TURNO
-// ==========================
-
 exports.crearTurno = (req, res) => {
 
   const {
@@ -111,199 +122,133 @@ exports.crearTurno = (req, res) => {
     tipo_turno
   } = req.body;
 
-  // 1️⃣ Validar ausencia primero
   Ausencia.existeAusenciaEnFecha(profesional_id, fecha, (err, hayAusencia) => {
 
-    if (err) {
-      return res.status(500).send("Error validando ausencia");
-    }
+    if (err) return res.status(500).send("Error validando ausencia");
 
     if (hayAusencia) {
-      return recargarFormularioConError(
-        res,
-        "El profesional no atiende en esa fecha (ausencia registrada)."
-      );
+      return res.status(400).send("El profesional no atiende en esa fecha.");
     }
 
-    // 2️⃣ Si es turno normal
-    if (tipo_turno === "normal") {
+    const esNormal = tipo_turno === "normal";
 
-      Turno.existeTurnoEnHorario(profesional_id, fecha, hora, (err2, existe) => {
+    const validarYCrear = (horaFinal) => {
 
-        if (err2) return res.status(500).send("Error validando turno");
+      Turno.obtenerAgendaId(profesional_id, (errAgenda, agenda_id) => {
 
-        if (existe) {
-          return recargarFormularioConError(res, "Ese horario ya está ocupado.");
-        }
+        if (errAgenda) return res.status(500).send("Error obteniendo agenda");
+        if (!agenda_id) return res.status(400).send("Sin agenda");
 
-        Turno.obtenerAgendaId(profesional_id, (errAgenda, agenda_id) => {
+        console.log("VALIDANDO EN AGENDA:", {
+          profesional_id,
+          fecha,
+          horaFinal
+        });
 
-          if (errAgenda) {
-            return res.status(500).send("Error obteniendo agenda");
-          }
+        Turno.validarHoraEnAgenda(
+          profesional_id,
+          fecha,
+          horaFinal,
+          (errHora, valida) => {
 
-          if (!agenda_id) {
-            return res.status(400).send("El profesional no tiene agenda activa");
-          }
+            if (errHora) return res.status(500).send("Error horario");
 
-          Turno.validarAgendaDeProfesional(
-            agenda_id,
-            profesional_id,
-            (errVal, esValida) => {
-
-              if (errVal) {
-                return res.status(500).send("Error validando agenda");
-              }
-
-              if (!esValida) {
-                return res.status(400).send("La agenda no pertenece al profesional");
-              }
-
-              Turno.validarHoraEnAgenda(
+            if (!valida) {
+              console.log("❌ FUERA DE AGENDA:", {
                 profesional_id,
                 fecha,
-                hora,
-                (errHora, esValidaHora) => {
-
-                  if (errHora) {
-                    return res.status(500).send("Error validando horario");
-                  }
-
-                  if (!esValidaHora) {
-                    return recargarFormularioConError(
-                      res,
-                      "El horario está fuera del rango de atención del profesional."
-                    );
-                  }
-
-                  insertarTurno(agenda_id);
-
-                }
-              );
-
+                horaFinal
+              });
+              return res.status(400).send("Horario fuera de agenda");
             }
-          );
 
-        });
+            Turno.obtenerSucursalPorAgenda(agenda_id, (errSuc, sucursal_id) => {
+
+              if (errSuc) return res.status(500).send("Error sucursal");
+
+              console.log("✅ CREANDO TURNO:", {
+                profesional_id,
+                fecha,
+                horaFinal
+              });
+
+              const data = {
+                paciente_id,
+                especialidad_id,
+                profesional_id,
+                sucursal_id,
+                fecha,
+                hora: horaFinal,
+                tipo_turno,
+                agenda_id
+              };
+
+              console.log("DATA CREAR TURNO:", data);
+
+              Turno.crear(data, (err) => {
+
+                if (err) {
+                  if (err.code === 'ER_DUP_ENTRY') {
+                    return res.status(400).send("Horario ocupado");
+                  }
+                  return res.status(500).send("Error creando turno");
+                }
+
+                res.redirect('/turnos');
+              });
+
+            });
+
+          }
+        );
+
+      });
+
+    };
+
+
+    const horaNormalizada = hora?.length === 5 ? hora : (hora ? hora.slice(0, 5) : null);
+
+
+    if (esNormal) {
+
+      console.log("CHECK TURNO EXISTENTE:", {
+        profesional_id,
+        fecha,
+        horaNormalizada
+      });
+      Turno.existeTurnoEnHorario(profesional_id, fecha, horaNormalizada, (err2, existe) => {
+
+        if (err2) {
+          return res.status(500).send("Error validando");
+        }
+
+        if (existe) {
+          return res.status(400).send("Horario ocupado");
+        }
+
+        validarYCrear(horaNormalizada);
 
       });
 
     } else {
 
-      // 3️⃣ Sobreturnos
-      Turno.contarSobreturnosEnHora(profesional_id, fecha, hora, (err3, cantidad) => {
+      Turno.contarSobreturnosEnHora(profesional_id, fecha, horaNormalizada, (err3, cantidad) => {
 
-        if (err3) return res.status(500).send("Error validando sobreturnos");
+        if (err3) return res.status(500).send("Error sobreturnos");
 
         if (cantidad >= 2) {
-          return recargarFormularioConError(
-            res,
-            "Máximo de sobreturnos alcanzado en este horario."
-          );
+          return res.status(400).send("Máximo sobreturnos");
         }
 
-        Turno.obtenerAgendaId(profesional_id, (errAgenda, agenda_id) => {
+        const nuevaHora = sumarSegundos(horaNormalizada, cantidad + 1);
 
-          if (errAgenda) {
-            return res.status(500).send("Error obteniendo agenda");
-          }
+        console.log("HORA NORMALIZADA:", horaNormalizada);
+        console.log("HORA RECIBIDA:", hora);
+        console.log("FECHA RECIBIDA:", fecha);
+        console.log("PROFESIONAL:", profesional_id);
 
-          if (!agenda_id) {
-            return res.status(400).send("El profesional no tiene agenda activa");
-          }
-
-          const nuevaHora = sumarSegundos(hora, cantidad + 1);
-
-          Turno.validarAgendaDeProfesional(
-            agenda_id,
-            profesional_id,
-            (errVal, esValida) => {
-
-              if (errVal) {
-                return res.status(500).send("Error validando agenda");
-              }
-
-              if (!esValida) {
-                return res.status(400).send("La agenda no pertenece al profesional");
-              }
-
-              Turno.validarHoraEnAgenda(
-                profesional_id,
-                fecha,
-                nuevaHora,
-                (errHora, esValidaHora) => {
-
-                  if (errHora) {
-                    return res.status(500).send("Error validando horario");
-                  }
-
-                  if (!esValidaHora) {
-                    return recargarFormularioConError(
-                      res,
-                      "El sobreturno queda fuera del horario de atención."
-                    );
-                  }
-
-                  insertarTurno(agenda_id, nuevaHora);
-
-                }
-              );
-
-            }
-          );
-
-        });
-
-      });
-
-    }
-
-    // ==========================
-    // FUNCIÓN INTERNA
-    // ==========================
-
-    function insertarTurno(agenda_id, horaFinal = hora) {
-
-      Turno.obtenerSucursalPorAgenda(agenda_id, (errSuc, sucursal_id) => {
-
-        if (errSuc) {
-          return res.status(500).send("Error obteniendo sucursal");
-        }
-
-        if (!sucursal_id) {
-          return res.status(400).send("El profesional no tiene sucursal asignada");
-        }
-
-        Turno.crear(
-          {
-            paciente_id,
-            especialidad_id,
-            profesional_id,
-            sucursal_id,
-            fecha,
-            hora: horaFinal,
-            tipo_turno,
-            agenda_id
-          },
-          (err) => {
-
-            if (err) {
-              console.error("ERROR AL CREAR TURNO:", err);
-
-              if (err.code === 'ER_DUP_ENTRY') {
-                return recargarFormularioConError(
-                  res,
-                  "Ese horario ya fue tomado por otro turno."
-                );
-              }
-
-              return res.status(500).send("Error creando turno");
-            }
-
-            return res.redirect('/turnos');
-
-          }
-        );
+        validarYCrear(nuevaHora);
 
       });
 
@@ -321,76 +266,57 @@ exports.obtenerHorariosDisponibles = (req, res) => {
 
   const { profesionalId, fecha } = req.params;
 
-  console.log("PARAMS:", profesionalId, fecha);
-
-  // 🔥 PRIMERA VALIDACIÓN: AUSENCIA
   Ausencia.existeAusenciaEnFecha(profesionalId, fecha, (err, hayAusencia) => {
 
-    if (err) {
-      console.error("ERROR EN AUSENCIA:", err);
-      return res.status(500).json({ motivo: 'error_ausencia' });
-    }
+    if (err) return res.status(500).json({ motivo: 'error_ausencia' });
 
     if (hayAusencia) {
       return res.json({ motivo: 'ausente' });
     }
-
-    // ================================
-    // SI NO HAY AUSENCIA → sigue flujo normal
-    // ================================
 
     let fechaObj;
 
     if (fecha.includes('-')) {
       const [y, m, d] = fecha.split('-');
       fechaObj = new Date(y, m - 1, d);
-    } else if (fecha.includes('/')) {
-      const [d, m, y] = fecha.split('/');
-      fechaObj = new Date(y, m - 1, d);
     } else {
-      return res.status(400).json({ motivo: 'formato_fecha_invalido' });
+      return res.status(400).json({ motivo: 'fecha_invalida' });
     }
 
-    let diaJS = fechaObj.getDay();
-    let diaBD = diaJS === 0 ? 7 : diaJS;
+    const diaBD = fechaObj.getDay() === 0 ? 7 : fechaObj.getDay();
 
-    Agenda.obtenerHorariosProfesional(profesionalId, diaBD, (err, bloques) => {
+    Turno.obtenerAgendaId(profesionalId, (errAgenda, agenda_id) => {
 
-      if (err) {
-        console.error("ERROR EN AGENDA:", err);
-        return res.status(500).json({ motivo: 'error_agenda' });
+      if (errAgenda || !agenda_id) {
+        return res.json({ motivo: 'sin_agenda' });
       }
 
-      if (!bloques || !bloques.length) {
-        return res.json({ motivo: 'no_trabaja' });
-      }
+      Agenda.obtenerHorariosProfesional(agenda_id, diaBD, (err, bloques) => {
 
-      const fechaSQL = fecha.split('T')[0];
+        if (err) return res.status(500).json({ motivo: 'error_agenda' });
 
-      Turno.obtenerHorariosOcupados(profesionalId, fechaSQL, (err2, ocupados) => {
-
-        if (err2) {
-          console.error("ERROR EN TURNOS:", err2);
-          return res.status(500).json({ motivo: 'error_turnos' });
+        if (!bloques.length) {
+          return res.json({ motivo: 'no_trabaja' });
         }
 
-        let posibles = [];
+        Turno.obtenerHorariosOcupados(profesionalId, fecha, (err2, ocupados) => {
 
-        bloques.forEach(b => {
-          posibles.push(
-            ...generarTurnos(
+          if (err2) return res.status(500).json({ motivo: 'error_turnos' });
+
+          let posibles = [];
+
+          bloques.forEach(b => {
+            posibles.push(...generarTurnos(
               b.hora_inicio,
               b.hora_fin,
               b.duracion_turno
-            )
-          );
-        });
+            ));
+          });
 
-        const libres = posibles.filter(h => !ocupados.includes(h));
+          const libres = posibles.filter(h => !ocupados.includes(h));
 
-        res.json({
-          libres,
-          ocupados
+          res.json({ libres, ocupados });
+
         });
 
       });
@@ -402,7 +328,7 @@ exports.obtenerHorariosDisponibles = (req, res) => {
 };
 
 // ==========================
-// CONFIRMAR TURNO
+// OTROS
 // ==========================
 
 exports.confirmarTurno = (req, res) => {
@@ -411,61 +337,11 @@ exports.confirmarTurno = (req, res) => {
 
   Turno.buscarPorToken(token, (err, turno) => {
 
-    if (err || !turno) {
-      return res.send('Token inválido');
-    }
+    if (err || !turno) return res.send('Token inválido');
+
     Turno.confirmar(turno.id, (err) => {
-      if (err) return res.status(500).send('Error confirmando turno');
-      res.send('Turno confirmado correctamente');
-    });
-
-  });
-
-};
-
-// ==========================
-// EDITAR TURNO
-// ==========================
-
-exports.mostrarFormularioEditarTurno = (req, res) => {
-
-  Turno.obtenerPorId(req.params.id, (err, turno) => {
-
-    if (err || !turno) {
-      return res.status(404).send('No encontrado');
-    }
-
-    Turno.obtenerPacientes((e1, pacientes) => {
-
-      Turno.obtenerEspecialidades((e2, especialidades) => {
-
-        Turno.obtenerSucursales((e3, sucursales) => {
-
-          Turno.obtenerProfesionalesPorEspecialidad(
-            turno.especialidad_id,
-            (e4, profesionales) => {
-
-              if (e1 || e2 || e3 || e4) {
-                return res.status(500).send('Error cargando formulario');
-              }
-
-              turno.fecha = new Date(turno.fecha).toISOString().split('T')[0];
-              turno.hora = turno.hora.slice(0, 5);
-              res.render('editarTurno', {
-                turno,
-                pacientes: pacientes || [],
-                especialidades: especialidades || [],
-                profesionales: profesionales || [],
-                sucursales: sucursales || []
-              });
-
-            }
-          );
-
-        });
-
-      });
-
+      if (err) return res.status(500).send('Error');
+      res.send('Turno confirmado');
     });
 
   });
@@ -475,10 +351,8 @@ exports.mostrarFormularioEditarTurno = (req, res) => {
 exports.editarTurno = (req, res) => {
 
   Turno.actualizar(req.params.id, req.body, (err) => {
-    if (err) {
-      console.error("ERROR REAL AL ACTUALIZAR:", err);
-      return res.status(500).send(err.message);
-    }
+    if (err) return res.status(500).send(err.message);
+    res.redirect('/turnos');
   });
 
 };
@@ -502,8 +376,8 @@ exports.obtenerEspecialidadesPorProfesional = (req, res) => {
     (err, rows) => {
 
       if (err) return res.status(500).json([]);
-
       res.json(rows || []);
+
     }
   );
 
@@ -516,9 +390,50 @@ exports.obtenerProfesionalesPorEspecialidad = (req, res) => {
     (err, rows) => {
 
       if (err) return res.status(500).json([]);
-
       res.json(rows || []);
+
     }
   );
+
+};
+
+exports.mostrarFormularioEditarTurno = (req, res) => {
+
+  Turno.obtenerPorId(req.params.id, (err, turno) => {
+
+    if (err || !turno) {
+      return res.status(404).send('No encontrado');
+    }
+
+    Turno.obtenerPacientes((e1, pacientes) => {
+
+      Turno.obtenerEspecialidades((e2, especialidades) => {
+
+        Turno.obtenerProfesionalesPorEspecialidad(
+          turno.especialidad_id,
+          (e3, profesionales) => {
+
+            if (e1 || e2 || e3) {
+              return res.status(500).send('Error cargando formulario');
+            }
+
+            turno.fecha = new Date(turno.fecha).toISOString().split('T')[0];
+            turno.hora = turno.hora.slice(0, 5);
+
+            res.render('editarTurno', {
+              turno,
+              pacientes,
+              especialidades,
+              profesionales
+            });
+
+          }
+        );
+
+      });
+
+    });
+
+  });
 
 };

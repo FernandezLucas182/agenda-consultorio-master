@@ -1,18 +1,22 @@
-doctype html
-html
-  head
-    title Detalle del Turno
-    link(rel='stylesheet', href='/styles.css')
-  body
-    h1 Detalle del Turno
+extends layout
+
+block title
+  | Detalle del Turno
+
+block content
+  .container.mt-4
+    h1.mb-4 Detalle del Turno
+
     if turno
-      ul
-        li Paciente: #{turno.paciente_nombre}
-        li Profesional: #{turno.profesional_nombre}
-        li Especialidad: #{turno.especialidad_nombre}
-        li Sucursal: #{turno.sucursal_nombre}
-        li Fecha: #{turno.fecha}
-        li Hora: #{turno.hora}
-        li Estado: #{turno.estado}
-        
-    a(href='/turnos') Volver a la lista de turnos
+      .card.shadow-sm
+        .card-body
+          ul.list-group.list-group-flush
+            li.list-group-item Paciente: #{turno.paciente_nombre}
+            li.list-group-item Profesional: #{turno.profesional_nombre}
+            li.list-group-item Especialidad: #{turno.especialidad_nombre}
+            li.list-group-item Sucursal: #{turno.sucursal_nombre}
+            li.list-group-item Fecha: #{turno.fecha}
+            li.list-group-item Hora: #{turno.hora}
+            li.list-group-item Estado: #{turno.estado}
+
+    a.btn.btn-secondary.mt-3(href='/turnos') Volver a la lista de turnos

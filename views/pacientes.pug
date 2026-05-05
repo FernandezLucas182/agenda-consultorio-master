@@ -6,12 +6,21 @@ block title
 block content
   h1 Pacientes
 
-  form(method="GET" action="/pacientes")
-    .row.mb-3
-      .col-md-4
-        input.form-control(type="text" name="dni" placeholder="Buscar por DNI")
-      .col-md-2
-        button.btn.btn-primary(type="submit") Buscar
+  div.d-flex.gap-2.mb-3
+    form(method="GET" action="/pacientes" style="flex:1")
+      input.form-control(
+        type="text"
+        name="dni"
+        placeholder="Buscar por DNI"
+        value=dni
+      )
+
+    button.btn.btn-primary(type="submit" formmethod="GET") Buscar
+    a.btn.btn-secondary(href="/pacientes") Mostrar todos
+  
+  div.mb-3.d-flex.gap-2
+    a(href="/pacientes/nuevo" class="btn btn-primary") Crear nuevo paciente
+    a(href="/" class="btn btn-secondary") Volver al inicio
 
   if pacientes.length === 0
     p.alert.alert-warning Paciente no encontrado.

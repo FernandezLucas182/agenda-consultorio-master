@@ -46,7 +46,7 @@ block content
       //- Profesional (Se carga dinámicamente)
       div.col-md-6
         label.form-label(for="profesional_id") Profesional
-        select.form-select(name="agenda_id") id="profesional_id" required disabled)
+        select.form-select(name="profesional_id" id="profesional_id" required disabled)
           option(value="" disabled selected) -- Primero seleccione especialidad --
 
       
@@ -107,8 +107,8 @@ block content
         profesionalSelect.innerHTML = '<option value="" disabled selected>-- Seleccione Profesional --</option>';
         data.forEach(p => {
           const option = document.createElement('option');
-          option.value = p.id;
-          option.textContent = p.nombre_completo; 
+          option.value = p.id; // 🔥 CLAVE
+          option.textContent = p.nombre_completo;
           profesionalSelect.appendChild(option);
         });
         profesionalSelect.disabled = false;
@@ -123,50 +123,87 @@ block content
       const profesionalId = profesionalSelect.value;
       const fecha = fechaInput.value;
 
-      mensajeDiv.innerHTML = '';
+      console.log("PROFESIONAL:", profesionalId);
+      console.log("FECHA:", fecha);
 
-      if (!profesionalId || !fecha) return;
+      if (!profesionalId || !fecha) {
+        console.log("Faltan datos, no carga");
+        return;
+      }
 
       horaSelect.innerHTML = '<option>Cargando...</option>';
       horaSelect.disabled = true;
 
       try {
-        const res = await fetch(`/turnos/horarios-disponibles/${profesionalId}/${fecha}`);
+        const res = await fetch(`/turnos/horarios-disponibles/${profesionalId}/${fecha}`, {
+          cache: "no-store"
+        });
+
         const data = await res.json();
 
-        horaSelect.innerHTML = '<option value="" disabled selected>-- Seleccione Hora --</option>';
+        console.log("DATA COMPLETA:", data);
 
-        if (data.motivo === 'ausente') {
+        horaSelect.innerHTML = '';
+
+        // ⚠️ Caso: backend devuelve motivo
+        if (data.motivo) {
+          let mensaje = '';
+
+          switch (data.motivo) {
+            case 'sin_agenda':
+              mensaje = 'El profesional no tiene agenda';
+              break;
+            case 'ausente':
+              mensaje = 'El profesional está ausente ese día';
+              break;
+            case 'no_trabaja':
+              mensaje = 'El profesional no trabaja ese día';
+              break;
+            default:
+              mensaje = 'No hay disponibilidad';
+          }
+
           const option = document.createElement('option');
-          option.text = "Profesional ausente en esta fecha";
+          option.textContent = mensaje;
           option.disabled = true;
-          option.classList.add('text-danger');
-          horaSelect.appendChild(option);
+          option.selected = true;
 
-        } else if (data.motivo === 'no_trabaja') {
-          const option = document.createElement('option');
-          option.text = "El profesional no trabaja este día";
-          option.disabled = true;
-          option.classList.add('text-warning');
           horaSelect.appendChild(option);
+          horaSelect.disabled = true;
+          return;
+        }
 
-        } else if (data.libres && data.libres.length > 0) {
+        // ⚠️ Caso normal
+        if (data.libres && data.libres.length > 0) {
+
+          const defaultOption = document.createElement('option');
+          defaultOption.textContent = '-- Seleccione Hora --';
+          defaultOption.disabled = true;
+          defaultOption.selected = true;
+
+          horaSelect.appendChild(defaultOption);
+
           data.libres.forEach(h => {
             const option = document.createElement('option');
             option.value = h;
             option.textContent = h;
             horaSelect.appendChild(option);
           });
-          horaSelect.disabled = false;
+
+          horaSelect.disabled = false; // 🔥 CLAVE
 
         } else {
           const option = document.createElement('option');
-          option.text = "No hay horarios disponibles";
+          option.textContent = 'No hay horarios disponibles';
           option.disabled = true;
+          option.selected = true;
+
           horaSelect.appendChild(option);
+          horaSelect.disabled = true;
         }
+
       } catch (err) {
-        console.error(err);
+        console.error("ERROR FETCH:", err);
         horaSelect.innerHTML = '<option>Error al cargar</option>';
       }
     }

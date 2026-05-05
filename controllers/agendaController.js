@@ -214,15 +214,30 @@ exports.mostrarAgendas = (req, res) => {
 
   Agenda.obtenerAgendaCompleta(buscar, (err, agenda) => {
 
-  if (err) {
-    console.error("ERROR EN QUERY AGENDA:", err);
-    return res.status(500).send(err.message);
-  }
+    if (err) {
+      console.error("ERROR EN QUERY AGENDA:", err);
+      return res.status(500).send(err.message);
+    }
 
-  console.log("AGENDA OK:", agenda.length);
+    // 🔥 AGRUPAR POR agenda_id
+    const agrupadas = {};
 
-  res.render('agendas', { agenda, buscar });
-});
+    agenda.forEach(item => {
+      if (!agrupadas[item.agenda_id]) {
+        agrupadas[item.agenda_id] = {
+          profesional: item.nombre + ' ' + item.apellido,
+          filas: []
+        };
+      }
+
+      agrupadas[item.agenda_id].filas.push(item);
+    });
+
+    // 🔥 CONVERTIR A ARRAY
+    const agendas = Object.values(agrupadas);
+
+    res.render('agendas', { agendas, buscar });
+  });
 };
 
 
@@ -275,13 +290,13 @@ exports.formularioEditarAgenda = (req, res) => {
       if (err || !horarios) horarios = [];
 
       const horariosDisponibles = generarHorarios();
-      
+
       console.log("Horarios disponibles:", horariosDisponibles);
-      
+
       console.log("Agenda ID:", id);
       console.log("Horarios:", horarios);
       console.log("Agrupados:", agruparHorariosPorDia(horarios));
-      
+
       res.render('editarAgenda', {
         agenda,
         horarios: agruparHorariosPorDia(horarios),

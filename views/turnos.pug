@@ -5,6 +5,28 @@ block title
 
 block content
   h1 Lista de Turnos
+
+  // 🔍 BUSCADOR
+  div.d-flex.gap-2.mb-3
+    form(method="GET" action="/turnos" style="flex:1; display:flex; gap:8px;")
+      input.form-control(
+        type="text"
+        name="q"
+        placeholder="Buscar por paciente, profesional o fecha..."
+        value=q
+      )
+      button.btn.btn-primary(type="submit") Buscar
+
+    a.btn.btn-secondary(href="/turnos") Mostrar todos
+
+
+  // 🔽 BOTONES ABAJO
+  div.d-flex.gap-2.mb-3
+    a.btn.btn-primary(href="/turnos/nuevo") Crear nuevo turno
+    a.btn.btn-secondary(href="/") Volver al inicio
+
+  if turnos.length > 0
+
   if turnos.length > 0
     table.table.table-striped
       thead

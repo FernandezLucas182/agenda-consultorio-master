@@ -2,19 +2,19 @@ const Paciente = require('../models/Paciente');
 
 // Mostrar todos los pacientes //Busqueda por dni
 exports.mostrarPacientes = (req, res) => {
-  const dni = req.query.dni;
+  const dni = req.query.dni || '';
 
   if (dni) {
     Paciente.buscarPorDni(dni, (err, pacientes) => {
       if (err) return res.status(500).send('Error');
 
-      res.render('pacientes', { pacientes });
+      res.render('pacientes', { pacientes, dni });
     });
   } else {
     Paciente.obtenerTodos((err, pacientes) => {
       if (err) return res.status(500).send('Error');
 
-      res.render('pacientes', { pacientes });
+      res.render('pacientes', { pacientes, dni });
     });
   }
 };

@@ -1,5 +1,16 @@
 const db = require('./Db');
 
+function normalizarHora(hora) {
+  if (!hora) return null;
+
+  const partes = hora.split(':');
+
+  const hh = partes[0].padStart(2, '0');
+  const mm = (partes[1] || '00').padStart(2, '0');
+
+  return `${hh}:${mm}`;
+}
+
 class Turno {
 
   // ==========================
@@ -38,14 +49,15 @@ class Turno {
     SELECT 
       t.*,
       p.nombre AS paciente_nombre,
-      CONCAT(pr.nombre, ' ', pr.apellido) AS profesional_nombre,
+      pr.nombre AS profesional_nombre,
       e.nombre AS especialidad_nombre,
       s.nombre AS sucursal_nombre
     FROM turnos t
-    JOIN pacientes p ON t.paciente_id = p.id
-    JOIN profesionales pr ON t.profesional_id = pr.id
-    JOIN especialidades e ON t.especialidad_id = e.id
-    JOIN sucursales s ON t.sucursal_id = s.id
+    JOIN pacientes p ON p.id = t.paciente_id
+    JOIN profesionales pr ON pr.id = t.profesional_id
+    JOIN especialidades e ON e.id = t.especialidad_id
+    JOIN agendas a ON a.id = t.agenda_id
+    LEFT JOIN sucursales s ON s.id = a.sucursal_id
     WHERE t.id = ?
   `;
 
@@ -157,7 +169,7 @@ class Turno {
   // SOBRETURNOS
   // ==========================
 
-  
+
 
   static obtenerMaxSobreturnos(profesional_id, especialidad_id, callback) {
     db.query(
@@ -245,7 +257,7 @@ class Turno {
   }
 
   static contarSobreturnos(profesional_id, fecha, callback) {
-  const sql = `
+    const sql = `
     SELECT COUNT(*) as total
     FROM turnos
     WHERE profesional_id = ?
@@ -254,16 +266,16 @@ class Turno {
       AND estado IN ('reservado','confirmado')
   `;
 
-  db.query(sql, [profesional_id, fecha], (err, rows) => {
-    if (err) return callback(err);
-    callback(null, rows[0].total);
-  });
-}
+    db.query(sql, [profesional_id, fecha], (err, rows) => {
+      if (err) return callback(err);
+      callback(null, rows[0].total);
+    });
+  }
 
 
-//===========================
-//Obtener Agenda x id
-//===========================
+  //===========================
+  //Obtener Agenda x id
+  //===========================
 
   static obtenerAgendaId(profesional_id, callback) {
     const sql = `
@@ -280,15 +292,15 @@ class Turno {
     });
   }
 
-  
+
   //============================
   // OBTENER SUCURSAL POR AGENDA
   //============================
   static obtenerSucursalPorAgenda(agenda_id, callback) {
     const sql = `
-    SELECT sucursal_id
-    FROM agendas
-    WHERE id = ?
+      SELECT sucursal_id
+      FROM agendas
+      WHERE id = ?
   `;
 
     db.query(sql, [agenda_id], (err, rows) => {
@@ -303,14 +315,26 @@ class Turno {
   }
 
 
+
+
   //============================
   // VALIDAR HORA DENTRO DE AGENDA
   //============================
   static validarHoraEnAgenda(profesional_id, fecha, hora, callback) {
 
-    const fechaObj = new Date(fecha);
+    const fechaObj = new Date(fecha + "T00:00:00");
     let diaJS = fechaObj.getDay();
-    let diaBD = diaJS === 0 ? 7 : diaJS;
+    //    let diaBD = diaJS === 0 ? 7 : diaJS;
+    const diaBD = fechaObj.getDay() === 0 ? 7 : fechaObj.getDay();
+
+    console.log("PROFESIONAL:", profesional_id);
+    console.log("DIA BD:", diaBD);
+
+    // 🔥 AGREGAR ESTO ACÁ
+    db.query("SELECT DATABASE() as db", (err, r) => {
+      console.log("DB ACTUAL:", r);
+    });
+
 
     const sql = `
     SELECT ah.hora_inicio, ah.hora_fin
@@ -321,16 +345,41 @@ class Turno {
   `;
 
     db.query(sql, [profesional_id, diaBD], (err, rows) => {
+      
 
       if (err) return callback(err);
 
+      console.log("HORARIOS BD:", rows);
+
       if (!rows.length) {
+        console.log("❌ SIN HORARIOS PARA ESE DÍA");
         return callback(null, false);
       }
 
+      function horaASegundos(h) {
+        const [hh, mm, ss = 0] = h.split(':').map(Number);
+        return hh * 3600 + mm * 60 + ss;
+      }
+
+      const horaNormalizada = normalizarHora(hora);
+      const horaSeg = horaASegundos(horaNormalizada);
+
+      console.log("DEBUG VALIDACION:");
+      console.log("hora evaluada:", horaNormalizada);
+      console.log("hora en segundos:", horaSeg);
+      console.log("bloques:", rows.map(b => ({
+        inicio: b.hora_inicio,
+        fin: b.hora_fin
+      })));
+
       const dentro = rows.some(bloque => {
-        return hora >= bloque.hora_inicio && hora < bloque.hora_fin;
+        const inicio = horaASegundos(bloque.hora_inicio);
+        const fin = horaASegundos(bloque.hora_fin);
+        
+        return horaSeg >= inicio && horaSeg < fin;
       });
+
+      console.log(dentro ? "✅ DENTRO DE AGENDA" : "❌ FUERA DE AGENDA");
 
       callback(null, dentro);
 

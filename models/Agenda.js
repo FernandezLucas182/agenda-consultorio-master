@@ -519,20 +519,35 @@ class Agenda {
     });
   }
 
-  static obtenerHorariosProfesional(profesional_id, dia_semana, callback) {
+  static obtenerHorariosProfesional(agenda_id, dia_semana, callback) {
 
     const sql = `
     SELECT ah.hora_inicio, ah.hora_fin, a.duracion_turno
-    FROM agendas a
-    JOIN agenda_horarios ah ON ah.agenda_id = a.id
-    WHERE a.profesional_id = ?
-      AND a.activo = 1
-      AND ah.dia_semana = ?
+    FROM agenda_horarios ah
+    JOIN agendas a ON ah.agenda_id = a.id
+    WHERE ah.agenda_id = ?
+    AND ah.dia_semana = ?
   `;
 
-    db.query(sql, [profesional_id, dia_semana], (err, resultados) => {
+    db.query(sql, [agenda_id, dia_semana], (err, resultados) => {
       if (err) return callback(err);
       callback(null, resultados || []);
+    });
+  }
+
+  static obtenerAgendaPorProfesional(profesional_id, callback) {
+
+    const sql = `
+    SELECT id, duracion_turno
+    FROM agendas
+    WHERE profesional_id = ?
+    AND activo = 1
+    LIMIT 1
+  `;
+
+    db.query(sql, [profesional_id], (err, resultados) => {
+      if (err) return callback(err);
+      callback(null, resultados[0] || null);
     });
   }
 

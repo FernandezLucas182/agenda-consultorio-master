@@ -6,6 +6,19 @@ block title
 block content
   h1 Lista de Ausencias
 
+  // 🔍 BUSCADOR
+  div.d-flex.gap-2.mb-3
+    form(method="GET" action="/ausencias" style="flex:1; display:flex; gap:8px;")
+      input.form-control(
+        type="text"
+        name="buscar"
+        placeholder="Buscar por profesional o motivo"
+        value=buscar
+      )
+      button.btn.btn-primary(type="submit") Buscar
+
+    a.btn.btn-secondary(href="/ausencias") Mostrar todos
+
   div.mb-3
     a(href="/" class="btn btn-secondary me-2") ← Volver al inicio
     a(href="/ausencias/nueva" class="btn btn-primary") Nueva Ausencia
@@ -27,3 +40,6 @@ block content
           td= a.motivo
           td
             a(href=`/ausencias/${a.id}/editar` class="btn btn-sm btn-warning") Editar
+  div.mb-4
+    a(href="/" class="btn btn-secondary me-2") ← Volver al inicio
+    a(href="/ausencias/nueva" class="btn btn-primary") Nueva Ausencia

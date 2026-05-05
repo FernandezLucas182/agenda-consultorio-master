@@ -4,59 +4,62 @@ block title
   | Editar Turno
 
 block content
-  h1 Editar Turno
+  .container.mt-4
+    h1.mb-4 Editar Turno
 
-  form(action=`/turnos/${turno.id}/editar` method="POST")
-    div.row.g-3
-      div.col-md-6
-        label.form-label(for="paciente_id") Paciente
-        select.form-select(name="paciente_id" id="paciente_id")
-          each paciente in pacientes
-            option(value=paciente.id selected=(paciente.id == turno.paciente_id))= paciente.nombre
+    .card.shadow-sm
+      .card-body
 
-      div.col-md-6
-        label.form-label(for="profesional_id") Profesional
-        select.form-select(disabled)
-          each profesional in profesionales
-            option(value=profesional.id selected=(profesional.id == turno.profesional_id))= profesional.nombre_completo
+        form(action=`/turnos/${turno.id}/editar` method="POST")
+          div.row.g-3
 
-        input(type="hidden" name="profesional_id" value=turno.profesional_id)
+            div.col-md-6
+              label.form-label(for="paciente_id") Paciente
+              select.form-select(name="paciente_id" id="paciente_id")
+                each paciente in pacientes
+                  option(value=paciente.id selected=(paciente.id == turno.paciente_id))= paciente.nombre
 
-      div.col-md-6
-        label.form-label(for="especialidad_id") Especialidad
-        select.form-select(disabled)
-          each especialidad in especialidades
-            option(value=especialidad.id selected=(especialidad.id == turno.especialidad_id))= especialidad.nombre
+            div.col-md-6
+              label.form-label Profesional
+              select.form-select(disabled)
+                each profesional in profesionales
+                  option(value=profesional.id selected=(profesional.id == turno.profesional_id))= profesional.nombre_completo
 
-        input(type="hidden" name="especialidad_id" value=turno.especialidad_id)
+              input(type="hidden" name="profesional_id" value=turno.profesional_id)
 
-      div.col-md-6
-        label.form-label(for="sucursal_id") Sucursal
-        select.form-select(name="sucursal_id" id="sucursal_id" disabled)
-          each sucursal in sucursales
-            option(value=sucursal.id selected=(sucursal.id == turno.sucursal_id))= sucursal.nombre
+            div.col-md-6
+              label.form-label Especialidad
+              select.form-select(disabled)
+                each especialidad in especialidades
+                  option(value=especialidad.id selected=(especialidad.id == turno.especialidad_id))= especialidad.nombre
 
-      div.col-md-6
-        label.form-label(for="fecha") Fecha
-        input.form-control(type="date" name="fecha" value=turno.fecha required)
+              input(type="hidden" name="especialidad_id" value=turno.especialidad_id)
 
-      div.col-md-6
-        label.form-label(for="hora") Hora
-        input.form-control(type="time" name="hora" value=turno.hora required)
+            div.col-md-6
+              label.form-label Sucursal
+              input.form-control(type="text" disabled value=turno.sucursal_nombre)
 
-      div.col-md-6
-        label.form-label(for="tipo_turno") Tipo de Turno
-        select.form-select(name="tipo_turno")
-          option(value="normal" selected=(turno.tipo_turno == 'normal')) Normal
-          option(value="sobreturno" selected=(turno.tipo_turno == 'sobreturno')) Sobreturno
+            div.col-md-6
+              label.form-label(for="fecha") Fecha
+              input.form-control(type="date" name="fecha" value=turno.fecha required)
 
-      div.col-md-6
-        label.form-label(for="estado") Estado
-        select.form-select(name="estado")
-          option(value="confirmado" selected=(turno.estado == 'confirmado')) Confirmado
-          option(value="cancelado" selected=(turno.estado == 'cancelado')) Cancelado
-          option(value="pendiente" selected=(turno.estado == 'pendiente')) Pendiente
+            div.col-md-6
+              label.form-label(for="hora") Hora
+              input.form-control(type="time" name="hora" value=turno.hora required)
 
-    div.mt-4
-      button.btn.btn-warning(type="submit") Actualizar Turno
-      a.btn.btn-secondary.ms-2(href="/turnos") Cancelar
+            div.col-md-6
+              label.form-label Tipo de Turno
+              select.form-select(name="tipo_turno")
+                option(value="normal" selected=(turno.tipo_turno == 'normal')) Normal
+                option(value="sobreturno" selected=(turno.tipo_turno == 'sobreturno')) Sobreturno
+
+            div.col-md-6
+              label.form-label Estado
+              select.form-select(name="estado")
+                option(value="confirmado" selected=(turno.estado == 'confirmado')) Confirmado
+                option(value="cancelado" selected=(turno.estado == 'cancelado')) Cancelado
+                option(value="pendiente" selected=(turno.estado == 'pendiente')) Pendiente
+
+          .mt-4
+            button.btn.btn-warning(type="submit") Actualizar Turno
+            a.btn.btn-secondary.ms-2(href="/turnos") Cancelar
