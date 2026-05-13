@@ -445,7 +445,10 @@ class Agenda {
             if (existente.length > 0) {
               return connection.rollback(() => {
                 connection.release();
-                callback(new Error("Ya existe una agenda activa para este profesional y especialidad"));
+                callback({
+                  type: 'BUSINESS_RULE',
+                  message: 'Ya existe una agenda activa para este profesional y especialidad'
+                });
               });
             }
 
@@ -548,6 +551,23 @@ class Agenda {
     db.query(sql, [profesional_id], (err, resultados) => {
       if (err) return callback(err);
       callback(null, resultados[0] || null);
+    });
+  }
+
+
+  static verificarDisponibilidad(profesional_id, especialidad_id, callback) {
+
+    const sql = `
+    SELECT id
+    FROM agendas
+    WHERE profesional_id = ?
+    AND especialidad_id = ?
+    AND activo = 1
+  `;
+
+    db.query(sql, [profesional_id, especialidad_id], (err, rows) => {
+      if (err) return callback(err);
+      callback(null, rows.length === 0); // true = disponible
     });
   }
 

@@ -12,13 +12,11 @@ block content
     div.row.g-3
       div.col-md-6
         label.form-label(for="profesionalSelect") Profesional
-        select.form-select(name="agenda_id") id="profesionalSelect" required)
+        select.form-select(name="profesional_id" id="profesionalSelect" required)
           option(value="" disabled selected) -- Selecciona profesional --
-          each agenda in agendas
-            option(
-              value=agenda.id
-              selected=(agenda.id == ausencia.agenda_id)
-            )= agenda.nombre
+          each profesional in profesionales
+            option(value=profesional.id)
+              | #{profesional.nombre} #{profesional.apellido}
 
       div.col-md-6
         label.form-label(for="especialidadSelect") Especialidad
@@ -63,12 +61,17 @@ block content
           button.btn.btn-outline-primary.btn-sm(type="button" onclick=`agregarBloque(${dia.id})`) + Agregar bloque horario
 
     div.mt-4
-      button.btn.btn-success.btn-lg(type="submit") Guardar Agenda Completa
+      button#btnGuardar.btn.btn-success.btn-lg(type="submit") Guardar Agenda Completa
       a.btn.btn-secondary.btn-lg.ms-2(href="/agendas") Volver
 
   // SCRIPT
   script.
     document.addEventListener('DOMContentLoaded', () => {
+
+      const profesionalSelect = document.getElementById('profesionalSelect');
+      const especialidadSelect = document.getElementById('especialidadSelect');
+      const sucursalSelect = document.getElementById('sucursalSelect');
+      const btnGuardar = document.getElementById('btnGuardar');
 
       const horariosDisponibles = [
         "09:00","09:30","10:00","10:30","11:00","11:30",
@@ -79,37 +82,16 @@ block content
 
       let bloqueIndex = 0;
 
-      const profesionalSelect = document.getElementById('profesionalSelect');
-      const especialidadSelect = document.getElementById('especialidadSelect');
-      const sucursalSelect = document.getElementById('sucursalSelect');
-
-      console.log("Select sucursal:", sucursalSelect);
-
-      profesionalSelect.addEventListener('change', async () => {
-        const profesionalId = profesionalSelect.value;
-
-        especialidadSelect.innerHTML = '<option disabled selected>Cargando...</option>';
-        sucursalSelect.innerHTML = '<option disabled selected>Cargando...</option>';
-
+      // =========================
+      // SUCURSALES (SOLO 1 VEZ)
+      // =========================
+      async function cargarSucursales() {
         try {
-          const res = await fetch(`/profesionales/${profesionalId}/especialidades`);
-          const especialidades = await res.json();
+          const res = await fetch('/sucursales');
+          const sucursales = await res.json();
 
-          especialidadSelect.innerHTML = '<option disabled selected>Selecciona especialidad</option>';
-
-          especialidades.forEach(e => {
-            const option = document.createElement('option');
-            option.value = e.id;
-            option.textContent = e.nombre;
-            especialidadSelect.appendChild(option);
-          });
-
-          const resSuc = await fetch(`/profesionales/${profesionalId}/sucursales`);
-          const sucursales = await resSuc.json();
-
-          console.log("Sucursales:", sucursales);
-
-          sucursalSelect.innerHTML = '<option disabled selected>Selecciona sucursal</option>';
+          sucursalSelect.innerHTML =
+            '<option disabled selected>Selecciona sucursal</option>';
 
           sucursales.forEach(s => {
             const option = document.createElement('option');
@@ -119,39 +101,102 @@ block content
           });
 
         } catch (err) {
-          console.error(err);
-          especialidadSelect.innerHTML = '<option disabled>Error</option>';
-          sucursalSelect.innerHTML = '<option disabled>Error</option>';
+          console.error("Error sucursales:", err);
         }
+      }
+
+      cargarSucursales();
+
+      // =========================
+      // DISPONIBILIDAD
+      // =========================
+      async function verificarDisponibilidad() {
+        const profesionalId = profesionalSelect.value;
+        const especialidadId = especialidadSelect.value;
+
+        if (!profesionalId || !especialidadId) return;
+
+        try {
+          const res = await fetch(
+            `/agendas/disponibilidad/${profesionalId}/${especialidadId}`
+          );
+
+          const data = await res.json();
+
+          btnGuardar.disabled = !data.disponible;
+
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      // =========================
+      // PROFESIONAL CHANGE
+      // =========================
+      profesionalSelect.addEventListener('change', async () => {
+        const profesionalId = profesionalSelect.value;
+
+        especialidadSelect.innerHTML =
+          '<option disabled selected>Cargando...</option>';
+
+        try {
+          const res = await fetch(`/profesionales/${profesionalId}/especialidades`);
+          const especialidades = await res.json();
+
+          especialidadSelect.innerHTML =
+            '<option disabled selected>Selecciona especialidad</option>';
+
+          especialidades.forEach(e => {
+            const option = document.createElement('option');
+            option.value = e.id;
+            option.textContent = e.nombre;
+            especialidadSelect.appendChild(option);
+          });
+
+        } catch (err) {
+          console.error(err);
+        }
+
+        verificarDisponibilidad();
       });
 
-      // ✔ MISMO NIVEL que lo anterior
-      window.agregarBloque = function(dia) {
-        const contenedor = document.getElementById('bloques-' + dia);
+      // =========================
+      // ESPECIALIDAD CHANGE
+      // =========================
+      especialidadSelect.addEventListener('change', () => {
+        verificarDisponibilidad();
+      });
 
-        const div = document.createElement('div');
-        div.className = 'row g-2 align-items-center mb-2';
+      // =========================
+      // BLOQUES HORARIOS
+      // =========================
+      window.agregarBloque = function(dia) {
+
+        const contenedor = document.getElementById('bloques-' + dia);
 
         const options = horariosDisponibles
           .map(h => `<option value="${h}">${h}</option>`)
           .join('');
 
+        const div = document.createElement('div');
+        div.className = 'row g-2 align-items-center mb-2';
+
         div.innerHTML = `
           <input type="hidden" name="horarios[${bloqueIndex}][dia]" value="${dia}">
-          <div class="col-auto"><label class="col-form-label">Desde:</label></div>
+          <div class="col-auto"><label>Desde:</label></div>
           <div class="col-auto">
-            <select class="form-select form-select-sm" name="horarios[${bloqueIndex}][desde]" required>
+            <select name="horarios[${bloqueIndex}][desde]" required>
               <option value="">--</option>${options}
             </select>
           </div>
-          <div class="col-auto"><label class="col-form-label">Hasta:</label></div>
+          <div class="col-auto"><label>Hasta:</label></div>
           <div class="col-auto">
-            <select class="form-select form-select-sm" name="horarios[${bloqueIndex}][hasta]" required>
+            <select name="horarios[${bloqueIndex}][hasta]" required>
               <option value="">--</option>${options}
             </select>
           </div>
           <div class="col-auto">
-            <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">X</button>
+            <button type="button" onclick="this.parentElement.parentElement.remove()">X</button>
           </div>
         `;
 

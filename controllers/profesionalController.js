@@ -213,7 +213,7 @@ exports.activarProfesional = (req, res) => {
 // ==========================
 // DEVOLVER SUCURSALES POR PROFESIONAL (API) 🔥
 // ==========================
-exports.obtenerSucursalesPorProfesional = (req, res) => {
+/*exports.obtenerSucursalesPorProfesional = (req, res) => {
   const profesionalId = req.params.id;
 
   Profesional.obtenerSucursalesPorProfesional(profesionalId, (err, sucursales) => {
@@ -224,4 +224,4 @@ exports.obtenerSucursalesPorProfesional = (req, res) => {
 
     res.json(sucursales);
   });
-};
+};*/

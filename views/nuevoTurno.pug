@@ -7,8 +7,8 @@ block content
   h1 Nuevo Turno
 
   //- Bloque para mostrar errores si el controlador los envía
-  if error
-    div.alert.alert-danger= error
+  if error && error.length > 0
+    div.alert.alert-danger= error[0]
 
   form(action="/turnos" method="POST")
     div.row.g-3
@@ -53,11 +53,20 @@ block content
       //- Fecha
       div.col-md-6
         label.form-label(for="fecha") Fecha
-        input.form-control(type="date" name="fecha" id="fecha" required)
+        input.form-control(
+          type="text"
+          name="fecha"
+          id="fecha"
+          placeholder="Seleccione fecha"
+          autocomplete="off"
+          required
+        )
 
       //- Hora (Se carga dinámicamente)
       div.col-md-6
         label.form-label(for="hora") Horarios Disponibles
+          small.text-muted.d-block.mb-1
+           | 🟢 Libre | 🔵 Sobreturno | 🔴 Completo
         select.form-select(name="hora" id="hora" required disabled)
           option(value="" disabled selected) -- Seleccione fecha y profesional --
         div#mensajeTurno.mt-2
@@ -81,11 +90,21 @@ block content
     const horaSelect = document.getElementById('hora');
     const pacienteSelect = document.getElementById('paciente_id');
     const mensajeDiv = document.getElementById('mensajeTurno');
-    
+    const tipoTurnoSelect = document.getElementById('tipo_turno');
 
     // 1. Pre-seleccionar paciente si viene en la URL (desde detallePaciente)
     const urlParams = new URLSearchParams(window.location.search);
     const pacienteIdParam = urlParams.get('paciente_id');
+
+    const estado = {
+      especialidad: null,
+      profesional: null,
+      fecha: null,
+      tipo: 'normal'
+    };
+
+    let cargandoHorarios = false;
+
     if (pacienteIdParam && pacienteSelect && !pacienteSelect.disabled) {
       pacienteSelect.value = pacienteIdParam;
     }
@@ -93,6 +112,7 @@ block content
     // 2. Cargar Profesionales al cambiar Especialidad
     especialidadSelect.addEventListener('change', async () => {
       const especialidadId = especialidadSelect.value;
+      estado.especialidad = especialidadSelect.value;
       profesionalSelect.innerHTML = '<option>Cargando...</option>';
       profesionalSelect.disabled = true;
       
@@ -120,24 +140,34 @@ block content
 
     // 3. Cargar Horarios al cambiar Profesional o Fecha
     async function cargarHorarios() {
+
       const profesionalId = profesionalSelect.value;
       const fecha = fechaInput.value;
+      const tipoTurno = tipoTurnoSelect.value;
 
-      console.log("PROFESIONAL:", profesionalId);
-      console.log("FECHA:", fecha);
+      estado.profesional = profesionalId;
+      estado.fecha = fecha;
+      estado.tipo = tipoTurno;
 
-      if (!profesionalId || !fecha) {
+      console.log("ESTADO:", estado);
+
+      if (!estado.profesional || !estado.fecha) {
         console.log("Faltan datos, no carga");
         return;
       }
+
+      if (cargandoHorarios) return;
+      cargandoHorarios = true;
 
       horaSelect.innerHTML = '<option>Cargando...</option>';
       horaSelect.disabled = true;
 
       try {
-        const res = await fetch(`/turnos/horarios-disponibles/${profesionalId}/${fecha}`, {
-          cache: "no-store"
-        });
+
+        const res = await fetch(
+          `/turnos/horarios-disponibles/${estado.profesional}/${estado.fecha}?tipo=${estado.tipo}`,
+          { cache: "no-store" }
+        );
 
         const data = await res.json();
 
@@ -145,26 +175,16 @@ block content
 
         horaSelect.innerHTML = '';
 
-        // ⚠️ Caso: backend devuelve motivo
         if (data.motivo) {
-          let mensaje = '';
 
-          switch (data.motivo) {
-            case 'sin_agenda':
-              mensaje = 'El profesional no tiene agenda';
-              break;
-            case 'ausente':
-              mensaje = 'El profesional está ausente ese día';
-              break;
-            case 'no_trabaja':
-              mensaje = 'El profesional no trabaja ese día';
-              break;
-            default:
-              mensaje = 'No hay disponibilidad';
-          }
+          const mensajes = {
+            sin_agenda: 'El profesional no tiene agenda',
+            ausente: 'El profesional está ausente ese día',
+            no_trabaja: 'El profesional no trabaja ese día'
+          };
 
           const option = document.createElement('option');
-          option.textContent = mensaje;
+          option.textContent = mensajes[data.motivo] || 'No hay disponibilidad';
           option.disabled = true;
           option.selected = true;
 
@@ -173,8 +193,7 @@ block content
           return;
         }
 
-        // ⚠️ Caso normal
-        if (data.libres && data.libres.length > 0) {
+        if (data.horarios && data.horarios.length > 0) {
 
           const defaultOption = document.createElement('option');
           defaultOption.textContent = '-- Seleccione Hora --';
@@ -183,14 +202,28 @@ block content
 
           horaSelect.appendChild(defaultOption);
 
-          data.libres.forEach(h => {
+          data.horarios.forEach(h => {
+
             const option = document.createElement('option');
-            option.value = h;
-            option.textContent = h;
+            option.value = h.hora;
+
+            if (h.estado === 'libre') {
+              option.textContent = `🟢 ${h.hora} (Libre)`;
+            }
+
+            if (h.estado === 'ocupado') {
+              option.textContent = `🔴 ${h.hora} (Completo)`;
+              option.disabled = true;
+            }
+
+            if (h.estado === 'sobreturno') {
+              option.textContent = `🔵 ${h.hora} (Sobreturno ${h.usados}/${h.max})`;
+            }
+
             horaSelect.appendChild(option);
           });
 
-          horaSelect.disabled = false; // 🔥 CLAVE
+          horaSelect.disabled = false;
 
         } else {
           const option = document.createElement('option');
@@ -204,9 +237,30 @@ block content
 
       } catch (err) {
         console.error("ERROR FETCH:", err);
-        horaSelect.innerHTML = '<option>Error al cargar</option>';
+      } finally {
+        cargandoHorarios = false;
       }
     }
 
-    profesionalSelect.addEventListener('change', cargarHorarios);
-    fechaInput.addEventListener('change', cargarHorarios);
+        profesionalSelect.addEventListener('change', () => {
+          estado.profesional = profesionalSelect.value;
+          cargarHorarios();
+        });
+        //fechaInput.addEventListener('change', cargarHorarios);
+        tipoTurnoSelect.addEventListener('change', () => {
+          estado.tipo = tipoTurnoSelect.value;
+          cargarHorarios();
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+
+          flatpickr("#fecha", {
+            locale: "es",
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            onChange: function () {
+              cargarHorarios(); // 🔥 clave: evento confiable
+            }
+          });
+
+        });

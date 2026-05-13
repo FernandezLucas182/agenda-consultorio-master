@@ -5,61 +5,55 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
-const agendaController = require('./controllers/agendaController');
-
-
-const routes = require('./routes/index'); // 👈 SOLO ESTE
+const open = require('open');
+const routes = require('./routes/index');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // =====================
-// Middlewares básicos
+// view engine
 // =====================
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
 
+// =====================
+// middlewares base
+// =====================
 app.use(logger('dev'));
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-
 // =====================
-// Session + flash
-// =====================S
-
+// session + flash (UNA SOLA VEZ)
+// =====================
 app.use(session({
-  secret: 'tu_secreto_aqui',
+  secret: 'agenda-secret',
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: false
 }));
+
+
 
 app.use(flash());
 
-app.use((err, req, res, next) => {
-  console.error("ERROR DETECTADO:");
-  console.error(err);
-  res.status(500).send(err.message);
-  console.log(err);
+// opcional: pasar flash a todas las vistas
+app.use((req, res, next) => {
+  res.locals.success = req.flash('success');
+  res.locals.error = req.flash('error');
+  next();
 });
 
 // =====================
-// Motor de plantillas
+// routes
 // =====================
-
-app.set('view engine', 'pug');
-app.set('views', path.join(__dirname, 'views'));
-
-// =====================
-// Rutas (UNA SOLA FUENTE)
-// =====================
-
-app.use('/', routes);   // 👈 acá vive TODO ahora
+app.use('/', routes);
 
 // =====================
 // 404
 // =====================
-
 app.use((req, res, next) => {
   const err = new Error('No encontrado');
   err.status = 404;
@@ -67,21 +61,22 @@ app.use((req, res, next) => {
 });
 
 // =====================
-// Error global
+// error handler (AL FINAL)
 // =====================
-
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500);
   res.render('error', { message: err.message, error: err });
 });
 
-
-
 // =====================
-// Server
-// =====================
-
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
+
+  try {
+    const open = (await import('open')).default;
+    await open(`http://localhost:${PORT}`);
+  } catch (err) {
+    console.error('No se pudo abrir el navegador:', err);
+  }
 });

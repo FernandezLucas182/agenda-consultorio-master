@@ -39,7 +39,6 @@ exports.mostrarTurnos = (req, res) => {
 
     if (q) {
       turnos = turnos.filter(t => {
-
         return (
           (t.paciente_nombre || "").toLowerCase().includes(q) ||
           (t.profesional_nombre || "").toLowerCase().includes(q) ||
@@ -47,7 +46,6 @@ exports.mostrarTurnos = (req, res) => {
           (t.fecha || "").toString().toLowerCase().includes(q) ||
           (t.hora || "").toString().toLowerCase().includes(q)
         );
-
       });
     }
 
@@ -56,9 +54,11 @@ exports.mostrarTurnos = (req, res) => {
       fecha: formatearFecha(t.fecha)
     }));
 
-    res.render('turnos', { turnos, q });
+    res.render('turnos', {
+      turnos,
+      q
+    });
   });
-
 };
 
 exports.mostrarTurno = (req, res) => {
@@ -189,11 +189,15 @@ exports.crearTurno = (req, res) => {
 
                 if (err) {
                   if (err.code === 'ER_DUP_ENTRY') {
-                    return res.status(400).send("Horario ocupado");
+                    req.flash('error', 'Horario ocupado');
+                    return res.status(400).redirect('/turnos');
                   }
-                  return res.status(500).send("Error creando turno");
+
+                  req.flash('error', 'Error creando turno');
+                  return res.status(500).redirect('/turnos');
                 }
 
+                req.flash('success', 'Turno creado exitosamente');
                 res.redirect('/turnos');
               });
 
@@ -265,6 +269,7 @@ exports.crearTurno = (req, res) => {
 exports.obtenerHorariosDisponibles = (req, res) => {
 
   const { profesionalId, fecha } = req.params;
+  const tipo = req.query.tipo;
 
   Ausencia.existeAusenciaEnFecha(profesionalId, fecha, (err, hayAusencia) => {
 
@@ -313,9 +318,41 @@ exports.obtenerHorariosDisponibles = (req, res) => {
             ));
           });
 
-          const libres = posibles.filter(h => !ocupados.includes(h));
+          const horarios = posibles.map(hora => {
 
-          res.json({ libres, ocupados });
+            const estaOcupado = ocupados.includes(hora);
+
+            // 🔵 Si eligió sobreturno
+            if (tipo === 'sobreturno' && estaOcupado) {
+
+              return {
+                hora,
+                estado: 'sobreturno',
+                usados: 1,
+                max: 2
+              };
+            }
+
+            // 🔴 Normal ocupado
+            if (estaOcupado) {
+
+              return {
+                hora,
+                estado: 'ocupado'
+              };
+            }
+
+            // 🟢 Libre
+            return {
+              hora,
+              estado: 'libre'
+            };
+
+          });
+
+          res.json({ horarios });
+
+
 
         });
 
@@ -351,16 +388,31 @@ exports.confirmarTurno = (req, res) => {
 exports.editarTurno = (req, res) => {
 
   Turno.actualizar(req.params.id, req.body, (err) => {
-    if (err) return res.status(500).send(err.message);
+
+    if (err) {
+      req.flash('error', 'Error al actualizar el turno');
+      return res.redirect('/turnos');
+    }
+
+    req.flash('success', 'Turno actualizado correctamente');
     res.redirect('/turnos');
+
   });
 
 };
 
 exports.eliminarTurno = (req, res) => {
 
-  Turno.eliminar(req.params.id, () => {
+  Turno.eliminar(req.params.id, (err) => {
+
+    if (err) {
+      req.flash('error', 'Error al eliminar el turno');
+      return res.redirect('/turnos');
+    }
+
+    req.flash('success', 'Turno eliminado correctamente');
     res.redirect('/turnos');
+
   });
 
 };

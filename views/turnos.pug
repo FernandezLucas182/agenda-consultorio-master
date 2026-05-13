@@ -6,6 +6,10 @@ block title
 block content
   h1 Lista de Turnos
 
+  
+  // 🔔 MENSAJES FLASH
+  div#toast-container.position-fixed.top-0.end-0.p-3(style="z-index: 9999")
+
   // 🔍 BUSCADOR
   div.d-flex.gap-2.mb-3
     form(method="GET" action="/turnos" style="flex:1; display:flex; gap:8px;")
@@ -25,7 +29,7 @@ block content
     a.btn.btn-primary(href="/turnos/nuevo") Crear nuevo turno
     a.btn.btn-secondary(href="/") Volver al inicio
 
-  if turnos.length > 0
+  
 
   if turnos.length > 0
     table.table.table-striped
@@ -62,3 +66,7 @@ block content
   div.mt-3
     a(href='/turnos/nuevo' class="btn btn-primary") Crear nuevo turno
     a(href='/' class="btn btn-secondary ms-2") Volver al inicio
+
+
+
+  

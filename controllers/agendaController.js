@@ -108,20 +108,30 @@ exports.crearAgendaBase = (req, res) => {
   const listaHorarios = Object.values(horarios);
 
   const datos = {
-  profesional_id,
-  especialidad_id,
-  duracion_turno,
-  sucursal_id,
-  horarios: listaHorarios
-};
+    profesional_id,
+    especialidad_id,
+    duracion_turno,
+    sucursal_id,
+    horarios: listaHorarios
+  };
 
   // 🔥 AQUÍ FALTABA LA LLAMADA AL MODELO
   Agenda.crearAgendaConHorarios(datos, (err) => {
 
     if (err) {
-      return res.status(500).send("Error al crear la agenda: " + err.message);
+
+      // ⚠️ regla de negocio (TU CASO)
+      if (err.type === 'BUSINESS_RULE') {
+        req.flash('error', err.message);
+        return res.redirect('/agendas/nueva');
+      }
+
+      console.error(err);
+      req.flash('error', 'Error inesperado al crear la agenda');
+      return res.redirect('/agendas/nueva');
     }
 
+    req.flash('success', 'Agenda creada correctamente');
     return res.redirect("/agendas");
   });
 };
@@ -142,12 +152,12 @@ exports.formularioNuevoHorario = (req, res) => {
     Agenda.obtenerAgendaBasePorId(agendaId, (err, agenda) => {
 
       if (err || !agenda)
-        return res.render('nuevoHorario', { 
+        return res.render('nuevoHorario', {
           agendas: [],
           horariosDisponibles
         });
 
-      res.render('nuevoHorario', { 
+      res.render('nuevoHorario', {
         agendas: [agenda],
         horariosDisponibles
       });
@@ -159,12 +169,12 @@ exports.formularioNuevoHorario = (req, res) => {
     Agenda.obtenerAgendasBase(null, (err, agendas) => {
 
       if (err)
-        return res.render('nuevoHorario', { 
+        return res.render('nuevoHorario', {
           agendas: [],
           horariosDisponibles
         });
 
-      res.render('nuevoHorario', { 
+      res.render('nuevoHorario', {
         agendas,
         horariosDisponibles
       });
@@ -183,7 +193,8 @@ exports.agregarHorario = (req, res) => {
   const { agenda_id, dia_semana, hora_inicio, hora_fin } = req.body;
 
   if (hora_inicio >= hora_fin) {
-    return res.send('La hora de inicio debe ser menor que la hora de fin');
+    req.flash('error', 'La hora de inicio debe ser menor que la hora de fin');
+    return res.redirect(`/agendas/horarios/nuevo?agenda_id=${agenda_id}`);
   }
 
   Agenda.agregarHorario(
@@ -192,14 +203,17 @@ exports.agregarHorario = (req, res) => {
 
       if (err) {
         if (err.message === 'Horario solapado') {
-          return res.send('Ya existe una franja horaria que se superpone en ese día');
+          req.flash('error', 'Horario superpuesto');
+          return res.redirect(`/agendas/horarios/nuevo?agenda_id=${agenda_id}`);
         }
 
         console.error(err);
-        return res.status(500).send('Error al agregar horario');
+        req.flash('error', 'Error al agregar horario');
+        return res.redirect('/agendas');
       }
 
-      res.redirect(`/agendas/horarios/nuevo?agenda_id=${agenda_id}`);
+      req.flash('success', 'Horario agregado correctamente');
+      return res.redirect(`/agendas/horarios/nuevo?agenda_id=${agenda_id}`);
     }
   );
 };
@@ -215,8 +229,8 @@ exports.mostrarAgendas = (req, res) => {
   Agenda.obtenerAgendaCompleta(buscar, (err, agenda) => {
 
     if (err) {
-      console.error("ERROR EN QUERY AGENDA:", err);
-      return res.status(500).send(err.message);
+      req.flash('error', 'Error en QUERY agenda');
+      return res.redirect('/agendas');
     }
 
     // 🔥 AGRUPAR POR agenda_id
@@ -225,6 +239,8 @@ exports.mostrarAgendas = (req, res) => {
     agenda.forEach(item => {
       if (!agrupadas[item.agenda_id]) {
         agrupadas[item.agenda_id] = {
+          id: item.agenda_id,
+          duracion_turno: item.duracion_turno,
           profesional: item.nombre + ' ' + item.apellido,
           filas: []
         };
@@ -236,7 +252,28 @@ exports.mostrarAgendas = (req, res) => {
     // 🔥 CONVERTIR A ARRAY
     const agendas = Object.values(agrupadas);
 
-    res.render('agendas', { agendas, buscar });
+    const ordenadores = {
+
+      profesional: (a, b) =>
+        a.profesional.localeCompare(b.profesional),
+
+      especialidad: (a, b) =>
+        a.filas[0].especialidad.localeCompare(b.filas[0].especialidad),
+
+      sucursal: (a, b) =>
+        (a.filas[0].sucursal || '').localeCompare(b.filas[0].sucursal || ''),
+
+      id: (a, b) =>
+        a.id - b.id
+    };
+
+    const ordenar = req.query.ordenar;
+
+    if (ordenadores[ordenar]) {
+      agendas.sort(ordenadores[ordenar]);
+    }
+
+    res.render('agendas', { agendas, buscar, ordenar });
   });
 };
 
@@ -248,16 +285,28 @@ exports.detalleAgenda = (req, res) => {
 
   const id = req.params.id;
 
-  Agenda.obtenerAgendaCompleta(null, (err, agendas) => {
+  // 1️⃣ Traer datos base
+  Agenda.obtenerAgendaBasePorId(id, (err, agenda) => {
 
-    if (err) return res.status(500).send('Error');
+    if (err || !agenda) {
+      req.flash('error', 'Agenda no encontrada');
+      return res.redirect('/agendas');
+    }
 
-    const agendaFiltrada = agendas.filter(a => a.agenda_id == id);
+    // 2️⃣ Traer horarios
+    Agenda.obtenerHorariosPorAgenda(id, (err, horarios) => {
 
-    if (agendaFiltrada.length === 0)
-      return res.status(404).send('Agenda no encontrada');
+      if (err) {
+        req.flash('error', 'Error al cargar horarios');
+        return res.redirect('/agendas');
+      }
 
-    res.render('detalleAgenda', { agenda: agendaFiltrada });
+      res.render('detalleAgenda', {
+        agenda,
+        horarios
+      });
+    });
+
   });
 };
 
@@ -320,7 +369,8 @@ exports.editarAgenda = (req, res) => {
   const { duracion_turno, max_sobreturnos } = req.body;
 
   if (!duracion_turno || duracion_turno <= 0) {
-    return res.status(400).send('Duración inválida');
+    req.flash('error', 'Duración inválida');
+    return res.redirect(`/agendas/${id}/editar`);
   }
 
   const listaHorarios = Object.values(req.body.horarios || {});
@@ -360,7 +410,8 @@ exports.editarAgenda = (req, res) => {
 
       if (err) {
         console.error(err);
-        return res.status(500).send('Error al actualizar agenda');
+        req.flash('error', 'Error al actualizar agenda');
+        return res.redirect('/agendas');
       }
 
       Agenda.reemplazarHorarios(id, listaHorarios, (err) => {
@@ -375,7 +426,8 @@ exports.editarAgenda = (req, res) => {
           );
         }
 
-        res.redirect('/agendas');
+        req.flash('success', 'Agenda actualizada correctamente');
+        return res.redirect('/agendas');
       });
     }
   );
@@ -385,19 +437,6 @@ exports.editarAgenda = (req, res) => {
 // FUNCIÓN AUXILIAR
 // ==========================
 function renderEditarConError(req, res, id, mensaje) {
-  Agenda.obtenerAgendaBasePorId(id, (err, agenda) => {
-    if (err || !agenda) return res.status(404).send('Agenda no encontrada');
-
-    Agenda.obtenerHorariosPorAgenda(id, (err2, horarios) => {
-      if (err2) horarios = [];
-
-      res.render("editarAgenda", {
-        agenda,
-        horarios: agruparHorariosPorDia(horarios),
-        dias,
-        horariosDisponibles: generarHorarios(),
-        error: mensaje
-      });
-    });
-  });
+  req.flash('error', mensaje);
+  return res.redirect(`/agendas/${id}/editar`);
 }

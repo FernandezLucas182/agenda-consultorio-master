@@ -4,17 +4,25 @@ block title
   | Agenda de Consultorios
 
 block content
+
   h1.mb-4 Agenda de Atención
 
   // 🔍 BUSCADOR
   div.d-flex.gap-2.mb-3
-    form(method="GET" action="/agendas" style="flex:1; display:flex; gap:8px;")
+
+    form(
+      method="GET"
+      action="/agendas"
+      style="flex:1; display:flex; gap:8px;"
+    )
+
       input.form-control(
         type="text"
         name="buscar"
         placeholder="Buscar por profesional, especialidad o sucursal"
         value=buscar
       )
+
       button.btn.btn-primary(type="submit") Buscar
 
     a.btn.btn-secondary(href="/agendas") Mostrar todos
@@ -29,10 +37,18 @@ block content
 
     each ag in agendas
 
-      div.mt-3.px-2.py-1.rounded(style="background:#e8f1ff; border-left:3px solid #0d6efd; margin-bottom:1px;")
+      div.mt-3.px-2.py-1.rounded(
+        style="background:#e8f1ff; border-left:3px solid #0d6efd; margin-bottom:1px; display:flex; justify-content:space-between; align-items:center;"
+      )
+
         span.fw-semibold= ag.profesional
 
+        a.btn.btn-warning.btn-sm(
+          href=`/agendas/${ag.id}/editar`
+        ) Editar agenda
+
       table.table.table-striped.table-bordered.table-sm.mt-0
+
         thead.table-dark
           tr
             th Especialidad
@@ -45,6 +61,7 @@ block content
             th Acciones
 
         tbody
+
           each item in ag.filas
             tr
               td= item.especialidad
@@ -54,8 +71,12 @@ block content
               td= item.duracion_turno
               td= item.max_sobreturnos
               td= item.sucursal || 'Sin sucursal'
+
               td
-                a.btn.btn-info.btn-sm(href=`/agendas/${item.agenda_id}`) Ver
+                a.btn.btn-info.btn-sm.me-1(
+                  href=`/agendas/${item.agenda_id}`
+                ) Ver
 
   else
+
     p.alert.alert-info No hay agendas cargadas.
