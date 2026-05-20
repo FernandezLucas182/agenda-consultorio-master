@@ -3,6 +3,14 @@ const Profesional = require('../models/Profesional');
 const Especialidad = require('../models/Especialidad');
 const db = require('../models/Db');
 
+
+const normalizar = (txt) =>
+  (txt || "")
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
 const dias = [
   { id: 1, nombre: "Lunes" },
   { id: 2, nombre: "Martes" },
@@ -224,7 +232,30 @@ exports.agregarHorario = (req, res) => {
 // ==========================
 exports.mostrarAgendas = (req, res) => {
 
-  const buscar = req.query.buscar || null;
+  const buscar = req.query.buscar || "";
+  const q = normalizar(buscar);
+  const meses = {
+    enero: 0,
+    febrero: 1,
+    marzo: 2,
+    abril: 3,
+    mayo: 4,
+    junio: 5,
+    julio: 6,
+    agosto: 7,
+    septiembre: 8,
+    octubre: 9,
+    noviembre: 10,
+    diciembre: 11
+  };
+
+  let filtroMes = null;
+
+  for (const m in meses) {
+    if (q.includes(m)) {
+      filtroMes = meses[m];
+    }
+  }
 
   Agenda.obtenerAgendaCompleta(buscar, (err, agenda) => {
 
@@ -251,6 +282,25 @@ exports.mostrarAgendas = (req, res) => {
 
     // 🔥 CONVERTIR A ARRAY
     const agendas = Object.values(agrupadas);
+
+    if (filtroMes !== null) {
+
+      agendas.forEach(a => {
+        a.filas = a.filas.filter(f => {
+
+          const fecha = new Date(f.fecha_inicio || f.fecha || null);
+
+          if (!fecha) return false;
+
+          return fecha.getMonth() === filtroMes;
+        });
+      });
+
+      // eliminar agendas vacías
+      for (const id in agrupadas) {
+        agrupadas[id].filas = agrupadas[id].filas.filter(Boolean);
+      }
+    }
 
     const ordenadores = {
 

@@ -15,8 +15,43 @@ block content
     // CONFIGURACIÓN GENERAL
     div.row.g-3.mb-4.p-3.bg-light.border.rounded
       div.col-md-6
-        label.form-label(for="duracion_turno") Duración del Turno (minutos)
-        input.form-control(type="number" name="duracion_turno" value=agenda.duracion_turno required)
+        label.form-label(for="duracion_turno")
+          | Duración del Turno (minutos)
+
+        select.form-select(
+          name="duracion_turno"
+          required
+        )
+
+          option(
+            value="10"
+            selected=agenda.duracion_turno == 10
+          ) 10 minutos
+
+          option(
+            value="20"
+            selected=agenda.duracion_turno == 20
+          ) 20 minutos
+
+          option(
+            value="30"
+            selected=agenda.duracion_turno == 30
+          ) 30 minutos
+
+          option(
+            value="40"
+            selected=agenda.duracion_turno == 40
+          ) 40 minutos
+
+          option(
+            value="45"
+            selected=agenda.duracion_turno == 45
+          ) 45 minutos
+
+          option(
+            value="60"
+            selected=agenda.duracion_turno == 60
+          ) 60 minutos
       div.col-md-6
         label.form-label(for="max_sobreturnos") Máx. Sobreturnos
         input.form-control(type="number" name="max_sobreturnos" value=agenda.max_sobreturnos required)
