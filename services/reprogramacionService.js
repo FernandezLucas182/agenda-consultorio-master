@@ -4,27 +4,80 @@ const Agenda = require('../models/Agenda');
 const generarTurnos = require('../utils/generarTurnos');
 const Turno = require('../models/Turno');
 const { enviarMailConfirmacion } = require('./emailService');
+const Ausencia = require('../models/Ausencia');
 
 //============================================================
 
-function procesarAusencia(profesional_id, fecha_inicio, fecha_fin) {
+function procesarAusencia(agenda_id, fecha_inicio, fecha_fin) {
+
+  console.log("🔥 PROCESANDO AUSENCIA");
 
   const sql = `
     SELECT *
     FROM turnos
-    WHERE profesional_id = ?
+    WHERE agenda_id = ?
       AND fecha BETWEEN ? AND ?
-      AND estado IN ('reservado','confirmado')
+      AND estado IN ('pendiente','confirmado','reservado')
   `;
 
-  db.query(sql, [profesional_id, fecha_inicio, fecha_fin], (err, turnos) => {
+  db.query(sql, [agenda_id, fecha_inicio, fecha_fin], (err, turnos) => {
+
+    console.log("AGENDA:", agenda_id);
+    console.log("FECHAS:", fecha_inicio, fecha_fin);
+    console.log("TURNOS ENCONTRADOS:", turnos);
+
     if (err) return console.error(err);
-    if (!turnos || !turnos.length) return;
+
+    if (!turnos || !turnos.length) {
+      console.log("⚠️ NO HAY TURNOS PARA REPROGRAMAR");
+      return;
+    }
 
     turnos.forEach(turno => {
-      buscarNuevoHorario(turno);
+
+      console.log("MARCANDO PARA REPROGRAMAR:", turno.id);
+
+      marcarParaReprogramacion(turno.id);
+
     });
+
   });
+}
+//=================================================
+function marcarParaReprogramacion(turnoId) {
+
+  db.query(
+    `UPDATE turnos
+     SET estado = 'reprogramar'
+     WHERE id = ?`,
+    [turnoId],
+    (err) => {
+
+      if (err) {
+        console.error(err);
+      } else {
+        console.log("✅ TURNO MARCADO:", turnoId);
+      }
+
+    }
+  );
+
+}
+
+//=================================================
+
+function marcarPendienteReprogramacion(turnoId) {
+
+  db.query(
+    `UPDATE turnos
+     SET estado = 'pendiente_reprogramacion'
+     WHERE id = ?`,
+    [turnoId],
+    (err) => {
+      if (err) console.error(err);
+    }
+  );
+
 }
 
 //==================================================
@@ -35,8 +88,10 @@ function buscarNuevoHorario(turno) {
   let diaJS = fechaObj.getDay();
   let diaBD = diaJS === 0 ? 7 : diaJS;
 
+  console.log("BUSCANDO NUEVO HORARIO PARA:", turno.id);
+
   Agenda.obtenerHorariosProfesional(
-    turno.profesional_id,
+    turno.agenda_id,
     diaBD,
     (err, bloques) => {
 
@@ -48,6 +103,7 @@ function buscarNuevoHorario(turno) {
         });
         return;
       }
+
 
       Turno.obtenerHorariosOcupados(
         turno.profesional_id,
@@ -68,12 +124,22 @@ function buscarNuevoHorario(turno) {
             );
           });
 
-          const libres = posibles.filter(h => !ocupados.includes(h));
+          const ocupadosFiltrados = ocupados.filter(h => h !== turno.hora);
+
+          console.log("BLOQUES:", bloques);
+          console.log("OCUPADOS:", ocupados);
+          console.log("POSIBLES:", posibles);
+
+          const libres = posibles.filter(
+            h => !ocupadosFiltrados.includes(h)
+          );
 
           if (libres.length > 0) {
 
             const nuevaHora = libres[0];
             const token = crypto.randomBytes(32).toString('hex');
+
+            console.log("LIBRES:", libres);
 
             // 🔒 TRANSACCIÓN
             db.beginTransaction(err => {
@@ -83,7 +149,7 @@ function buscarNuevoHorario(turno) {
                 `UPDATE turnos
                  SET fecha = ?,
                      hora = ?,
-                     estado = 'reservado',
+                     estado = 'reprogramar'
                      requiere_confirmacion = 1,
                      token_confirmacion = ?
                  WHERE id = ?`,
@@ -107,7 +173,9 @@ function buscarNuevoHorario(turno) {
                   });
 
                 }
+
               );
+              console.log("TURNO REPROGRAMADO");
             });
 
           } else {
@@ -129,22 +197,25 @@ function buscarNuevoHorario(turno) {
 function buscarOtroProfesional(turno, callback) {
 
   const sql = `
-    SELECT p.id
-    FROM profesionales p
+    SELECT
+      a.id as agenda_id,
+      a.profesional_id,
+      a.sucursal_id
+    FROM agendas a
     JOIN profesional_especialidad pe
-      ON p.id = pe.profesional_id
+      ON pe.profesional_id = a.profesional_id
     WHERE pe.especialidad_id = ?
-      AND p.id != ?
-      AND p.estado = 'activo'
+      AND a.id != ?
+      AND a.activo = 1
   `;
 
-  db.query(sql, [turno.especialidad_id, turno.profesional_id], (err, profesionales) => {
+  db.query(sql, [turno.especialidad_id, turno.agenda_id], (err, profesionales) => {
 
     if (err || !profesionales.length) {
       return callback(null);
     }
 
-    let encontrado = false;
+    //    let encontrado = false;
 
     let index = 0;
 
@@ -160,86 +231,119 @@ function buscarOtroProfesional(turno, callback) {
       let diaJS = fechaObj.getDay();
       let diaBD = diaJS === 0 ? 7 : diaJS;
 
-      Turno.obtenerHorariosOcupados(
-        prof.id,
+      Ausencia.existeAusenciaEnFecha(
+        prof.profesional_id,
         turno.fecha,
-        (err2, ocupados) => {
+        (errAus, ausente) => {
 
-          if (err2) return intentarSiguiente();
+          if (errAus || ausente) {
+            return intentarSiguiente();
+          }
 
-          Agenda.obtenerHorariosProfesional(
-            prof.id,
-            diaBD,
-            (err3, bloques) => {
+          Turno.obtenerHorariosOcupados(
+            prof.profesional_id,
+            turno.fecha,
+            (err2, ocupados) => {
 
-              if (!bloques || !bloques.length)
-                return intentarSiguiente();
+              if (err2) return intentarSiguiente();
 
-              let posibles = [];
+              Agenda.obtenerHorariosProfesional(
+                prof.agenda_id,
+                diaBD,
+                (err3, bloques) => {
 
-              bloques.forEach(b => {
-                posibles.push(
-                  ...generarTurnos(
-                    b.hora_inicio,
-                    b.hora_fin,
-                    b.duracion_turno
-                  )
-                );
-              });
+                  if (!bloques || !bloques.length) {
+                    return intentarSiguiente();
+                  }
 
-              const libres = posibles.filter(h => !ocupados.includes(h));
+                  let posibles = [];
 
-              if (libres.length > 0) {
+                  bloques.forEach(b => {
+                    posibles.push(
+                      ...generarTurnos(
+                        b.hora_inicio,
+                        b.hora_fin,
+                        b.duracion_turno
+                      )
+                    );
+                  });
 
-                const nuevaHora = libres[0];
-                const token = crypto.randomBytes(32).toString('hex');
-
-                db.beginTransaction(err => {
-                  if (err) return intentarSiguiente();
-
-                  db.query(
-                    `UPDATE turnos
-                 SET profesional_id = ?,
-                     hora = ?,
-                     estado = 'reservado',
-                     requiere_confirmacion = 1,
-                     token_confirmacion = ?
-                 WHERE id = ?`,
-                    [prof.id, nuevaHora, token, turno.id],
-                    (err2) => {
-
-                      if (err2)
-                        return db.rollback(() => intentarSiguiente());
-
-                      db.commit(err3 => {
-                        if (err3)
-                          return db.rollback(() => intentarSiguiente());
-
-                        enviarMail(turno, token);
-                        return callback(true);
-                      });
-
-                    }
+                  const libres = posibles.filter(
+                    h => !ocupados.includes(h)
                   );
-                });
 
-              } else {
-                intentarSiguiente();
-              }
+                  if (libres.length > 0) {
+
+                    const nuevaHora = libres[0];
+                    const token = crypto.randomBytes(32).toString('hex');
+
+                    db.beginTransaction(err => {
+
+                      if (err) return intentarSiguiente();
+
+                      db.query(
+                        `UPDATE turnos
+                         SET profesional_id = ?,
+                             agenda_id = ?,
+                             sucursal_id = ?,
+                             hora = ?,
+                             estado = 'reprogramar',
+                             requiere_confirmacion = 1,
+                             token_confirmacion = ?
+                         WHERE id = ?`,
+                        [
+                          prof.profesional_id,
+                          prof.agenda_id,
+                          prof.sucursal_id,
+                          nuevaHora,
+                          token,
+                          turno.id
+                        ],
+                        (err2) => {
+
+                          if (err2) {
+                            return db.rollback(() => intentarSiguiente());
+                          }
+
+                          db.commit(err3 => {
+
+                            if (err3) {
+                              return db.rollback(() => intentarSiguiente());
+                            }
+
+                            enviarMail(turno, token);
+
+                            return callback(true);
+
+                          });
+
+                        }
+                      );
+
+                    });
+
+                  } else {
+
+                    intentarSiguiente();
+
+                  }
+
+                }
+              );
 
             }
           );
+
         }
       );
+
     }
 
     intentarSiguiente();
 
-    if (!encontrado) callback(null);
-
   });
-}
 
+}
 //========================================================
 
 function marcarNoDisponible(turnoId) {

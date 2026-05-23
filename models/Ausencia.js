@@ -82,18 +82,25 @@ class Ausencia {
       callback
     );
   }
-  static existeAusenciaEnFecha(agenda_id, fecha, callback) {
-    const sql = `
-  SELECT id
-  FROM ausencias
-  WHERE agenda_id = ?
-    AND ? BETWEEN fecha_inicio AND fecha_fin
-`;
+  static existeAusenciaEnFecha(profesional_id, fecha, callback) {
 
-    db.query(sql, [agenda_id, fecha], (err, rows) => {
+    const sql = `
+    SELECT au.id
+    FROM ausencias au
+    INNER JOIN agendas a
+      ON a.id = au.agenda_id
+    WHERE a.profesional_id = ?
+      AND ? BETWEEN au.fecha_inicio AND au.fecha_fin
+  `;
+
+    db.query(sql, [profesional_id, fecha], (err, rows) => {
+
       if (err) return callback(err);
+
       callback(null, rows.length > 0);
+
     });
+
   }
 
 }

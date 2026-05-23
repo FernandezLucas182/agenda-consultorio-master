@@ -24,11 +24,13 @@ block content
           option(value="" disabled selected) -- Selecciona especialidad --
           each esp in especialidades
             option(value=esp.id)= esp.nombre
-
+      
       div.col-md-6
         label.form-label(for="sucursal_id") Sucursal
         select.form-select(name="sucursal_id" id="sucursalSelect" required)
           option(value="" disabled selected) -- Selecciona sucursal --
+
+      div#alertaAgendaExistente.alert.alert-danger.mt-2.d-none
 
       div.col-md-6
         label.form-label(for="duracion_turno") Duración del turno (minutos)
@@ -61,7 +63,8 @@ block content
           button.btn.btn-outline-primary.btn-sm(type="button" onclick=`agregarBloque(${dia.id})`) + Agregar bloque horario
 
     div.mt-4
-      button#btnGuardar.btn.btn-success.btn-lg(type="submit") Guardar Agenda Completa
+      button#btnGuardar.btn.btn-success.btn-lg(type="submit")
+        | Guardar Agenda Completa
       a.btn.btn-secondary.btn-lg.ms-2(href="/agendas") Volver
 
   // SCRIPT
@@ -72,6 +75,8 @@ block content
       const especialidadSelect = document.getElementById('especialidadSelect');
       const sucursalSelect = document.getElementById('sucursalSelect');
       const btnGuardar = document.getElementById('btnGuardar');
+      const alertaAgendaExistente = document.getElementById('alertaAgendaExistente');
+      
 
       const horariosDisponibles = [
         "09:00","09:30","10:00","10:30","11:00","11:30",
@@ -81,6 +86,36 @@ block content
       ];
 
       let bloqueIndex = 0;
+
+      sucursalSelect.addEventListener('change', () => {
+        verificarDisponibilidad();
+      });
+      
+    //=========================
+    //Verificar disponibilidad
+    //=========================
+      async function verificarDisponibilidad() {
+        const profesionalId = profesionalSelect.value;
+        const especialidadId = especialidadSelect.value;
+
+        if (!profesionalId || !especialidadId) return;
+
+        const res = await fetch(
+          `/agendas/disponibilidad/${profesionalId}/${especialidadId}/${sucursalId}`
+        );
+
+        const data = await res.json();
+
+        if (!data.disponible) {
+          btnGuardar.disabled = true;
+          alertaAgendaExistente.classList.remove('d-none');
+          alertaAgendaExistente.innerHTML =
+            "Ya existe una agenda activa para este profesional, especialidad y sucursal.";
+        } else {
+          btnGuardar.disabled = false;
+          alertaAgendaExistente.classList.add('d-none');
+        }
+      }
 
       // =========================
       // SUCURSALES (SOLO 1 VEZ)
@@ -110,26 +145,7 @@ block content
       // =========================
       // DISPONIBILIDAD
       // =========================
-      async function verificarDisponibilidad() {
-        const profesionalId = profesionalSelect.value;
-        const especialidadId = especialidadSelect.value;
-
-        if (!profesionalId || !especialidadId) return;
-
-        try {
-          const res = await fetch(
-            `/agendas/disponibilidad/${profesionalId}/${especialidadId}`
-          );
-
-          const data = await res.json();
-
-          btnGuardar.disabled = !data.disponible;
-
-        } catch (err) {
-          console.error(err);
-        }
-      }
-
+      
       // =========================
       // PROFESIONAL CHANGE
       // =========================
@@ -156,8 +172,8 @@ block content
         } catch (err) {
           console.error(err);
         }
-
         verificarDisponibilidad();
+        
       });
 
       // =========================

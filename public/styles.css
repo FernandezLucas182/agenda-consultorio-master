@@ -63,7 +63,7 @@ h1 {
   backdrop-filter: blur(6px);
   padding: 20px 0;
   margin-bottom: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .titulo-sistema {
@@ -75,9 +75,10 @@ h1 {
 
 /* Navbar personalizada */
 .navbar {
-  background: rgba(0, 0, 0, 0.9) !important; /* negro elegante */
+  background: rgba(0, 0, 0, 0.9) !important;
+  /* negro elegante */
   backdrop-filter: blur(6px);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .navbar-brand {
@@ -94,12 +95,14 @@ h1 {
 }
 
 .logo-navbar {
-  width: 60px;          /* tamaño del logo */
+  width: 60px;
+  /* tamaño del logo */
   height: 60px;
   object-fit: contain;
 
   position: relative;
-  top: 10px;            /* hace que sobresalga hacia abajo */
+  top: 10px;
+  /* hace que sobresalga hacia abajo */
 }
 
 
@@ -117,13 +120,13 @@ h1 {
   align-items: center;
 
   transition: all 0.3s ease;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 /* Hover (efecto pro) */
 .dashboard-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
   color: #2ecc71;
 }
 
@@ -132,4 +135,99 @@ h1 {
   width: 60px;
   height: 60px;
   object-fit: contain;
+}
+
+/* =========================
+   FLATPICKR AGENDA
+========================= */
+
+.flatpickr-day.disponible {
+  background: #198754 !important;
+  border-color: #198754 !important;
+  color: white !important;
+}
+
+.flatpickr-day.no-disponible {
+  background: #dc3545 !important;
+  border-color: #dc3545 !important;
+  color: white !important;
+}
+
+.flatpickr-day.sin-agenda {
+  background: #6c757d !important;
+  border-color: #6c757d !important;
+  color: white !important;
+}
+
+.flatpickr-day.ausente {
+  background: #fd7e14 !important;
+  border-color: #fd7e14 !important;
+  color: white !important;
+}
+
+.flatpickr-day.flatpickr-disabled {
+  opacity: 0.35;
+}
+
+/* =========================
+   TURNO RECIÉN CREADO
+========================= */
+
+.turno-recien-creado td {
+  background-color: rgba(220, 53, 69, 0.35) !important;
+  color: #000 !important;
+  font-weight: 600;
+
+  border-top: 2px solid #dc3545 !important;
+  border-bottom: 2px solid #dc3545 !important;
+
+  animation: pulseTurnoRojo 1s ease-in-out infinite alternate;
+}
+
+/* Borde izquierdo fuerte */
+.turno-recien-creado td:first-child {
+  border-left: 6px solid #dc3545 !important;
+}
+
+/* Borde derecho */
+.turno-recien-creado td:last-child {
+  border-right: 2px solid #dc3545 !important;
+}
+
+@keyframes pulseTurnoRojo {
+
+  from {
+    background-color: rgba(220, 53, 69, 0.25);
+  }
+
+  to {
+    background-color: rgba(220, 53, 69, 0.55);
+  }
+}
+
+
+
+/* =========================
+   AGENDA RECIÉN CREADA
+========================= */
+
+.turno-recien-creado-agenda {
+  background: rgba(220, 53, 69, 0.35) !important;
+
+  border-left: 6px solid #dc3545 !important;
+
+  animation: pulseAgendaRoja 1s ease-in-out infinite alternate;
+
+  box-shadow: 0 0 18px rgba(220, 53, 69, 0.35);
+}
+
+@keyframes pulseAgendaRoja {
+
+  from {
+    background-color: rgba(220, 53, 69, 0.25);
+  }
+
+  to {
+    background-color: rgba(220, 53, 69, 0.55);
+  }
 }

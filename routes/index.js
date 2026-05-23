@@ -30,7 +30,27 @@ console.log("Paciente:", Object.keys(pacienteController));
 // =====================
 
 router.get('/', (req, res) => {
-  res.render('index');
+
+  const sql = `
+    SELECT COUNT(*) AS total
+    FROM turnos
+    WHERE estado = 'reprogramar'
+  `;
+
+  db.query(sql, (err, rows) => {
+
+    if (err) {
+      return res.render('index', {
+        totalReprogramaciones: 0
+      });
+    }
+
+    res.render('index', {
+      totalReprogramaciones: rows[0].total
+    });
+
+  });
+
 });
 
 router.get('/login', authController.getLogin);
@@ -53,13 +73,15 @@ router.get('/agendas/:id', agendaController.detalleAgenda);
 router.get('/agendas/:id/editar', agendaController.formularioEditarAgenda);
 router.post('/agendas/:id/editar', agendaController.editarAgenda);
 
-
-
-router.get('/agendas/disponibilidad/:profesionalId/:especialidadId', (req, res) => {
+//=================
+//DISPONIBILIDAD
+//=================
+router.get('/agendas/disponibilidad/:profesionalId/:especialidadId/:sucursalId', (req, res) => {
 
   Agenda.verificarDisponibilidad(
     req.params.profesionalId,
     req.params.especialidadId,
+    req.params.sucursalId,
     (err, disponible) => {
 
       if (err) return res.status(500).json({ disponible: false });
@@ -68,6 +90,7 @@ router.get('/agendas/disponibilidad/:profesionalId/:especialidadId', (req, res) 
     }
   );
 });
+
 
 // =====================
 // TURNOS
@@ -79,6 +102,18 @@ router.get('/turnos', turnosController.mostrarTurnos);
 
 router.get('/turnos/nuevo', turnosController.mostrarFormularioNuevoTurno);
 router.post('/turnos', turnosController.crearTurno);
+
+
+//==================================
+//ruteo para reprogramacionTurnos
+//================================
+
+router.get(
+  '/turnos/reprogramaciones',
+  turnosController.mostrarReprogramaciones
+);
+
+
 
 router.get('/turnos/:id', turnosController.mostrarTurno);
 
@@ -111,6 +146,16 @@ router.get(
   '/turnos/horarios-disponibles/:profesionalId/:fecha',
   turnosController.obtenerHorariosDisponibles
 );
+router.get(
+  '/turnos/disponibilidad-calendario/:profesionalId',
+  turnosController.obtenerDisponibilidadCalendario
+);
+router.get(
+  '/turnos/ocupacion-mensual/:profesionalId',
+  turnosController.obtenerOcupacionMensual
+);
+
+
 
 
 // =====================

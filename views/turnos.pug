@@ -46,7 +46,7 @@ block content
           th Acciones
       tbody
         each turno in turnos
-          tr             
+          tr(class=(turno.id == nuevoTurnoId ? 'turno-recien-creado' : ''))          
             td= turno.paciente_nombre
             td= turno.profesional_nombre
             td= turno.especialidad_nombre

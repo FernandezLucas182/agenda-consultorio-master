@@ -38,6 +38,7 @@ block content
     each ag in agendas
 
       div.mt-3.px-2.py-1.rounded(
+        class=(ag.id == nuevaAgendaId ? 'turno-recien-creado-agenda' : '')
         style="background:#e8f1ff; border-left:3px solid #0d6efd; margin-bottom:1px; display:flex; justify-content:space-between; align-items:center;"
       )
 

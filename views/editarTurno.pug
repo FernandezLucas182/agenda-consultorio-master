@@ -39,13 +39,31 @@ block content
               label.form-label Sucursal
               input.form-control(type="text" disabled value=turno.sucursal_nombre)
 
+            //- Fecha
             div.col-md-6
               label.form-label(for="fecha") Fecha
-              input.form-control(type="date" name="fecha" value=turno.fecha required)
 
+              input.form-control(
+                type="text"
+                name="fecha"
+                id="fecha"
+                value=turno.fecha_formateada
+                autocomplete="off"
+                required
+              )
+
+            //- Hora
             div.col-md-6
-              label.form-label(for="hora") Hora
-              input.form-control(type="time" name="hora" value=turno.hora required)
+              label.form-label(for="hora") Horarios Disponibles
+
+              small.text-muted.d-block.mb-1
+                | 🟢 Libre | 🔵 Sobreturno | 🔴 Completo
+
+              select.form-select(name="hora" id="hora" required)
+                option(value=turno.hora selected)
+                  = turno.hora
+
+            div#mensajeTurno.mt-2
 
             div.col-md-6
               label.form-label Tipo de Turno
@@ -63,3 +81,160 @@ block content
           .mt-4
             button.btn.btn-warning(type="submit") Actualizar Turno
             a.btn.btn-secondary.ms-2(href="/turnos") Cancelar
+
+
+
+            script.
+
+              const profesionalId = "#{turno.profesional_id}";
+              const fechaInput = document.getElementById('fecha');
+              const horaSelect = document.getElementById('hora');
+
+              async function cargarHorarios() {
+
+                const fecha = fechaInput.value;
+
+                if (!fecha) return;
+
+                horaSelect.innerHTML = '<option>Cargando...</option>';
+
+                try {
+
+                  const res = await fetch(
+                    `/turnos/horarios-disponibles/${profesionalId}/${fecha}`
+                  );
+
+                  const data = await res.json();
+
+                  horaSelect.innerHTML = '';
+
+                  if (data.horarios && data.horarios.length > 0) {
+
+                    data.horarios.forEach(h => {
+
+                      const option = document.createElement('option');
+
+                      option.value = h.hora;
+
+                      if (h.estado === 'libre') {
+                        option.textContent = `🟢 ${h.hora} (Libre)`;
+                      }
+
+                      if (h.estado === 'ocupado') {
+                        option.textContent = `🔴 ${h.hora} (Completo)`;
+                        option.disabled = true;
+                      }
+
+                      if (h.estado === 'sobreturno') {
+                        option.textContent =
+                          `🔵 ${h.hora} (Sobreturno ${h.usados}/${h.max})`;
+                      }
+
+                      horaSelect.appendChild(option);
+
+                    });
+
+                  }
+
+                } catch (err) {
+
+                  console.error(err);
+
+                }
+
+              }
+
+              let calendario = null;
+
+              document.addEventListener("DOMContentLoaded", async () => {
+
+                try {
+
+                  const res = await fetch(
+                    `/turnos/disponibilidad-calendario/${profesionalId}`
+                  );
+
+                  const data = await res.json();
+
+                  calendario = flatpickr("#fecha", {
+
+                    locale: "es",
+                    dateFormat: "Y-m-d",
+
+                    enable: [
+                      function(date) {
+
+                        const diaJS = date.getDay();
+                        const diaBD = diaJS === 0 ? 7 : diaJS;
+
+                        const trabaja =
+                          data.diasLaborales.includes(diaBD);
+
+                        if (!trabaja) return false;
+
+                        const fechaActual =
+                          date.toISOString().split('T')[0];
+
+                        const estaAusente = data.ausencias.some(a => {
+
+                          return (
+                            fechaActual >= a.fecha_inicio &&
+                            fechaActual <= a.fecha_fin
+                          );
+
+                        });
+
+                        return !estaAusente;
+
+                      }
+                    ],
+
+                    onDayCreate: function(dObj, dStr, fp, dayElem) {
+
+                      const fecha =
+                        dayElem.dateObj.toISOString().split('T')[0];
+
+                      const diaJS = dayElem.dateObj.getDay();
+                      const diaBD = diaJS === 0 ? 7 : diaJS;
+
+                      const trabaja =
+                        data.diasLaborales.includes(diaBD);
+
+                      const estaAusente = data.ausencias.some(a => {
+
+                        return (
+                          fecha >= a.fecha_inicio &&
+                          fecha <= a.fecha_fin
+                        );
+
+                      });
+
+                      if (!trabaja) {
+                        dayElem.classList.add("no-disponible");
+                        return;
+                      }
+
+                      if (estaAusente) {
+                        dayElem.classList.add("ausente");
+                        return;
+                      }
+
+                      dayElem.classList.add("disponible");
+
+                    },
+
+                    onChange: function() {
+
+                      cargarHorarios();
+
+                    }
+
+                  });
+
+                } catch(err) {
+
+                  console.error(err);
+
+                }
+
+              });

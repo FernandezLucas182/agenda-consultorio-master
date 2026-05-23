@@ -30,6 +30,7 @@ function formatearFecha(fecha) {
 exports.mostrarTurnos = (req, res) => {
 
   const q = req.query.q?.toLowerCase() || "";
+  const nuevoId = req.query.nuevo;
 
   Turno.obtenerTodos((err, turnos) => {
     if (err) {
@@ -51,12 +52,14 @@ exports.mostrarTurnos = (req, res) => {
 
     turnos = turnos.map(t => ({
       ...t,
-      fecha: formatearFecha(t.fecha)
+      fecha: formatearFecha(t.fecha),
+      recienCreado: nuevoId && t.id == nuevoId
     }));
 
     res.render('turnos', {
       turnos,
-      q
+      q,
+      nuevoTurnoId: req.query.nuevo
     });
   });
 };
@@ -185,7 +188,7 @@ exports.crearTurno = (req, res) => {
 
               console.log("DATA CREAR TURNO:", data);
 
-              Turno.crear(data, (err) => {
+              Turno.crear(data, (err, result) => {
 
                 if (err) {
                   if (err.code === 'ER_DUP_ENTRY') {
@@ -198,7 +201,9 @@ exports.crearTurno = (req, res) => {
                 }
 
                 req.flash('success', 'Turno creado exitosamente');
-                res.redirect('/turnos');
+
+                res.redirect(`/turnos?nuevo=${result.insertId}`);
+
               });
 
             });
@@ -364,6 +369,37 @@ exports.obtenerHorariosDisponibles = (req, res) => {
 
 };
 
+
+//============================
+// OCUPACION MENSUAL
+//============================
+exports.obtenerOcupacionMensual = (req, res) => {
+
+  const profesionalId = req.params.profesionalId;
+
+  const { desde, hasta } = req.query;
+
+  Turno.obtenerOcupacionMensual(
+    profesionalId,
+    desde,
+    hasta,
+    (err, rows) => {
+
+      if (err) {
+        console.error(err);
+
+        return res.status(500).json({
+          error: 'Error ocupacion'
+        });
+      }
+
+      res.json(rows);
+
+    }
+  );
+
+};
+
 // ==========================
 // OTROS
 // ==========================
@@ -417,6 +453,30 @@ exports.eliminarTurno = (req, res) => {
 
 };
 
+
+
+//==================================
+//mostrarReprogramaciones
+//==================================
+exports.mostrarReprogramaciones = (req, res) => {
+
+  Turno.obtenerTurnosParaReprogramar((err, turnos) => {
+
+    if (err) {
+      console.error(err);
+      return res.sendStatus(500);
+    }
+
+    res.render('reprogramacionTurno', {
+      turnos: turnos || []
+    });
+
+  });
+
+};
+
+
+
 // ==========================
 // AJAX
 // ==========================
@@ -469,7 +529,9 @@ exports.mostrarFormularioEditarTurno = (req, res) => {
               return res.status(500).send('Error cargando formulario');
             }
 
-            turno.fecha = new Date(turno.fecha).toISOString().split('T')[0];
+            turno.fecha_formateada =
+              new Date(turno.fecha).toISOString().split('T')[0];
+
             turno.hora = turno.hora.slice(0, 5);
 
             res.render('editarTurno', {
@@ -487,5 +549,30 @@ exports.mostrarFormularioEditarTurno = (req, res) => {
     });
 
   });
+
+};
+
+//============================
+// DISPONIBILIDAD CALENDARIO
+//============================
+exports.obtenerDisponibilidadCalendario = (req, res) => {
+
+  const profesionalId = req.params.profesionalId;
+
+  Turno.obtenerDisponibilidadCalendario(
+    profesionalId,
+    (err, data) => {
+
+      if (err) {
+        console.error(err);
+        return res.status(500).json({
+          error: 'Error obteniendo disponibilidad'
+        });
+      }
+
+      res.json(data);
+
+    }
+  );
 
 };

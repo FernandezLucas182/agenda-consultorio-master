@@ -323,8 +323,6 @@ class Turno {
   static validarHoraEnAgenda(profesional_id, fecha, hora, callback) {
 
     const fechaObj = new Date(fecha + "T00:00:00");
-    let diaJS = fechaObj.getDay();
-    //    let diaBD = diaJS === 0 ? 7 : diaJS;
     const diaBD = fechaObj.getDay() === 0 ? 7 : fechaObj.getDay();
 
     console.log("PROFESIONAL:", profesional_id);
@@ -345,7 +343,7 @@ class Turno {
   `;
 
     db.query(sql, [profesional_id, diaBD], (err, rows) => {
-      
+
 
       if (err) return callback(err);
 
@@ -357,12 +355,22 @@ class Turno {
       }
 
       function horaASegundos(h) {
+
+        if (!h) {
+          return null;
+        }
+
         const [hh, mm, ss = 0] = h.split(':').map(Number);
+
         return hh * 3600 + mm * 60 + ss;
       }
 
       const horaNormalizada = normalizarHora(hora);
       const horaSeg = horaASegundos(horaNormalizada);
+
+      if (horaSeg === null) {
+        return callback(new Error('Hora inválida'));
+      }
 
       console.log("DEBUG VALIDACION:");
       console.log("hora evaluada:", horaNormalizada);
@@ -375,7 +383,7 @@ class Turno {
       const dentro = rows.some(bloque => {
         const inicio = horaASegundos(bloque.hora_inicio);
         const fin = horaASegundos(bloque.hora_fin);
-        
+
         return horaSeg >= inicio && horaSeg < fin;
       });
 
@@ -454,6 +462,140 @@ class Turno {
     });
   }
 
+  //============================
+  // DISPONIBILIDAD CALENDARIO
+  //============================
+  static obtenerDisponibilidadCalendario(profesional_id, callback) {
+
+    const sqlDias = `
+    SELECT DISTINCT ah.dia_semana
+    FROM agenda_horarios ah
+    INNER JOIN agendas a
+      ON a.id = ah.agenda_id
+    WHERE a.profesional_id = ?
+      AND a.activo = 1
+  `;
+
+    db.query(sqlDias, [profesional_id], (err, diasRows) => {
+
+      if (err) return callback(err);
+
+      const diasLaborales = diasRows.map(r => Number(r.dia_semana));
+
+      const sqlAusencias = `
+      SELECT fecha_inicio, fecha_fin
+      FROM ausencias au
+      INNER JOIN agendas a
+        ON a.id = au.agenda_id
+      WHERE a.profesional_id = ?
+    `;
+
+      db.query(sqlAusencias, [profesional_id], (err2, ausenciasRows) => {
+
+        if (err2) return callback(err2);
+
+        callback(null, {
+          diasLaborales,
+          ausencias: ausenciasRows || []
+        });
+
+      });
+
+    });
+
+  }
+
+
+  //============================
+  // OCUPACION POR FECHA
+  //============================
+  static obtenerOcupacionMensual(
+    profesional_id,
+    desde,
+    hasta,
+    callback
+  ) {
+
+    const sql = `
+    SELECT 
+      fecha,
+      COUNT(*) as total
+    FROM turnos
+    WHERE profesional_id = ?
+      AND fecha BETWEEN ? AND ?
+      AND estado IN ('reservado', 'confirmado')
+    GROUP BY fecha
+  `;
+
+    db.query(
+      sql,
+      [profesional_id, desde, hasta],
+      (err, rows) => {
+
+        if (err) return callback(err);
+
+        callback(null, rows || []);
+
+      }
+    );
+
+  }
+
+
+  //==================================
+  //mostrarReprogramaciones
+  //==================================
+
+  //============================
+  // TURNOS PARA REPROGRAMAR
+  //============================
+  static obtenerTurnosParaReprogramar(callback) {
+
+    const sql = `
+    SELECT
+      t.id,
+      t.fecha,
+      t.hora,
+      t.estado,
+      t.tipo_turno,
+
+      p.nombre AS paciente_nombre,
+
+      CONCAT(pr.nombre, ' ', pr.apellido)
+        AS profesional_nombre,
+
+      e.nombre AS especialidad_nombre,
+
+      s.nombre AS sucursal_nombre
+
+    FROM turnos t
+
+    INNER JOIN pacientes p
+      ON p.id = t.paciente_id
+
+    INNER JOIN profesionales pr
+      ON pr.id = t.profesional_id
+
+    INNER JOIN especialidades e
+      ON e.id = t.especialidad_id
+
+    LEFT JOIN sucursales s
+      ON s.id = t.sucursal_id
+
+    WHERE t.estado = 'reprogramar'
+
+    ORDER BY t.fecha ASC, t.hora ASC
+  `;
+
+    db.query(sql, callback);
+
+  }
+
+
+
 }
+
+
+
 
 module.exports = Turno;

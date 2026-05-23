@@ -4,8 +4,8 @@ block title
   | Editar Agenda
 
 block content
-  h1 Editar Agenda: #{agenda.nombre} #{agenda.apellido}
-  p.text-muted Especialidad: #{agenda.especialidad} | Sucursal: #{agenda.sucursal_nombre || 'N/A'}
+  h1 Editar Agenda: #{agenda.nombre_completo}
+  p.text-muted Especialidad: #{agenda.especialidad} | Sucursal: #{agenda.sucursal || 'N/A'}
 
   if error
     div.alert.alert-danger= error

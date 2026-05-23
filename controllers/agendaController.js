@@ -124,23 +124,24 @@ exports.crearAgendaBase = (req, res) => {
   };
 
   // 🔥 AQUÍ FALTABA LA LLAMADA AL MODELO
-  Agenda.crearAgendaConHorarios(datos, (err) => {
+  Agenda.crearAgendaConHorarios(datos, (err, result) => {
 
     if (err) {
 
-      // ⚠️ regla de negocio (TU CASO)
+      // ⚠️ regla de negocio (CASO)
       if (err.type === 'BUSINESS_RULE') {
         req.flash('error', err.message);
         return res.redirect('/agendas/nueva');
       }
 
       console.error(err);
+      console.log(err);
       req.flash('error', 'Error inesperado al crear la agenda');
       return res.redirect('/agendas/nueva');
     }
 
     req.flash('success', 'Agenda creada correctamente');
-    return res.redirect("/agendas");
+    return res.redirect(`/agendas?nueva=${result.insertId}`);
   });
 };
 
@@ -283,6 +284,19 @@ exports.mostrarAgendas = (req, res) => {
     // 🔥 CONVERTIR A ARRAY
     const agendas = Object.values(agrupadas);
 
+    const nuevaAgendaId = parseInt(req.query.nueva);
+
+    if (nuevaAgendaId) {
+
+      agendas.sort((a, b) => {
+
+        if (a.id === nuevaAgendaId) return -1;
+        if (b.id === nuevaAgendaId) return 1;
+
+        return 0;
+      });
+    }
+
     if (filtroMes !== null) {
 
       agendas.forEach(a => {
@@ -323,7 +337,10 @@ exports.mostrarAgendas = (req, res) => {
       agendas.sort(ordenadores[ordenar]);
     }
 
-    res.render('agendas', { agendas, buscar, ordenar });
+    res.render('agendas', {
+      agendas,
+      nuevaAgendaId
+    });
   });
 };
 
@@ -340,7 +357,7 @@ exports.detalleAgenda = (req, res) => {
 
     if (err || !agenda) {
       req.flash('error', 'Agenda no encontrada');
-      return res.redirect('/agendas');
+      res.redirect(`/agendas?nueva=${result.insertId}`);
     }
 
     // 2️⃣ Traer horarios
@@ -465,7 +482,7 @@ exports.editarAgenda = (req, res) => {
       }
 
       Agenda.reemplazarHorarios(id, listaHorarios, (err) => {
-
+        let errorEncontrado = false;
         if (err) {
           console.error(err);
           return renderEditarConError(

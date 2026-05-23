@@ -47,3 +47,28 @@ block content
       a.card.dashboard-card.text-center(href='/ausencias')
         h5 Gestionar Ausencias
         img.icono.mt-3(src='/img/ausencias.png')
+
+    // Reprogramaciones
+    .col-md-4
+
+      - const alerta = totalReprogramaciones > 0
+
+      a.card.dashboard-card.text-center(
+        href='/turnos/reprogramaciones',
+        style=alerta
+          ? 'background:#ffdddd; border:2px solid red;'
+          : ''
+      )
+
+        h5
+          | Reprogramaciones
+
+          if alerta
+            span.badge.bg-danger.ms-2
+              = totalReprogramaciones
+
+        img.icono.mt-3(src='/img/turnos.png')
+
+        if alerta
+          p.text-danger.mt-2.fw-bold
+            | Hay turnos pendientes

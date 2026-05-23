@@ -1,0 +1,50 @@
+extends layout
+
+block content
+
+  .container.mt-4
+
+    h1.mb-4 Turnos para Reprogramar
+
+    if turnos.length === 0
+
+      .alert.alert-success
+        | No hay turnos pendientes de reprogramación.
+
+    else
+
+      table.table.table-striped
+
+        thead
+          tr
+            th Paciente
+            th Profesional
+            th Especialidad
+            th Sucursal
+            th Fecha
+            th Hora
+            th Tipo
+            th Estado
+            th Acción
+
+        tbody
+
+          each turno in turnos
+
+            tr
+              td= turno.paciente_nombre
+              td= turno.profesional_nombre
+              td= turno.especialidad_nombre
+              td= turno.sucursal_nombre
+              td= new Date(turno.fecha).toLocaleDateString('es-AR')
+              td= turno.hora
+              td= turno.tipo_turno
+              td
+                span.badge.bg-warning.text-dark
+                  | Reprogramar
+
+              td
+                a.btn.btn-primary.btn-sm(
+                  href=`/turnos/${turno.id}/editar`
+                )
+                  | Reprogramar
