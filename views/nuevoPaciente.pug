@@ -7,23 +7,57 @@ block content
 
     div.mb-3
       label.form-label(for="nombre") Nombre
-      input.form-control(type='text' name='nombre' id='nombre' required)
+      input.form-control(
+        type='text'
+        name='nombre'
+        id='nombre'
+        required
+      )
 
     div.mb-3
       label.form-label(for="apellido") Apellido
-      input.form-control(type='text' name='apellido' id='apellido' required)
+      input.form-control(
+        type='text'
+        name='apellido'
+        id='apellido'
+        required
+      )
 
     div.mb-3
       label.form-label(for="dni") DNI
-      input.form-control(type='text' name='dni' id='dni' required)
+      input.form-control(
+        type='text'
+        name='dni'
+        id='dni'
+        required
+      )
 
     div.mb-3
       label.form-label(for="obra_social") Obra Social
-      input.form-control(type='text' name='obra_social' id='obra_social')
+      input.form-control(
+        type='text'
+        name='obra_social'
+        id='obra_social'
+      )
 
     div.mb-3
-      label.form-label(for="contacto") Contacto
-      input.form-control(type='text' name='contacto' id='contacto')
+      label.form-label(for="telefono") Teléfono
+      input.form-control(
+        type='text'
+        name='telefono'
+        id='telefono'
+      )
 
-    button.btn.btn-primary(type='submit') Guardar
-    a.btn.btn-secondary.ms-2(href='/pacientes') Volver
+    div.mb-3
+      label.form-label(for="email") Email
+      input.form-control(
+        type='email'
+        name='email'
+        id='email'
+      )
+
+    button.btn.btn-primary(type='submit')
+      | Guardar
+
+    a.btn.btn-secondary.ms-2(href='/pacientes')
+      | Volver

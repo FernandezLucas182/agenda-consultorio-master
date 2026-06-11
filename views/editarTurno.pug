@@ -10,22 +10,52 @@ block content
     .card.shadow-sm
       .card-body
 
+        .alert.alert-info.mb-4
+          h5.mb-3 Contacto del Paciente
+          p.mb-1
+            strong Teléfono:
+            |  #{turno.telefono || 'Sin teléfono'}
+
+          p.mb-1
+            strong Email:
+            |  #{turno.email || 'Sin email'}
+
+          p.mb-1
+            strong Paciente:
+            |  #{turno.paciente_nombre}
+
+          a.btn.btn-warning.mt-2(
+            href=`/pacientes/${turno.paciente_id}/editar`
+          )
+            | Editar Paciente
+          
+
+          
+
         form(action=`/turnos/${turno.id}/editar` method="POST")
           div.row.g-3
 
             div.col-md-6
               label.form-label(for="paciente_id") Paciente
-              select.form-select(name="paciente_id" id="paciente_id")
+              select.form-select(disabled)
                 each paciente in pacientes
                   option(value=paciente.id selected=(paciente.id == turno.paciente_id))= paciente.nombre
+              input(
+                type="hidden"
+                name="paciente_id"
+                value=turno.paciente_id
+              )
 
             div.col-md-6
               label.form-label Profesional
-              select.form-select(disabled)
+              select.form-select(
+                name="profesional_id"
+                id="profesional_id"
+              )
                 each profesional in profesionales
                   option(value=profesional.id selected=(profesional.id == turno.profesional_id))= profesional.nombre_completo
 
-              input(type="hidden" name="profesional_id" value=turno.profesional_id)
+              
 
             div.col-md-6
               label.form-label Especialidad
@@ -77,6 +107,12 @@ block content
                 option(value="confirmado" selected=(turno.estado == 'confirmado')) Confirmado
                 option(value="cancelado" selected=(turno.estado == 'cancelado')) Cancelado
                 option(value="pendiente" selected=(turno.estado == 'pendiente')) Pendiente
+                option(value="reservado" selected=(turno.estado == 'reservado')) Reservado
+
+          
+            
+
+              
 
           .mt-4
             button.btn.btn-warning(type="submit") Actualizar Turno
@@ -84,11 +120,30 @@ block content
 
 
 
-            script.
+  script.
 
-              const profesionalId = "#{turno.profesional_id}";
+              const profesionalSelect =
+                document.getElementById('profesional_id');
               const fechaInput = document.getElementById('fecha');
               const horaSelect = document.getElementById('hora');
+
+              function obtenerProfesionalActual() {
+                return profesionalSelect.value;
+              }
+
+              profesionalSelect.addEventListener('change', async () => {
+
+                if (calendario) {
+                  calendario.destroy();
+                }
+
+                fechaInput.value = '';
+                horaSelect.innerHTML =
+                  '<option>Seleccione fecha</option>';
+
+                cargarCalendario();
+
+              });
 
               async function cargarHorarios() {
 
@@ -101,7 +156,7 @@ block content
                 try {
 
                   const res = await fetch(
-                    `/turnos/horarios-disponibles/${profesionalId}/${fecha}`
+                    `/turnos/horarios-disponibles/${obtenerProfesionalActual()}/${fecha}`
                   );
 
                   const data = await res.json();
@@ -146,12 +201,12 @@ block content
 
               let calendario = null;
 
-              document.addEventListener("DOMContentLoaded", async () => {
+              async function cargarCalendario() {
 
                 try {
 
                   const res = await fetch(
-                    `/turnos/disponibilidad-calendario/${profesionalId}`
+                    `/turnos/disponibilidad-calendario/${obtenerProfesionalActual()}`
                   );
 
                   const data = await res.json();
@@ -160,6 +215,7 @@ block content
 
                     locale: "es",
                     dateFormat: "Y-m-d",
+                    defaultDate: fechaInput.value,
 
                     enable: [
                       function(date) {
@@ -230,11 +286,18 @@ block content
                     }
 
                   });
-
-                } catch(err) {
+                }
+                catch(err) {
 
                   console.error(err);
 
                 }
+              }
+              document.addEventListener("DOMContentLoaded", async () => {
+
+                await cargarCalendario();
+
+                cargarHorarios();
 
               });
+                        

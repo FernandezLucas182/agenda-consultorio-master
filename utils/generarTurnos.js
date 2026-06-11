@@ -11,6 +11,12 @@ function generarTurnos(horaInicio, horaFin, duracion) {
 
   while (actual + duracion <= fin) {
 
+    // ❌ BLOQUEAR 13:00 → 16:00
+    if (actual >= 780 && actual < 960) {
+      actual += duracion;
+      continue;
+    }
+
     console.log("MINUTOS INICIO:", actual);
     console.log("MINUTOS FIN:", fin);
     console.log("DURACION:", duracion);

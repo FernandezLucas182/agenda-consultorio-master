@@ -115,12 +115,12 @@ router.get(
 
 
 
-router.get('/turnos/:id', turnosController.mostrarTurno);
-
 router.get('/turnos/:id/editar', turnosController.mostrarFormularioEditarTurno);
 router.post('/turnos/:id/editar', turnosController.editarTurno);
+
 router.post('/turnos/:id/eliminar', turnosController.eliminarTurno);
 
+router.get('/turnos/:id', turnosController.mostrarTurno);
 
 
 //=====================

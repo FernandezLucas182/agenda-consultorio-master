@@ -31,6 +31,7 @@ exports.mostrarTurnos = (req, res) => {
 
   const q = req.query.q?.toLowerCase() || "";
   const nuevoId = req.query.nuevo;
+  const editadoId = req.query.editado;
 
   Turno.obtenerTodos((err, turnos) => {
     if (err) {
@@ -53,13 +54,15 @@ exports.mostrarTurnos = (req, res) => {
     turnos = turnos.map(t => ({
       ...t,
       fecha: formatearFecha(t.fecha),
-      recienCreado: nuevoId && t.id == nuevoId
+      recienCreado: nuevoId && t.id == nuevoId,
+      recienEditado: editadoId && t.id == editadoId
     }));
 
     res.render('turnos', {
       turnos,
       q,
-      nuevoTurnoId: req.query.nuevo
+      nuevoTurnoId: req.query.nuevo,
+      turnoEditadoId: req.query.editado
     });
   });
 };
@@ -314,7 +317,7 @@ exports.obtenerHorariosDisponibles = (req, res) => {
           if (err2) return res.status(500).json({ motivo: 'error_turnos' });
 
           let posibles = [];
-
+          console.log("BLOQUES AGENDA:", bloques);
           bloques.forEach(b => {
             posibles.push(...generarTurnos(
               b.hora_inicio,
@@ -423,7 +426,9 @@ exports.confirmarTurno = (req, res) => {
 
 exports.editarTurno = (req, res) => {
 
-  Turno.actualizar(req.params.id, req.body, (err) => {
+  const turnoId = req.params.id;
+
+  Turno.actualizar(turnoId, req.body, (err) => {
 
     if (err) {
       req.flash('error', 'Error al actualizar el turno');
@@ -431,7 +436,8 @@ exports.editarTurno = (req, res) => {
     }
 
     req.flash('success', 'Turno actualizado correctamente');
-    res.redirect('/turnos');
+
+    res.redirect(`/turnos?editado=${turnoId}`);
 
   });
 
@@ -532,7 +538,9 @@ exports.mostrarFormularioEditarTurno = (req, res) => {
             turno.fecha_formateada =
               new Date(turno.fecha).toISOString().split('T')[0];
 
-            turno.hora = turno.hora.slice(0, 5);
+            turno.hora = turno.hora
+              ? turno.hora.slice(0, 5)
+              : '';
 
             res.render('editarTurno', {
               turno,

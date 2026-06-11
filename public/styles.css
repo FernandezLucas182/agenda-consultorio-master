@@ -184,6 +184,7 @@ h1 {
   animation: pulseTurnoRojo 1s ease-in-out infinite alternate;
 }
 
+
 /* Borde izquierdo fuerte */
 .turno-recien-creado td:first-child {
   border-left: 6px solid #dc3545 !important;
@@ -193,6 +194,32 @@ h1 {
 .turno-recien-creado td:last-child {
   border-right: 2px solid #dc3545 !important;
 }
+
+/* =========================
+   TURNO RECIÉN EDITADO
+========================= */
+
+.turno-recien-editado td {
+  background-color: rgba(255, 193, 7, 0.35) !important;
+  color: #000 !important;
+  font-weight: 600;
+
+  border-top: 2px solid #ffc107 !important;
+  border-bottom: 2px solid #ffc107 !important;
+
+  animation: pulseTurnoAmarillo 1s ease-in-out infinite alternate;
+}
+
+/* Borde izquierdo */
+.turno-recien-editado td:first-child {
+  border-left: 6px solid #ffc107 !important;
+}
+
+/* Borde derecho */
+.turno-recien-editado td:last-child {
+  border-right: 2px solid #ffc107 !important;
+}
+
 
 @keyframes pulseTurnoRojo {
 
@@ -205,6 +232,16 @@ h1 {
   }
 }
 
+@keyframes pulseTurnoAmarillo {
+
+  from {
+    background-color: rgba(255, 193, 7, 0.25);
+  }
+
+  to {
+    background-color: rgba(255, 193, 7, 0.55);
+  }
+}
 
 
 /* =========================

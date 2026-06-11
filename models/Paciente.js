@@ -3,50 +3,116 @@ const db = require('./Db');
 class Paciente {
 
   static obtenerTodos(callback) {
-    db.query('SELECT * FROM pacientes', (err, resultados) => {
-      if (err) return callback(err);
-      callback(null, resultados || []);
-    });
+    db.query(
+      'SELECT * FROM pacientes',
+      (err, resultados) => {
+
+        if (err) return callback(err);
+
+        callback(null, resultados || []);
+      }
+    );
   }
 
   static crear(datos, callback) {
-    const { nombre, dni, obra_social, contacto } = datos;
+
+    const {
+      nombre,
+      apellido,
+      dni,
+      obra_social,
+      telefono,
+      email
+    } = datos;
 
     db.query(
-      'INSERT INTO pacientes (nombre, dni, obra_social, contacto) VALUES (?, ?, ?, ?)',
-      [nombre, dni, obra_social || null, contacto || null],
+      `
+    INSERT INTO pacientes
+    (
+      nombre,
+      apellido,
+      dni,
+      obra_social,
+      telefono,
+      email
+    )
+    VALUES (?, ?, ?, ?, ?, ?)
+    `,
+      [
+        nombre,
+        apellido || null,
+        dni,
+        obra_social || null,
+        telefono || null,
+        email || null
+      ],
       callback
     );
   }
 
   static obtenerPorId(id, callback) {
-    db.query('SELECT * FROM pacientes WHERE id = ?', [id], (err, resultados) => {
-      if (err) return callback(err);
-      callback(null, resultados[0]);
-    });
+
+    db.query(
+      'SELECT * FROM pacientes WHERE id = ?',
+      [id],
+      (err, resultados) => {
+
+        if (err) return callback(err);
+
+        callback(null, resultados[0]);
+      }
+    );
   }
 
   static editar(id, datos, callback) {
-    const { nombre, dni, obra_social, contacto } = datos;
+
+    const {
+      nombre,
+      apellido,
+      dni,
+      obra_social,
+      telefono,
+      email
+    } = datos;
 
     db.query(
-      'UPDATE pacientes SET nombre = ?, dni = ?, obra_social = ?, contacto = ? WHERE id = ?',
-      [nombre, dni, obra_social || null, contacto || null, id],
+      `
+      UPDATE pacientes
+      SET
+        nombre = ?,
+        apellido = ?,
+        dni = ?,
+        obra_social = ?,
+        telefono = ?,
+        email = ?
+      WHERE id = ?
+      `,
+      [
+        nombre,
+        apellido,
+        dni,
+        obra_social || null,
+        telefono || null,
+        email || null,
+        id
+      ],
       callback
     );
   }
-  
-  
+
   static buscarPorDni(dni, callback) {
-  db.query(
-    'SELECT * FROM pacientes WHERE dni LIKE ?',
-    [`%${dni}%`],
-    (err, resultados) => {
-      if (err) return callback(err);
-      callback(null, resultados);
-    }
-  );
-}
+
+    db.query(
+      'SELECT * FROM pacientes WHERE dni LIKE ?',
+      [`%${dni}%`],
+      (err, resultados) => {
+
+        if (err) return callback(err);
+
+        callback(null, resultados);
+      }
+    );
+  }
 
 }
 

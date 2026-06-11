@@ -4,25 +4,90 @@ block title
   | Editar Paciente
 
 block content
-  h1 Editar Paciente
 
-  form(action=`/pacientes/${paciente.id}/editar` method="POST")
-    div.mb-3
-      label.form-label(for="nombre") Nombre Completo
-      input.form-control(type="text" id="nombre" name="nombre" value=paciente.nombre required)
+  h1.mb-4 Editar Paciente
 
-    div.mb-3
-      label.form-label(for="dni") DNI
-      input.form-control(type="text" id="dni" name="dni" value=paciente.dni required)
+  form(
+    action=`/pacientes/${paciente.id}/editar`
+    method="POST"
+  )
 
     div.mb-3
-      label.form-label(for="obra_social") Obra Social
-      input.form-control(type="text" id="obra_social" name="obra_social" value=paciente.obra_social)
+      label.form-label(for="nombre")
+        | Nombre
+
+      input.form-control(
+        type="text"
+        id="nombre"
+        name="nombre"
+        value=paciente.nombre
+        required
+      )
 
     div.mb-3
-      label.form-label(for="contacto") Contacto (Teléfono/Email)
-      input.form-control(type="text" id="contacto" name="contacto" value=paciente.contacto)
+      label.form-label(for="apellido")
+        | Apellido
+
+      input.form-control(
+        type="text"
+        id="apellido"
+        name="apellido"
+        value=paciente.apellido
+      )
+
+    div.mb-3
+      label.form-label(for="dni")
+        | DNI
+
+      input.form-control(
+        type="text"
+        id="dni"
+        name="dni"
+        value=paciente.dni
+        required
+      )
+
+    div.mb-3
+      label.form-label(for="obra_social")
+        | Obra Social
+
+      input.form-control(
+        type="text"
+        id="obra_social"
+        name="obra_social"
+        value=paciente.obra_social
+      )
+
+    div.mb-3
+      label.form-label(for="telefono")
+        | Teléfono
+
+      input.form-control(
+        type="text"
+        id="telefono"
+        name="telefono"
+        value=paciente.telefono
+      )
+
+    div.mb-3
+      label.form-label(for="email")
+        | Email
+
+      input.form-control(
+        type="email"
+        id="email"
+        name="email"
+        value=paciente.email
+      )
 
     div.mt-4
-      button.btn.btn-success(type="submit") Guardar Cambios
-      a.btn.btn-secondary.ms-2(href="/pacientes") Cancelar
+
+      button.btn.btn-success(
+        type="submit"
+      )
+        | Guardar Cambios
+
+      a.btn.btn-secondary.ms-2(
+        href="/pacientes"
+      )
+        | Cancelar

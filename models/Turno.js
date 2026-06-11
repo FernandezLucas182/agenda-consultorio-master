@@ -20,27 +20,43 @@ class Turno {
   static obtenerTodos(callback) {
 
     const sql = `
-    SELECT 
-      t.id,
-      t.fecha,
-      t.hora,
-      t.estado,
-      t.tipo_turno,
-      p.nombre AS paciente_nombre,
-      CONCAT(pr.nombre, ' ', pr.apellido) AS profesional_nombre,
-      e.nombre AS especialidad_nombre,
-      s.nombre AS sucursal_nombre
-    FROM turnos t
-    JOIN pacientes p ON t.paciente_id = p.id
-    JOIN profesionales pr ON t.profesional_id = pr.id
-    JOIN especialidades e ON t.especialidad_id = e.id
-    JOIN sucursales s ON t.sucursal_id = s.id
-    ORDER BY t.fecha DESC, t.hora ASC
-  `;
+      SELECT 
+        t.id,
+        t.fecha,
+        t.hora,
+        t.estado,
+        t.tipo_turno,
+
+        p.nombre AS paciente_nombre,
+        p.telefono AS paciente_telefono,
+        p.email AS paciente_email,
+        p.obra_social AS paciente_obra_social,
+
+        CONCAT(pr.nombre, ' ', pr.apellido)
+          AS profesional_nombre,
+
+        e.nombre AS especialidad_nombre,
+        s.nombre AS sucursal_nombre
+
+      FROM turnos t
+
+      JOIN pacientes p
+        ON t.paciente_id = p.id
+
+      JOIN profesionales pr
+        ON t.profesional_id = pr.id
+
+      JOIN especialidades e
+        ON t.especialidad_id = e.id
+
+      JOIN sucursales s
+        ON t.sucursal_id = s.id
+
+      ORDER BY t.fecha DESC, t.hora ASC
+    `;
 
     db.query(sql, callback);
   }
-
   //=======================
   //Obtener Por Id
   //=======================
@@ -48,22 +64,45 @@ class Turno {
     const sql = `
     SELECT 
       t.*,
+      p.telefono,
+      p.email,
+      p.obra_social,
       p.nombre AS paciente_nombre,
-      pr.nombre AS profesional_nombre,
+
+      CONCAT(pr.nombre, ' ', pr.apellido)
+        AS profesional_nombre,
+
       e.nombre AS especialidad_nombre,
       s.nombre AS sucursal_nombre
+      
     FROM turnos t
-    JOIN pacientes p ON p.id = t.paciente_id
-    JOIN profesionales pr ON pr.id = t.profesional_id
-    JOIN especialidades e ON e.id = t.especialidad_id
-    JOIN agendas a ON a.id = t.agenda_id
-    LEFT JOIN sucursales s ON s.id = a.sucursal_id
+
+    JOIN pacientes p
+      ON p.id = t.paciente_id
+
+    JOIN profesionales pr
+      ON pr.id = t.profesional_id
+
+    JOIN especialidades e
+      ON e.id = t.especialidad_id
+
+    LEFT JOIN sucursales s
+      ON s.id = t.sucursal_id
+
     WHERE t.id = ?
   `;
 
     db.query(sql, [id], (err, rows) => {
-      if (err) return callback(err);
+
+      if (err) {
+        console.log("ERROR SQL:", err);
+        return callback(err);
+      }
+
+      console.log("ROWS:", rows);
+
       callback(null, rows[0]);
+
     });
   }
 
@@ -88,28 +127,32 @@ class Turno {
   }
 
   static actualizar(id, data, callback) {
+
+    const sql = `
+    UPDATE turnos SET
+      paciente_id = ?,
+      profesional_id = ?,
+      especialidad_id = ?,
+      fecha = ?,
+      hora = ?,
+      tipo_turno = ?
+    WHERE id = ?
+  `;
+
     db.query(
-      `UPDATE turnos SET
-        paciente_id = ?,
-        profesional_id = ?,
-        especialidad_id = ?,
-        sucursal_id = ?,
-        fecha = ?,
-        hora = ?,
-        estado = ?
-       WHERE id = ?`,
+      sql,
       [
         data.paciente_id,
         data.profesional_id,
         data.especialidad_id,
-        data.sucursal_id,
         data.fecha,
         data.hora,
-        data.estado,
+        data.tipo_turno,
         id
       ],
       callback
     );
+
   }
 
   static eliminar(id, callback) {
@@ -151,7 +194,7 @@ class Turno {
     WHERE profesional_id = ?
       AND fecha = ?
       AND TIME_FORMAT(hora, '%H:%i') = ?
-      AND estado IN ('reservado', 'confirmado')
+      AND estado IN ('reservado', 'confirmado', 'pendiente')
   `;
 
     db.query(sql, [profesional_id, fecha, hora], (err, rows) => {
