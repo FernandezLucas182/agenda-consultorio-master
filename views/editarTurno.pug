@@ -59,11 +59,17 @@ block content
 
             div.col-md-6
               label.form-label Especialidad
-              select.form-select(disabled)
-                each especialidad in especialidades
-                  option(value=especialidad.id selected=(especialidad.id == turno.especialidad_id))= especialidad.nombre
 
-              input(type="hidden" name="especialidad_id" value=turno.especialidad_id)
+              select.form-select(
+                name="especialidad_id"
+                id="especialidad_id"
+              )
+
+                each especialidad in especialidades
+                  option(
+                    value=especialidad.id
+                    selected=(especialidad.id == turno.especialidad_id)
+                  )= especialidad.nombre
 
             div.col-md-6
               label.form-label Sucursal
@@ -116,16 +122,40 @@ block content
 
           .mt-4
             button.btn.btn-warning(type="submit") Actualizar Turno
-            a.btn.btn-secondary.ms-2(href="/turnos") Cancelar
 
+            a.btn.btn-secondary.ms-2(href="/turnos")
+              | Cancelar
+
+            button.btn.btn-info.ms-2(
+              type="button"
+              id="btnReset"
+            )
+              | Reiniciar
+
+      
 
 
   script.
+
+              const especialidadSelect =
+                document.getElementById('especialidad_id');
 
               const profesionalSelect =
                 document.getElementById('profesional_id');
               const fechaInput = document.getElementById('fecha');
               const horaSelect = document.getElementById('hora');
+              const especialidadOriginal =
+                "#{turno.especialidad_id}";
+
+              const profesionalOriginal =
+                "#{turno.profesional_id}";
+
+              const fechaOriginal =
+                "#{turno.fecha_formateada}";
+
+              const horaOriginal =
+                "#{turno.hora}";
+              let actualizando = false;
 
               function obtenerProfesionalActual() {
                 return profesionalSelect.value;
@@ -133,30 +163,139 @@ block content
 
               profesionalSelect.addEventListener('change', async () => {
 
+                if (actualizando) return;
+
+                actualizando = true;
+
+                const profesionalId = profesionalSelect.value;
+
+                try {
+                  
+                  console.log(
+                    'PROFESIONAL ACTUAL:',
+                    obtenerProfesionalActual()
+                  );
+                  const res = await fetch(
+                    `/profesionales/${profesionalId}/especialidades`
+                  );
+
+                  const especialidades = await res.json();
+
+                  especialidadSelect.innerHTML = '';
+
+                  especialidades.forEach(e => {
+
+                    const option = document.createElement('option');
+
+                    option.value = e.id;
+                    option.textContent = e.nombre;
+
+                    especialidadSelect.appendChild(option);
+
+                  });
+
+                  if (calendario) {
+                    calendario.destroy();
+                  }
+
+                  fechaInput.value = '';
+
+                  horaSelect.innerHTML =
+                    '<option>Seleccione fecha</option>';
+  
+                  console.log(
+                    'PROFESIONAL PARA HORARIOS:',
+                    obtenerProfesionalActual()
+                  );
+                  await cargarCalendario();
+
+                } catch(err) {
+
+                  console.error(err);
+
+                }
+
+                actualizando = false;
+
+              });
+              
+
+              especialidadSelect.addEventListener('change', async () => {
+
+                if (actualizando) return;
+
+                actualizando = true;
+
+                const especialidadId = especialidadSelect.value;
+
+                const res = await fetch(
+                  `/profesionales/especialidad/${especialidadId}`
+                );
+
+                const profesionales = await res.json();
+
+                profesionalSelect.innerHTML = '';
+
+                profesionales.forEach(p => {
+
+                  const option = document.createElement('option');
+
+                  option.value = p.id;
+                  option.textContent = p.nombre_completo;
+
+                  profesionalSelect.appendChild(option);
+
+                });
+
+                
+
+                if (profesionales.length > 0) {
+
+                  if (profesionales.some(
+                    p => p.id == profesionalOriginal
+                  )) {
+
+                    profesionalSelect.value =
+                      profesionalOriginal;
+
+                  } else {
+
+                    profesionalSelect.value =
+                      profesionales[0].id;
+
+                  }
+
+                }
+
+
                 if (calendario) {
                   calendario.destroy();
                 }
 
-                fechaInput.value = '';
-                horaSelect.innerHTML =
-                  '<option>Seleccione fecha</option>';
-
-                cargarCalendario();
+                await cargarCalendario();
+                  actualizando = false;
 
               });
 
               async function cargarHorarios() {
 
                 const fecha = fechaInput.value;
+                const profesionalId = obtenerProfesionalActual();
+
+                if (!profesionalId) {
+                  console.warn(
+                    'No hay profesional seleccionado'
+                  );
+                  return;
+                }
 
                 if (!fecha) return;
-
                 horaSelect.innerHTML = '<option>Cargando...</option>';
 
                 try {
 
                   const res = await fetch(
-                    `/turnos/horarios-disponibles/${obtenerProfesionalActual()}/${fecha}`
+                    `/turnos/horarios-disponibles/${obtenerProfesionalActual()}/${fecha}?turnoId=#{turno.id}`
                   );
 
                   const data = await res.json();
@@ -203,10 +342,20 @@ block content
 
               async function cargarCalendario() {
 
+                const profesionalId =
+                  obtenerProfesionalActual();
+
+                if (!profesionalId) {
+                  console.warn(
+                    'No hay profesional seleccionado'
+                  );
+                  return;
+                }
+
                 try {
 
                   const res = await fetch(
-                    `/turnos/disponibilidad-calendario/${obtenerProfesionalActual()}`
+                    `/turnos/disponibilidad-calendario/${profesionalId}`
                   );
 
                   const data = await res.json();
@@ -300,4 +449,33 @@ block content
                 cargarHorarios();
 
               });
+
+              document.getElementById('btnReset')
+                .addEventListener('click', async () => {
+
+                  actualizando = true;
+
+                  profesionalSelect.value =
+                    profesionalOriginal;
+
+                  especialidadSelect.value =
+                    especialidadOriginal;
+
+                  fechaInput.value =
+                    fechaOriginal;
+
+                  if (calendario) {
+                    calendario.destroy();
+                  }
+
+                  await cargarCalendario();
+
+                  await cargarHorarios();
+
+                  horaSelect.value =
+                    horaOriginal;
+
+                  actualizando = false;
+
+                });
                         

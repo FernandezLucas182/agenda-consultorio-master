@@ -163,17 +163,18 @@ class Turno {
   // HORARIOS
   // ==========================
 
-  static obtenerHorariosOcupados(profesional_id, fecha, callback) {
+  static obtenerHorariosOcupados(profesional_id, fecha, turnoIdExcluir, callback) {
 
     console.log("BUSCANDO OCUPADOS:", profesional_id, fecha);
 
     db.query(
       `SELECT DATE_FORMAT(hora, '%H:%i') AS hora
-     FROM turnos
-     WHERE profesional_id = ?
-       AND fecha = ?
-       AND estado != 'cancelado'`,
-      [profesional_id, fecha],
+      FROM turnos
+      WHERE profesional_id = ?
+        AND fecha = ?
+        AND id <> ?
+        AND estado != 'cancelado'`,
+      [profesional_id, fecha, turnoIdExcluir],
       (err, rows) => {
 
         if (err) return callback(err);

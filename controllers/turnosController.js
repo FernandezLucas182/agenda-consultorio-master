@@ -284,6 +284,7 @@ exports.obtenerHorariosDisponibles = (req, res) => {
   const { profesionalId, fecha } = req.params;
   const tipo = req.query.tipo;
 
+  const turnoIdExcluir = req.query.turnoId || 0;
   Ausencia.existeAusenciaEnFecha(profesionalId, fecha, (err, hayAusencia) => {
 
     if (err) return res.status(500).json({ motivo: 'error_ausencia' });
@@ -317,7 +318,7 @@ exports.obtenerHorariosDisponibles = (req, res) => {
           return res.json({ motivo: 'no_trabaja' });
         }
 
-        Turno.obtenerHorariosOcupados(profesionalId, fecha, (err2, ocupados) => {
+        Turno.obtenerHorariosOcupados(profesionalId, fecha, turnoIdExcluir, (err2, ocupados) => {
 
           if (err2) return res.status(500).json({ motivo: 'error_turnos' });
 

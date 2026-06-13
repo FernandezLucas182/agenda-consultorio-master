@@ -356,6 +356,44 @@ block content
             }
           ],
 
+          onDayCreate: function(dObj, dStr, fp, dayElem) {
+
+            const fecha =
+              dayElem.dateObj.toISOString().split('T')[0];
+
+            const diaJS =
+              dayElem.dateObj.getDay();
+
+            const diaBD =
+              diaJS === 0 ? 7 : diaJS;
+
+            const trabaja =
+              data.diasLaborales.includes(diaBD);
+
+            const estaAusente =
+              data.ausencias.some(a => {
+
+                return (
+                  fecha >= a.fecha_inicio &&
+                  fecha <= a.fecha_fin
+                );
+
+              });
+
+            if (!trabaja) {
+              dayElem.classList.add("no-disponible");
+              return;
+            }
+
+            if (estaAusente) {
+              dayElem.classList.add("ausente");
+              return;
+            }
+
+            dayElem.classList.add("disponible");
+
+          },
+
           onChange: function () {
             cargarHorarios();
           }
