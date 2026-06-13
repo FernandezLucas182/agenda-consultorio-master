@@ -46,8 +46,10 @@ block content
       //- Profesional (Se carga dinámicamente)
       div.col-md-6
         label.form-label(for="profesional_id") Profesional
-        select.form-select(name="profesional_id" id="profesional_id" required disabled)
-          option(value="" disabled selected) -- Primero seleccione especialidad --
+        select.form-select(name="profesional_id" id="profesional_id" required)
+          option(value="" disabled selected) -- Seleccione Profesional --
+          each profesional in profesionales
+            option(value=profesional.id)= profesional.nombre_completo
 
       
       //- Fecha
@@ -80,7 +82,15 @@ block content
 
     div.mt-4
       button.btn.btn-primary(type="submit") Crear Turno
-      a.btn.btn-secondary.ms-2(href="/turnos") Cancelar
+
+      a.btn.btn-secondary.ms-2(href="/turnos")
+        | Cancelar
+
+      button.btn.btn-warning.ms-2(
+        type="button"
+        onclick="window.location.reload()"
+      )
+        | Reiniciar
 
   //- Scripts para la lógica dinámica
   script.
@@ -102,8 +112,12 @@ block content
       fecha: null,
       tipo: 'normal'
     };
-
+    let actualizando = false;
     let cargandoHorarios = false;
+
+    
+    
+
 
     if (pacienteIdParam && pacienteSelect && !pacienteSelect.disabled) {
       pacienteSelect.value = pacienteIdParam;
@@ -111,31 +125,64 @@ block content
 
     // 2. Cargar Profesionales al cambiar Especialidad
     especialidadSelect.addEventListener('change', async () => {
-      const especialidadId = especialidadSelect.value;
-      estado.especialidad = especialidadSelect.value;
-      profesionalSelect.innerHTML = '<option>Cargando...</option>';
-      profesionalSelect.disabled = true;
+
+      if (actualizando) return;
+
+      actualizando = true;
+
       
-      // Resetear horarios también
-      horaSelect.innerHTML = '<option value="" disabled selected>-- Seleccione fecha y profesional --</option>';
-      horaSelect.disabled = true;
+
+      // GUARDAR PROFESIONAL y especialidad ACTUAL
+      const especialidadId = especialidadSelect.value;
+      console.log(
+        "ESPECIALIDAD SELECCIONADA:",
+        especialidadId
+      );
+      const profesionalActual = profesionalSelect.value;
 
       try {
-        const res = await fetch(`/profesionales/especialidad/${especialidadId}`);
-        const data = await res.json();
 
-        profesionalSelect.innerHTML = '<option value="" disabled selected>-- Seleccione Profesional --</option>';
+        const res = await fetch(
+          `/profesionales/especialidad/${especialidadId}`
+        );
+
+        const data = await res.json();
+        console.log("PROFESIONALES RECIBIDOS:", data);
+
+        profesionalSelect.innerHTML =
+          '<option value="" disabled selected>-- Seleccione Profesional --</option>';
+
         data.forEach(p => {
+
           const option = document.createElement('option');
-          option.value = p.id; // 🔥 CLAVE
+
+          option.value = p.id;
           option.textContent = p.nombre_completo;
+
           profesionalSelect.appendChild(option);
+
         });
-        profesionalSelect.disabled = false;
-      } catch (err) {
+
+        if (profesionalActual) {
+          profesionalSelect.value = profesionalActual;
+        }
+
+        if (profesionalSelect.value) {
+          await cargarCalendarioProfesional(
+            profesionalSelect.value
+          );
+        }
+
+       
+
+      } catch(err) {
+
         console.error(err);
-        profesionalSelect.innerHTML = '<option>Error al cargar</option>';
+
       }
+
+      actualizando = false;
+
     });
 
     // 3. Cargar Horarios al cambiar Profesional o Fecha
@@ -171,7 +218,14 @@ block content
 
         const data = await res.json();
 
+        console.log(
+          "HORARIOS DISPONIBLES",
+          estado.profesional,
+          data
+        );
+
         console.log("DATA COMPLETA:", data);
+
 
         horaSelect.innerHTML = '';
 
@@ -242,108 +296,138 @@ block content
       }
     }
 
-        profesionalSelect.addEventListener('change', async () => {
+    async function cargarCalendarioProfesional(profesionalId) {
 
-          estado.profesional = profesionalSelect.value;
+      horaSelect.innerHTML =
+        '<option value="" disabled selected>-- Seleccione fecha --</option>';
 
-          horaSelect.innerHTML =
-            '<option value="" disabled selected>-- Seleccione fecha --</option>';
+      horaSelect.disabled = true;
 
-          horaSelect.disabled = true;
+      fechaInput.value = '';
 
-          fechaInput.value = '';
+      try {
 
-          try {
+        const res = await fetch(
+          `/turnos/disponibilidad-calendario/${profesionalId}`
+        );
 
-            const res = await fetch(
-              `/turnos/disponibilidad-calendario/${estado.profesional}`
-            );
+        const data = await res.json();
 
-            const data = await res.json();
+        console.log(
+          "DISPONIBILIDAD CALENDARIO",
+          profesionalId,
+          data
+        );
 
-            console.log("DISPONIBILIDAD:", data);
+        calendario.destroy();
 
-            calendario.destroy();
+        calendario = flatpickr("#fecha", {
 
-            calendario = flatpickr("#fecha", {
+          locale: "es",
+          dateFormat: "Y-m-d",
+          minDate: "today",
 
-              locale: "es",
-              dateFormat: "Y-m-d",
-              minDate: "today",
+          enable: [
+            function(date) {
 
-              enable: [
-                function(date) {
+              const diaJS = date.getDay();
+              const diaBD = diaJS === 0 ? 7 : diaJS;
 
-                  const diaJS = date.getDay();
-                  const diaBD = diaJS === 0 ? 7 : diaJS;
+              const trabaja =
+                data.diasLaborales.includes(diaBD);
 
-                  const trabaja = data.diasLaborales.includes(diaBD);
+              if (!trabaja) return false;
 
-                  if (!trabaja) return false;
+              const fechaActual =
+                date.toISOString().split('T')[0];
 
-                  const fechaActual =
-                    date.toISOString().split('T')[0];
-
-                  const estaAusente = data.ausencias.some(a => {
-
-                    return (
-                      fechaActual >= a.fecha_inicio &&
-                      fechaActual <= a.fecha_fin
-                    );
-
-                  });
-
-                  return !estaAusente;
-                }
-              ],
-
-              onDayCreate: function(dObj, dStr, fp, dayElem) {
-
-                const fecha =
-                  dayElem.dateObj.toISOString().split('T')[0];
-
-                const diaJS = dayElem.dateObj.getDay();
-                const diaBD = diaJS === 0 ? 7 : diaJS;
-
-                const trabaja = data.diasLaborales.includes(diaBD);
-
-                const estaAusente = data.ausencias.some(a => {
+              const estaAusente =
+                data.ausencias.some(a => {
 
                   return (
-                    fecha >= a.fecha_inicio &&
-                    fecha <= a.fecha_fin
+                    fechaActual >= a.fecha_inicio &&
+                    fechaActual <= a.fecha_fin
                   );
 
                 });
 
-                // 🔴 No trabaja
-                if (!trabaja) {
-                  dayElem.classList.add("no-disponible");
-                  return;
-                }
+              return !estaAusente;
 
-                // 🟠 Ausente
-                if (estaAusente) {
-                  dayElem.classList.add("ausente");
-                  return;
-                }
+            }
+          ],
 
-                // 🟢 Disponible
-                dayElem.classList.add("disponible");
+          onChange: function () {
+            cargarHorarios();
+          }
 
-              },
+        });
 
-              onChange: function () {
-                cargarHorarios();
-              }
+      } catch(err) {
+
+        console.error(err);
+
+      }
+
+    }
+
+        profesionalSelect.addEventListener('change', async () => {
+
+          if (actualizando) return;
+
+          console.log("PROFESIONAL CAMBIADO");
+
+          actualizando = true;
+
+          estado.profesional = profesionalSelect.value;
+
+          console.log(
+            "PROFESIONAL SELECCIONADO:",
+            estado.profesional
+          );
+
+          console.log("ID PROFESIONAL:", estado.profesional);
+
+          try {
+
+            const res = await fetch(
+              `/profesionales/${estado.profesional}/especialidades`
+            );
+
+            
+            console.log("STATUS ESPECIALIDADES:", res.status);
+
+            const data = await res.json();
+
+            console.log("ESPECIALIDADES RECIBIDAS:", data);
+            console.log("DATA ESPECIALIDADES:", data);
+
+            especialidadSelect.innerHTML =
+              '<option value="" disabled selected>-- Seleccione Especialidad --</option>';
+
+            data.forEach(e => {
+
+              const option = document.createElement('option');
+
+              option.value = e.id;
+              option.textContent = e.nombre;
+
+              especialidadSelect.appendChild(option);
 
             });
 
-          } catch (err) {
+          } catch(err) {
 
-            console.error("ERROR CALENDARIO:", err);
+            console.error("ERROR ESPECIALIDADES:", err);
 
           }
+
+          actualizando = false;
+
+          // CALENDARIO
+
+          await cargarCalendarioProfesional(
+            profesionalSelect.value
+          );
 
         });
         //fechaInput.addEventListener('change', cargarHorarios);

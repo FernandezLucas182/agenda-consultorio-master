@@ -272,6 +272,21 @@ class Turno {
     db.query('SELECT * FROM sucursales', callback);
   }
 
+  static obtenerTodosProfesionales(callback) {
+
+    const sql = `
+      SELECT
+        id,
+        CONCAT(nombre,' ',apellido) AS nombre_completo
+      FROM profesionales
+      WHERE estado = 'activo'
+      ORDER BY apellido, nombre
+    `;
+
+    db.query(sql, callback);
+
+  }
+
   static obtenerEspecialidadesPorProfesional(profesionalId, callback) {
     db.query(
       `SELECT e.id, e.nombre
@@ -295,6 +310,26 @@ class Turno {
      WHERE pe.especialidad_id = ?
        AND p.estado = 'activo'`,
       [especialidadId],
+      callback
+    );
+  }
+
+  static obtenerEspecialidadesPorProfesional(
+    profesionalId,
+    callback
+  ) {
+    db.query(
+      `
+    SELECT
+      e.id,
+      e.nombre
+    FROM especialidades e
+    JOIN profesional_especialidad pe
+      ON e.id = pe.especialidad_id
+    WHERE pe.profesional_id = ?
+    ORDER BY e.nombre
+    `,
+      [profesionalId],
       callback
     );
   }

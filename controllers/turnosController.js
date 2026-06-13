@@ -90,21 +90,26 @@ exports.mostrarFormularioNuevoTurno = (req, res) => {
 
     Turno.obtenerPacientes((e2, pacientes) => {
 
-      if (e1 || e2) {
-        return res.status(500).send('Error cargando formulario');
-      }
+      Turno.obtenerTodosProfesionales((e3, profesionales) => {
 
-      let pacienteSeleccionado = null;
+        if (e1 || e2 || e3) {
+          return res.status(500).send('Error cargando formulario');
+        }
 
-      if (pacienteId) {
-        pacienteSeleccionado = pacientes.find(p => p.id == pacienteId);
-      }
+        let pacienteSeleccionado = null;
 
-      res.render('nuevoTurno', {
-        especialidades: especialidades || [],
-        pacientes: pacientes || [],
-        profesionales: [],
-        pacienteSeleccionado
+        if (pacienteId) {
+          pacienteSeleccionado =
+            pacientes.find(p => p.id == pacienteId);
+        }
+
+        res.render('nuevoTurno', {
+          especialidades,
+          pacientes,
+          profesionales,
+          pacienteSeleccionado
+        });
+
       });
 
     });
@@ -489,9 +494,21 @@ exports.mostrarReprogramaciones = (req, res) => {
 
 exports.obtenerEspecialidadesPorProfesional = (req, res) => {
 
+  console.log(
+    "PROFESIONAL RECIBIDO:",
+    req.params.profesionalId
+  );
+
+
   Turno.obtenerEspecialidadesPorProfesional(
     req.params.profesionalId,
     (err, rows) => {
+
+      console.log(
+        "ESPECIALIDADES ENCONTRADAS:",
+        rows
+      );
+
 
       if (err) return res.status(500).json([]);
       res.json(rows || []);
@@ -503,9 +520,20 @@ exports.obtenerEspecialidadesPorProfesional = (req, res) => {
 
 exports.obtenerProfesionalesPorEspecialidad = (req, res) => {
 
+  console.log(
+    "ESPECIALIDAD RECIBIDA:",
+    req.params.especialidadId
+  );
+
+
   Turno.obtenerProfesionalesPorEspecialidad(
     req.params.especialidadId,
     (err, rows) => {
+
+      console.log(
+        "PROFESIONALES ENCONTRADOS:",
+        rows
+      );
 
       if (err) return res.status(500).json([]);
       res.json(rows || []);
@@ -514,6 +542,8 @@ exports.obtenerProfesionalesPorEspecialidad = (req, res) => {
   );
 
 };
+
+
 
 exports.mostrarFormularioEditarTurno = (req, res) => {
 
