@@ -41,9 +41,14 @@ block content
             th Acciones
         tbody
           each profesional in profesionales
-            tr
+            tr(class=profesional.recienCreado ? 'table-success' : profesional.recienEditado ? 'table-warning' : '')
               td= profesional.matricula
               td= profesional.nombre
+                if profesional.recienCreado
+                  span.badge.bg-success.ms-2 NUEVO
+
+                if profesional.recienEditado
+                  span.badge.bg-warning.text-dark.ms-2 EDITADO
               td= profesional.apellido
               td= profesional.dni
               td= profesional.telefono || '-'

@@ -2,21 +2,76 @@ const Paciente = require('../models/Paciente');
 
 // Mostrar todos los pacientes //Busqueda por dni
 exports.mostrarPacientes = (req, res) => {
+
   const dni = req.query.dni || '';
 
+  const nuevoId = req.query.nuevo;
+  const editadoId = req.query.editado;
+
+
+  const procesar = pacientes => {
+
+    pacientes = pacientes.map(p => ({
+
+      ...p,
+
+      recienCreado:
+        Number(p.id) === Number(nuevoId),
+
+      recienEditado:
+        Number(p.id) === Number(editadoId)
+
+    }));
+
+
+    pacientes.sort((a, b) => {
+
+      if (a.recienCreado !== b.recienCreado)
+        return a.recienCreado ? -1 : 1;
+
+      if (a.recienEditado !== b.recienEditado)
+        return a.recienEditado ? -1 : 1;
+
+      return 0;
+
+    });
+
+
+    res.render('pacientes', {
+
+      pacientes,
+      dni
+
+    });
+
+  };
+
+
   if (dni) {
+
     Paciente.buscarPorDni(dni, (err, pacientes) => {
-      if (err) return res.status(500).send('Error');
 
-      res.render('pacientes', { pacientes, dni });
-    });
-  } else {
-    Paciente.obtenerTodos((err, pacientes) => {
-      if (err) return res.status(500).send('Error');
+      if (err)
+        return res.status(500).send('Error');
 
-      res.render('pacientes', { pacientes, dni });
+      procesar(pacientes);
+
     });
+
   }
+  else {
+
+    Paciente.obtenerTodos((err, pacientes) => {
+
+      if (err)
+        return res.status(500).send('Error');
+
+      procesar(pacientes);
+
+    });
+
+  }
+
 };
 
 // Crear un nuevo paciente
@@ -24,12 +79,14 @@ exports.crearPaciente = (req, res) => {
   const pacienteData = req.body;
 
   Paciente.crear(pacienteData, (err, result) => {
-    if (err) return res.status(500).send('Error');
+
+    if (err)
+      return res.status(500).send('Error');
 
     const pacienteId = result.insertId;
 
-    // 🔥 redirigir directo a turno
-    res.redirect(`/turnos/nuevo?paciente_id=${pacienteId}`);
+    res.redirect(`/pacientes?nuevo=${pacienteId}`);
+
   });
 };
 
@@ -65,6 +122,6 @@ exports.editarPaciente = (req, res) => {
     if (err) {
       return res.status(500).send('Error al editar paciente.');
     }
-    res.redirect('/pacientes');
+    res.redirect(`/pacientes?editado=${pacienteId}`);
   });
 };

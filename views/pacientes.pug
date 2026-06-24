@@ -37,9 +37,23 @@ block content
           th Acciones
       tbody
         each paciente in pacientes
-          tr
+          tr(
+            class=
+              paciente.recienCreado
+              ? 'table-success'
+              : paciente.recienEditado
+              ? 'table-warning'
+              : ''
+          )
             td= paciente.id
             td= paciente.nombre
+
+              if paciente.recienCreado
+                span.badge.bg-success.ms-2 NUEVO
+
+              if paciente.recienEditado
+                span.badge.bg-warning.text-dark.ms-2 EDITADO
+
             td= paciente.dni
             td= paciente.obra_social
             td= paciente.contacto

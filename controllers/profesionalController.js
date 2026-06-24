@@ -6,14 +6,50 @@ exports.mostrarProfesional = (req, res) => {
 
   const filtro = req.query.buscar || '';
 
+  const nuevoId = req.query.nuevo;
+  const editadoId = req.query.editado;
+
   Profesional.obtenerTodos(filtro, (err, profesionales) => {
-    if (err) return res.status(500).send('Error al obtener los profesionales');
+
+    if (err)
+      return res.status(500).send('Error al obtener los profesionales');
+
+
+    profesionales = profesionales.map(p => ({
+
+      ...p,
+
+      recienCreado:
+        Number(p.id) === Number(nuevoId),
+
+      recienEditado:
+        Number(p.id) === Number(editadoId)
+
+    }));
+
+
+    profesionales.sort((a, b) => {
+
+      if (a.recienCreado !== b.recienCreado)
+        return a.recienCreado ? -1 : 1;
+
+      if (a.recienEditado !== b.recienEditado)
+        return a.recienEditado ? -1 : 1;
+
+      return 0;
+
+    });
+
 
     res.render('listaProfesional', {
+
       profesionales,
       filtro
+
     });
+
   });
+
 };
 
 /// Mostrar formulario para crear un nuevo profesional
@@ -65,12 +101,15 @@ exports.crearProfesional = (req, res) => {
       especialidades: especialidadesFinales,
     };
 
-    Profesional.crear(datosNormalizados, (err) => {
+    Profesional.crear(datosNormalizados, (err, profesionalId) => {
+
       if (err) {
         console.error(err);
         return res.status(500).send('Error al crear profesional');
       }
-      res.redirect('/profesionales');
+
+      res.redirect(`/profesionales?nuevo=${profesionalId}`);
+
     });
   };
 
@@ -188,7 +227,7 @@ exports.editarProfesional = (req, res) => {
         return res.status(500).send('Error al editar el profesional');
       }
 
-      res.redirect('/profesionales');
+      res.redirect(`/profesionales?editado=${profesionalId}`);
     }
   );
 };

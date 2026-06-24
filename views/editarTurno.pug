@@ -159,13 +159,25 @@ block content
 
               const especialidadSelect =
                 document.getElementById('especialidad_id');
+
               const sucursalInput =
                 document.getElementById('sucursal_nombre');
 
               const profesionalSelect =
                 document.getElementById('profesional_id');
-              const fechaInput = document.getElementById('fecha');
-              const horaSelect = document.getElementById('hora');
+
+              const fechaInput =
+                document.getElementById('fecha');
+
+              const horaSelect =
+                document.getElementById('hora');
+
+              const estadoSelect =
+                document.querySelector('select[name="estado"]');
+
+              const tipoTurnoSelect =
+                document.querySelector('select[name="tipo_turno"]');
+
               const especialidadOriginal =
                 "#{turno.especialidad_id}";
 
@@ -177,6 +189,15 @@ block content
 
               const horaOriginal =
                 "#{turno.hora}";
+              
+              const tipoTurnoOriginal =
+                "#{turno.tipo_turno}";
+
+
+              const estadoOriginal =
+                "#{turno.estado}";
+
+              
               let actualizando = false;
 
               function obtenerProfesionalActual() {
@@ -218,7 +239,7 @@ block content
 
               profesionalSelect.addEventListener('change', async () => {
                 console.log("CHANGE DISPARADO");
-                if (actualizando) return;
+                
 
                 actualizando = true;
 
@@ -289,14 +310,22 @@ block content
 
                 }
 
-                actualizando = false;
+                finally {
+                  actualizando = false;
+                }
 
               });
               
 
               especialidadSelect.addEventListener('change', async () => {
 
-                if (actualizando) return;
+                console.log("CHANGE ESPECIALIDAD");
+                console.log("actualizando =", actualizando);
+
+                if (actualizando) {
+                  console.log("CHANGE IGNORADO");
+                  return;
+              }
 
                 actualizando = true;
 
@@ -553,31 +582,50 @@ block content
               });
 
               document.getElementById('btnReset')
-                .addEventListener('click', async () => {
+              .addEventListener('click', async () => {
+                console.log("REINICIAR");
+                console.log("profesional antes:", profesionalSelect.value);
 
                   actualizando = true;
 
-                  profesionalSelect.value =
-                    profesionalOriginal;
+                  profesionalSelect.value = profesionalOriginal;
+                  console.log("profesional asignado:", profesionalSelect.value);
 
-                  especialidadSelect.value =
-                    especialidadOriginal;
+                  const res = await fetch(
+                      `/profesionales/${profesionalOriginal}/especialidades`
+                  );
 
-                  fechaInput.value =
-                    fechaOriginal;
+                  const especialidades = await res.json();
 
-                  if (calendario) {
-                    calendario.destroy();
-                  }
+                  especialidadSelect.innerHTML = '';
+
+                  especialidades.forEach(e => {
+
+                      const option = document.createElement('option');
+
+                      option.value = e.id;
+                      option.textContent = e.nombre;
+
+                      especialidadSelect.appendChild(option);
+
+                  });
+
+                  especialidadSelect.value = especialidadOriginal;
+
+                  fechaInput.value = fechaOriginal;
+
+                  if (calendario)
+                      calendario.destroy();
 
                   await cargarCalendario();
 
                   await cargarHorarios();
 
-                  horaSelect.value =
-                    horaOriginal;
+                  horaSelect.value = horaOriginal;
+
+                  tipoTurnoSelect.value = tipoTurnoOriginal;
+                  estadoSelect.value = estadoOriginal;
 
                   actualizando = false;
 
-                });
-                        
+              });

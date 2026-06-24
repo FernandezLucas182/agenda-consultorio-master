@@ -106,7 +106,7 @@ class Profesional {
             });
         }
 
-        callback(null);
+        callback(null, profesionalId);
       }
     );
   }
