@@ -25,6 +25,12 @@ console.log("Turnos:", Object.keys(turnosController));
 console.log("Profesional:", Object.keys(profesionalController));
 console.log("Auth:", Object.keys(authController));
 console.log("Paciente:", Object.keys(pacienteController));
+
+router.get(
+  '/profesionales/todos',
+  turnosController.obtenerTodosProfesionales
+);
+
 // =====================
 // HOME & LOGIN
 // =====================
@@ -103,7 +109,13 @@ router.get('/turnos', turnosController.mostrarTurnos);
 router.get('/turnos/nuevo', turnosController.mostrarFormularioNuevoTurno);
 router.post('/turnos', turnosController.crearTurno);
 
+router.get(
 
+  '/turnos/sucursal/:profesionalId/:especialidadId',
+
+  turnosController.obtenerSucursalAgenda
+
+);
 //==================================
 //ruteo para reprogramacionTurnos
 //================================
@@ -173,6 +185,8 @@ router.get(
   '/profesionales/:profesionalId/especialidades',
   turnosController.obtenerEspecialidadesPorProfesional
 );
+
+
 
 
 // =====================

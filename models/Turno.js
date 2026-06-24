@@ -49,7 +49,7 @@ class Turno {
       JOIN especialidades e
         ON t.especialidad_id = e.id
 
-      JOIN sucursales s
+      LEFT JOIN sucursales s
         ON t.sucursal_id = s.id
 
       ORDER BY t.fecha DESC, t.hora ASC
@@ -108,6 +108,7 @@ class Turno {
 
 
   static crear(data, callback) {
+    console.log("INSERTANDO", data);
     db.query(
       `INSERT INTO turnos
      (agenda_id, paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora, estado, tipo_turno)
@@ -122,35 +123,72 @@ class Turno {
         data.hora,
         data.tipo_turno || 'normal'
       ],
-      callback
+      (err, result) => {
+
+        
+
+        console.log("ERROR CREAR:", err);
+
+        console.log("RESULTADO INSERT:", result);
+
+        callback(err, result);
+      }
+
     );
   }
 
   static actualizar(id, data, callback) {
+    console.log("ACTUALIZANDO");
+    console.log(id);
+    console.log(data);
+
 
     const sql = `
-    UPDATE turnos SET
-      paciente_id = ?,
-      profesional_id = ?,
-      especialidad_id = ?,
-      fecha = ?,
-      hora = ?,
-      tipo_turno = ?
-    WHERE id = ?
+
+  UPDATE turnos SET
+
+  agenda_id = ?,
+  sucursal_id = ?,
+
+  paciente_id = ?,
+  profesional_id = ?,
+  especialidad_id = ?,
+
+  fecha = ?,
+  hora = ?,
+
+  tipo_turno = ?,
+  estado = ?
+
+  WHERE id = ?
+
   `;
 
     db.query(
+
       sql,
+
       [
+
+        data.agenda_id,
+        data.sucursal_id,
+
         data.paciente_id,
         data.profesional_id,
         data.especialidad_id,
+
         data.fecha,
         data.hora,
+
         data.tipo_turno,
+        data.estado,
+
         id
+
       ],
+
       callback
+
     );
 
   }
@@ -159,13 +197,112 @@ class Turno {
     db.query(`DELETE FROM turnos WHERE id = ?`, [id], callback);
   }
 
+
+
+  //===========================================
+  static obtenerAgendaPorProfesionalYEspecialidad(
+    profesional_id,
+    especialidad_id,
+    callback
+  ) {
+
+    const sql = `
+
+SELECT id,sucursal_id
+
+FROM agendas
+
+WHERE profesional_id=?
+AND especialidad_id=?
+AND activo=1
+
+LIMIT 1
+
+`;
+
+    db.query(
+
+      sql,
+
+      [profesional_id, especialidad_id],
+
+      (err, rows) => {
+
+        if (err) return callback(err);
+
+        callback(null, rows[0]);
+
+      });
+
+  }
+
+
+  static obtenerSucursalAgenda(
+    profesional_id,
+    especialidad_id,
+    callback
+  ) {
+
+    const sql = `
+
+SELECT
+a.id,
+s.nombre AS sucursal_nombre
+
+FROM agendas a
+
+LEFT JOIN sucursales s
+ON s.id=a.sucursal_id
+
+WHERE a.profesional_id=?
+AND a.especialidad_id=?
+AND a.activo=1
+
+LIMIT 1
+
+`;
+
+    db.query(
+      sql,
+      [profesional_id, especialidad_id],
+      (err, rows) => {
+
+        if (err) return callback(err);
+
+        callback(null, rows[0]);
+
+      });
+
+  }
+
+
   // ==========================
   // HORARIOS
   // ==========================
 
   static obtenerHorariosOcupados(profesional_id, fecha, turnoIdExcluir, callback) {
+    console.log("FECHA RECIBIDA:", `"${fecha}"`);
+    console.log("EXCLUIR:", turnoIdExcluir);
 
     console.log("BUSCANDO OCUPADOS:", profesional_id, fecha);
+    db.query(
+
+      `SELECT
+ DATE_FORMAT(fecha,'%Y-%m-%d') as fecha,
+ DATE_FORMAT(hora,'%H:%i') as hora,
+ estado
+ FROM turnos
+ WHERE profesional_id=?`,
+
+      [profesional_id],
+
+      (err, r) => {
+
+        console.log("TODOS LOS TURNOS DEL PROFESIONAL");
+        console.table(r);
+
+      });
+
 
     db.query(
       `SELECT DATE_FORMAT(hora, '%H:%i') AS hora
@@ -182,6 +319,7 @@ class Turno {
         console.log("RESULTADO BD:", rows); // ✅ ahora sí existe
 
         const horas = rows.map(r => r.hora);
+        console.log("HORAS OCUPADAS:", horas);
 
         callback(null, horas);
       }
@@ -288,17 +426,7 @@ class Turno {
 
   }
 
-  static obtenerEspecialidadesPorProfesional(profesionalId, callback) {
-    db.query(
-      `SELECT e.id, e.nombre
-       FROM especialidades e
-       JOIN profesional_especialidad pe
-         ON e.id = pe.especialidad_id
-       WHERE pe.profesional_id = ?`,
-      [profesionalId],
-      callback
-    );
-  }
+
 
   static obtenerProfesionalesPorEspecialidad(especialidadId, callback) {
     db.query(
@@ -356,21 +484,22 @@ class Turno {
   //Obtener Agenda x id
   //===========================
 
-  static obtenerAgendaId(profesional_id, callback) {
+  static obtenerAgendaId(profesional_id, especialidad_id, callback) {
+
     const sql = `
     SELECT id
     FROM agendas
     WHERE profesional_id = ?
+      AND especialidad_id = ?
       AND activo = 1
     LIMIT 1
   `;
 
-    db.query(sql, [profesional_id], (err, rows) => {
+    db.query(sql, [profesional_id, especialidad_id], (err, rows) => {
       if (err) return callback(err);
       callback(null, rows[0]?.id);
     });
   }
-
 
   //============================
   // OBTENER SUCURSAL POR AGENDA
@@ -410,6 +539,7 @@ class Turno {
     // 🔥 AGREGAR ESTO ACÁ
     db.query("SELECT DATABASE() as db", (err, r) => {
       console.log("DB ACTUAL:", r);
+      console.log(r);
     });
 
 

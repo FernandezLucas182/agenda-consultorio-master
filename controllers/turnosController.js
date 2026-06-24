@@ -52,11 +52,28 @@ exports.mostrarTurnos = (req, res) => {
     }
 
     turnos = turnos.map(t => ({
+
       ...t,
+
       fecha: formatearFecha(t.fecha),
-      recienCreado: nuevoId && t.id == nuevoId,
-      recienEditado: editadoId && t.id == editadoId
+      recienCreado:
+        Number(t.id) === Number(nuevoId),
+
+      recienEditado:
+        Number(t.id) === Number(editadoId)
     }));
+
+    turnos.sort((a, b) => {
+
+      if (a.recienCreado !== b.recienCreado)
+        return a.recienCreado ? -1 : 1;
+
+      if (a.recienEditado !== b.recienEditado)
+        return a.recienEditado ? -1 : 1;
+
+      return 0;
+
+    });
 
     res.render('turnos', {
       turnos,
@@ -133,6 +150,16 @@ exports.crearTurno = (req, res) => {
     tipo_turno
   } = req.body;
 
+  if (!paciente_id ||
+    !especialidad_id ||
+    !profesional_id ||
+    !fecha ||
+    !hora) {
+
+    req.flash('error', 'Debe completar todos los campos');
+    return res.redirect('/turnos/nuevo');
+  }
+
   Ausencia.existeAusenciaEnFecha(profesional_id, fecha, (err, hayAusencia) => {
 
     if (err) return res.status(500).send("Error validando ausencia");
@@ -145,10 +172,10 @@ exports.crearTurno = (req, res) => {
 
     const validarYCrear = (horaFinal) => {
 
-      Turno.obtenerAgendaId(profesional_id, (errAgenda, agenda_id) => {
+      Turno.obtenerAgendaPorProfesionalYEspecialidad(profesional_id, especialidad_id, (errAgenda, agenda) => {
 
         if (errAgenda) return res.status(500).send("Error obteniendo agenda");
-        if (!agenda_id) return res.status(400).send("Sin agenda");
+        if (!agenda) return res.status(400).send("Sin agenda");
 
         console.log("VALIDANDO EN AGENDA:", {
           profesional_id,
@@ -172,6 +199,8 @@ exports.crearTurno = (req, res) => {
               });
               return res.status(400).send("Horario fuera de agenda");
             }
+
+            const agenda_id = agenda.id;
 
             Turno.obtenerSucursalPorAgenda(agenda_id, (errSuc, sucursal_id) => {
 
@@ -211,6 +240,8 @@ exports.crearTurno = (req, res) => {
                 req.flash('success', 'Turno creado exitosamente');
 
                 res.redirect(`/turnos?nuevo=${result.insertId}`);
+                console.log("NUEVO ID:", result.insertId);
+
 
               });
 
@@ -304,75 +335,90 @@ exports.obtenerHorariosDisponibles = (req, res) => {
 
     const diaBD = fechaObj.getDay() === 0 ? 7 : fechaObj.getDay();
 
-    Turno.obtenerAgendaId(profesionalId, (errAgenda, agenda_id) => {
+    Turno.obtenerAgendaPorProfesionalYEspecialidad(
+      profesionalId,
+      req.query.especialidadId,
+      (errAgenda, agenda) => {
 
-      if (errAgenda || !agenda_id) {
-        return res.json({ motivo: 'sin_agenda' });
-      }
-
-      Agenda.obtenerHorariosProfesional(agenda_id, diaBD, (err, bloques) => {
-
-        if (err) return res.status(500).json({ motivo: 'error_agenda' });
-
-        if (!bloques.length) {
-          return res.json({ motivo: 'no_trabaja' });
+        if (errAgenda) {
+          return res.json({ motivo: 'sin_agenda' });
         }
 
-        Turno.obtenerHorariosOcupados(profesionalId, fecha, turnoIdExcluir, (err2, ocupados) => {
+        if (!agenda) {
+          return res.json({ motivo: 'sin_agenda' });
+        }
 
-          if (err2) return res.status(500).json({ motivo: 'error_turnos' });
+        const agenda_id = agenda.id;
 
-          let posibles = [];
-          console.log("BLOQUES AGENDA:", bloques);
-          bloques.forEach(b => {
-            posibles.push(...generarTurnos(
-              b.hora_inicio,
-              b.hora_fin,
-              b.duracion_turno
-            ));
-          });
+        Agenda.obtenerHorariosProfesional(
+          agenda_id,
+          diaBD,
+          (err, bloques) => {
 
-          const horarios = posibles.map(hora => {
+            if (err)
+              return res.status(500).json({ motivo: 'error_agenda' });
 
-            const estaOcupado = ocupados.includes(hora);
-
-            // 🔵 Si eligió sobreturno
-            if (tipo === 'sobreturno' && estaOcupado) {
-
-              return {
-                hora,
-                estado: 'sobreturno',
-                usados: 1,
-                max: 2
-              };
+            if (!bloques.length) {
+              return res.json({ motivo: 'no_trabaja' });
             }
 
-            // 🔴 Normal ocupado
-            if (estaOcupado) {
+            // el resto queda igual
 
-              return {
-                hora,
-                estado: 'ocupado'
-              };
-            }
+            Turno.obtenerHorariosOcupados(profesionalId, fecha, turnoIdExcluir, (err2, ocupados) => {
 
-            // 🟢 Libre
-            return {
-              hora,
-              estado: 'libre'
-            };
+              if (err2) return res.status(500).json({ motivo: 'error_turnos' });
+
+              let posibles = [];
+              console.log("BLOQUES AGENDA:", bloques);
+              bloques.forEach(b => {
+                posibles.push(...generarTurnos(
+                  b.hora_inicio,
+                  b.hora_fin,
+                  b.duracion_turno
+                ));
+              });
+
+              const horarios = posibles.map(hora => {
+
+                const estaOcupado = ocupados.includes(hora);
+
+                // 🔵 Si eligió sobreturno
+                if (tipo === 'sobreturno' && estaOcupado) {
+
+                  return {
+                    hora,
+                    estado: 'sobreturno',
+                    usados: 1,
+                    max: 2
+                  };
+                }
+
+                // 🔴 Normal ocupado
+                if (estaOcupado) {
+
+                  return {
+                    hora,
+                    estado: 'ocupado'
+                  };
+                }
+
+                // 🟢 Libre
+                return {
+                  hora,
+                  estado: 'libre'
+                };
+
+              });
+
+              res.json({ horarios });
+
+
+
+            });
 
           });
-
-          res.json({ horarios });
-
-
-
-        });
 
       });
-
-    });
 
   });
 
@@ -432,22 +478,78 @@ exports.confirmarTurno = (req, res) => {
 
 exports.editarTurno = (req, res) => {
 
+
   const turnoId = req.params.id;
 
-  Turno.actualizar(turnoId, req.body, (err) => {
 
-    if (err) {
-      req.flash('error', 'Error al actualizar el turno');
-      return res.redirect('/turnos');
+  const profesional_id = req.body.profesional_id;
+  const especialidad_id = req.body.especialidad_id;
+
+
+
+  Turno.obtenerAgendaPorProfesionalYEspecialidad(
+
+    profesional_id,
+
+    especialidad_id,
+
+    (err, agenda) => {
+
+
+      if (err || !agenda) {
+        console.log("AGENDA ENCONTRADA:");
+        console.log(agenda);
+
+        req.flash("error", "No existe agenda");
+
+        return res.redirect("/turnos");
+
+      }
+
+
+      console.log("AGENDA ENCONTRADA:");
+      console.log(agenda);
+
+      req.body.agenda_id = agenda.id;
+      req.body.sucursal_id = agenda.sucursal_id;
+
+
+      console.log("BODY FINAL:");
+      console.log(req.body);
+      Turno.actualizar(
+
+        turnoId,
+
+        req.body,
+
+        (err) => {
+
+
+          if (err) {
+
+            console.log(err);
+
+            req.flash("error", "Error");
+
+            return res.redirect("/turnos");
+
+          }
+
+
+          res.redirect(`/turnos?editado=${turnoId}`);
+
+
+        }
+
+      );
+
+
     }
 
-    req.flash('success', 'Turno actualizado correctamente');
+  );
 
-    res.redirect(`/turnos?editado=${turnoId}`);
 
-  });
-
-};
+}
 
 exports.eliminarTurno = (req, res) => {
 
@@ -545,6 +647,49 @@ exports.obtenerProfesionalesPorEspecialidad = (req, res) => {
 };
 
 
+exports.obtenerTodosProfesionales = (req, res) => {
+
+  console.log("ENTRE A /profesionales/todos");
+
+  Turno.obtenerTodosProfesionales((err, rows) => {
+
+    if (err) {
+      console.error(err);
+      return res.status(500).json([]);
+    }
+    console.log("ROWS:", rows);
+    res.json(rows || []);
+
+  });
+
+};
+
+exports.obtenerSucursalAgenda = (req, res) => {
+
+  const { profesionalId, especialidadId } = req.params;
+
+  Turno.obtenerSucursalAgenda(
+
+    profesionalId,
+    especialidadId,
+
+    (err, agenda) => {
+
+      if (err) {
+        console.log("ERROR:", err);
+        return res.status(500).json({});
+      }
+
+      console.log("AGENDA DEVUELTA:");
+      console.log(agenda);
+
+      res.json(agenda || {});
+
+    }
+
+  );
+
+};
 
 exports.mostrarFormularioEditarTurno = (req, res) => {
 

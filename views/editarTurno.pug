@@ -47,15 +47,31 @@ block content
               )
 
             div.col-md-6
-              label.form-label Profesional
-              select.form-select(
-                name="profesional_id"
-                id="profesional_id"
-              )
-                each profesional in profesionales
-                  option(value=profesional.id selected=(profesional.id == turno.profesional_id))= profesional.nombre_completo
 
-              
+              label.form-label Profesional
+
+              .d-flex.align-items-center.gap-2
+
+                select.form-select(
+                  name="profesional_id"
+                  id="profesional_id"
+                )
+
+                  each profesional in profesionales
+                    option(
+                      value=profesional.id
+                      selected=(profesional.id == turno.profesional_id)
+                    )= profesional.nombre_completo
+
+
+                button.btn.btn-warning(
+                  type="button"
+                  id="btnRecargarProfesionales"
+                  title="Mostrar todos los profesionales"
+                )
+                  i.bi.bi-arrow-clockwise.me-1
+                  | Todos
+                
 
             div.col-md-6
               label.form-label Especialidad
@@ -73,7 +89,11 @@ block content
 
             div.col-md-6
               label.form-label Sucursal
-              input.form-control(type="text" disabled value=turno.sucursal_nombre)
+              input.form-control(
+              id="sucursal_nombre"
+              disabled
+              value=turno.sucursal_nombre
+              )
 
             //- Fecha
             div.col-md-6
@@ -139,6 +159,8 @@ block content
 
               const especialidadSelect =
                 document.getElementById('especialidad_id');
+              const sucursalInput =
+                document.getElementById('sucursal_nombre');
 
               const profesionalSelect =
                 document.getElementById('profesional_id');
@@ -161,8 +183,41 @@ block content
                 return profesionalSelect.value;
               }
 
-              profesionalSelect.addEventListener('change', async () => {
 
+              document.getElementById('btnRecargarProfesionales').addEventListener('click', async () => {
+                console.log("CLICK");
+                const res = await fetch('/profesionales/todos'); // Ruta que ya tenés
+                console.log("RESPUESTA", res.status);
+                const profesionales = await res.json();
+                console.log(profesionales);
+                console.log("CANTIDAD:", profesionales.length);
+                console.log(JSON.stringify(profesionales));
+                
+                profesionalSelect.innerHTML = ''; // Limpiamos las opciones
+
+                profesionales.forEach(p => {
+                  console.log(p.nombre_completo);
+                  const option = document.createElement('option');
+
+                  option.value = p.id;
+                  option.textContent = p.nombre_completo;
+
+                  profesionalSelect.appendChild(option);
+                });
+
+                const seleccionado = profesionalOriginal;
+
+                if (profesionales.some(p => p.id == seleccionado)) {
+                  profesionalSelect.value = seleccionado;
+                }
+
+                profesionalSelect.dispatchEvent(
+                  new Event('change')
+                );     
+              });
+
+              profesionalSelect.addEventListener('change', async () => {
+                console.log("CHANGE DISPARADO");
                 if (actualizando) return;
 
                 actualizando = true;
@@ -183,16 +238,35 @@ block content
 
                   especialidadSelect.innerHTML = '';
 
+                  
                   especialidades.forEach(e => {
-
                     const option = document.createElement('option');
-
                     option.value = e.id;
                     option.textContent = e.nombre;
-
                     especialidadSelect.appendChild(option);
-
                   });
+
+                  // 👈 ACÁ SE TERMINA DE LLENAR EL SELECT
+
+                  const especialidadId =
+                    especialidadOriginal && especialidades.some(e => e.id == especialidadOriginal)
+                      ? especialidadOriginal
+                      : especialidades[0].id;
+
+                  especialidadSelect.value = especialidadId;
+
+                  
+
+                  const resSuc = await fetch(
+                    `/turnos/sucursal/${profesionalId}/${especialidadId}`
+                  );
+
+                  
+
+                  const suc = await resSuc.json();
+
+                  sucursalInput.value =
+                  suc.sucursal_nombre || '';
 
                   if (calendario) {
                     calendario.destroy();
@@ -264,6 +338,23 @@ block content
                       profesionales[0].id;
 
                   }
+                  const resSuc = await fetch(
+
+                  `/turnos/sucursal/${
+                  profesionalSelect.value
+                  }/${
+                  especialidadId
+                  }`
+
+                  );
+
+                  const suc = await resSuc.json();
+
+                  sucursalInput.value =
+                  suc.sucursal_nombre || '';
+
+
+                  
 
                 }
 
@@ -294,8 +385,19 @@ block content
 
                 try {
 
+                  const especialidadId =
+                    especialidadSelect.value;
+
                   const res = await fetch(
-                    `/turnos/horarios-disponibles/${obtenerProfesionalActual()}/${fecha}?turnoId=#{turno.id}`
+
+                  `/turnos/horarios-disponibles/${
+                  obtenerProfesionalActual()
+                  }/${
+                  fecha
+                  }?especialidadId=${
+                  especialidadId
+                  }&turnoId=#{turno.id}`
+
                   );
 
                   const data = await res.json();

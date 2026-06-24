@@ -6,9 +6,18 @@ block title
 block content
   h1 Nuevo Turno
 
-  //- Bloque para mostrar errores si el controlador los envía
-  if error && error.length > 0
-    div.alert.alert-danger= error[0]
+
+  iif error.length
+    each msg in error
+      .alert.alert-danger.mb-3
+        = msg
+
+  if success.length
+    each msg in success
+      .alert.alert-success.mb-3
+        = msg
+
+  
 
   form(action="/turnos" method="POST")
     div.row.g-3
@@ -195,6 +204,7 @@ block content
       estado.profesional = profesionalId;
       estado.fecha = fecha;
       estado.tipo = tipoTurno;
+      estado.especialidad = especialidadSelect.value;
 
       console.log("ESTADO:", estado);
 
@@ -210,10 +220,21 @@ block content
       horaSelect.disabled = true;
 
       try {
+        console.log(
+        "ENVIANDO",
+        estado.profesional,
+        estado.especialidad,
+        estado.fecha
+        );
 
+        console.log("especialidadSelect.value =", especialidadSelect.value);
+        
         const res = await fetch(
-          `/turnos/horarios-disponibles/${estado.profesional}/${estado.fecha}?tipo=${estado.tipo}`,
-          { cache: "no-store" }
+
+        `/turnos/horarios-disponibles/${estado.profesional}/${estado.fecha}?tipo=${estado.tipo}&especialidadId=${estado.especialidad}`,
+
+        { cache: "no-store" }
+
         );
 
         const data = await res.json();
@@ -439,6 +460,9 @@ block content
             console.log("ESPECIALIDADES RECIBIDAS:", data);
             console.log("DATA ESPECIALIDADES:", data);
 
+
+            const especialidadActual = especialidadSelect.value;
+
             especialidadSelect.innerHTML =
               '<option value="" disabled selected>-- Seleccione Especialidad --</option>';
 
@@ -448,6 +472,10 @@ block content
 
               option.value = e.id;
               option.textContent = e.nombre;
+
+              if(e.id == especialidadActual){
+                option.selected=true;
+            }
 
               especialidadSelect.appendChild(option);
 

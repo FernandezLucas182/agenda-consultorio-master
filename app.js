@@ -8,6 +8,9 @@ const cookieParser = require('cookie-parser');
 const open = require('open');
 const routes = require('./routes/index');
 
+console.log("APP INICIADA", process.pid);
+
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
