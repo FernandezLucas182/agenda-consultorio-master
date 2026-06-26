@@ -38,6 +38,11 @@ app.use(session({
   saveUninitialized: false
 }));
 
+app.use((req, res, next) => {
+  res.locals.path = req.path;
+  next();
+});
+
 
 
 app.use(flash());

@@ -40,7 +40,9 @@ exports.mostrarPacientes = (req, res) => {
     res.render('pacientes', {
 
       pacientes,
-      dni
+      dni,
+
+      path: req.path
 
     });
 

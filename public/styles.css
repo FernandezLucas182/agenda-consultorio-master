@@ -268,3 +268,23 @@ h1 {
     background-color: rgba(220, 53, 69, 0.55);
   }
 }
+
+#calendar-mini {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.day {
+  padding: 6px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 12px;
+  border: 1px solid #ddd;
+}
+
+.day.absent {
+  background: #ffdddd;
+  color: #b00000;
+  font-weight: bold;
+}

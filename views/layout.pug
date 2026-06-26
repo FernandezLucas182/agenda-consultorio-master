@@ -25,6 +25,7 @@ html
     link(rel='stylesheet', href='/styles.css')
 
   body
+    - const currentPath = typeof path !== 'undefined' ? path : ''
 
     // NAVBAR SUPERIOR
     nav.navbar.navbar-expand-lg.navbar-dark.bg-dark.shadow-sm
@@ -39,17 +40,35 @@ html
         .collapse.navbar-collapse#navbarNav
           ul.navbar-nav.ms-auto
             li.nav-item
-              a.nav-link(href='/') Inicio
+              a.nav-link(
+                href='/'
+                class=(currentPath == '/' ? 'active fw-bold text-warning' : '')
+              ) Inicio
             li.nav-item
-              a.nav-link(href='/turnos') Turnos
+              a.nav-link(
+                href='/turnos'
+                class=(currentPath.startsWith('/turnos') ? 'active fw-bold text-warning' : '')
+              ) Turnos
             li.nav-item
-              a.nav-link(href='/profesionales') Profesionales
+              a.nav-link(
+                href='/profesionales'
+                class=(currentPath.startsWith('/profesionales') ? 'active fw-bold text-warning' : '')
+              ) Profesionales
             li.nav-item
-              a.nav-link(href='/pacientes') Pacientes
+              a.nav-link(
+                href='/pacientes'
+                class=(currentPath.startsWith('/pacientes') ? 'active fw-bold text-warning' : '')
+              ) Pacientes
             li.nav-item
-              a.nav-link(href='/agendas') Agendas
+              a.nav-link(
+                href='/agendas'
+                class=(currentPath.startsWith('/agendas') ? 'active fw-bold text-warning' : '')
+              ) Agendas
             li.nav-item
-              a.nav-link(href='/ausencias') Ausencias
+              a.nav-link(
+                href='/ausencias'
+                class=(currentPath.startsWith('/ausencias') ? 'active fw-bold text-warning' : '')
+              ) Ausencias
             li.nav-item
               a.nav-link(href='/turnos/reprogramaciones') Reprogramaciones
 

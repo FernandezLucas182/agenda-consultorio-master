@@ -16,7 +16,7 @@ const pacienteController = require('../controllers/pacienteController');
 const ausenciasController = require('../controllers/ausenciasController');
 
 
-
+console.log("🔥 ROUTER AUSENCIAS CARGADO");
 console.log("Agenda controller keys:", Object.keys(agendaController));
 console.log("Turnos controller keys:", Object.keys(turnosController));
 
@@ -47,12 +47,14 @@ router.get('/', (req, res) => {
 
     if (err) {
       return res.render('index', {
-        totalReprogramaciones: 0
+        totalReprogramaciones: 0,
+        path: req.path
       });
     }
 
     res.render('index', {
-      totalReprogramaciones: rows[0].total
+      totalReprogramaciones: rows[0].total,
+      path: req.path
     });
 
   });

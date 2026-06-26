@@ -103,6 +103,24 @@ class Ausencia {
 
   }
 
+
+  static obtenerPorAgenda(agenda_id, callback) {
+
+    const sql = `
+    SELECT
+      id,
+      fecha_inicio,
+      fecha_fin,
+      motivo
+    FROM ausencias
+    WHERE agenda_id = ?
+    ORDER BY fecha_inicio
+  `;
+
+    db.query(sql, [agenda_id], callback);
+
+  }
+
 }
 
 module.exports = Ausencia;

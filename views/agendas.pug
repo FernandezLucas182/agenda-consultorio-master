@@ -59,7 +59,7 @@ block content
             th Duración
             th Máx. Sobreturnos
             th Sucursal
-            th Acciones
+            
 
         tbody
 
@@ -73,10 +73,7 @@ block content
               td= item.max_sobreturnos
               td= item.sucursal || 'Sin sucursal'
 
-              td
-                a.btn.btn-info.btn-sm.me-1(
-                  href=`/agendas/${item.agenda_id}`
-                ) Ver
+              
 
   else
 

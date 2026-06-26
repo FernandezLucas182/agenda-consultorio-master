@@ -44,7 +44,9 @@ exports.mostrarProfesional = (req, res) => {
     res.render('listaProfesional', {
 
       profesionales,
-      filtro
+      filtro,
+
+      path: req.path
 
     });
 

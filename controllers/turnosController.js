@@ -79,7 +79,8 @@ exports.mostrarTurnos = (req, res) => {
       turnos,
       q,
       nuevoTurnoId: req.query.nuevo,
-      turnoEditadoId: req.query.editado
+      turnoEditadoId: req.query.editado,
+      path: req.path
     });
   });
 };
@@ -582,7 +583,8 @@ exports.mostrarReprogramaciones = (req, res) => {
     }
 
     res.render('reprogramacionTurno', {
-      turnos: turnos || []
+      turnos: turnos || [],
+      path: req.path
     });
 
   });

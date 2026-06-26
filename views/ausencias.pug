@@ -33,13 +33,21 @@ block content
         th Acciones
     tbody
       each a in ausencias
-        tr
+
+        tr(class={
+          'turno-recien-creado': a.recienCreado,
+          'turno-recien-editado': a.recienEditado
+        })
+
           td= a.nombre_completo
           td= a.fecha_inicio
           td= a.fecha_fin
           td= a.motivo
           td
-            a(href=`/ausencias/${a.id}/editar` class="btn btn-sm btn-warning") Editar
+            a(
+              href=`/ausencias/${a.id}/editar`
+              class="btn btn-sm btn-warning"
+            ) Editar
   div.mb-4
     a(href="/" class="btn btn-secondary me-2") ← Volver al inicio
     a(href="/ausencias/nueva" class="btn btn-primary") Nueva Ausencia

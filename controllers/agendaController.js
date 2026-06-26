@@ -339,7 +339,9 @@ exports.mostrarAgendas = (req, res) => {
 
     res.render('agendas', {
       agendas,
-      nuevaAgendaId
+      nuevaAgendaId,
+
+      path: req.path
     });
   });
 };

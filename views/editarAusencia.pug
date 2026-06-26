@@ -33,3 +33,39 @@ block content
     div.mt-4
       button.btn.btn-warning(type="submit") Actualizar Ausencia
       a.btn.btn-secondary.ms-2(href="/ausencias") Cancelar
+
+  .card.mt-4
+    .card-header
+      h5.mb-0 Historial de ausencias
+
+    .card-body
+
+      each a in ausencias
+
+        - const esActual = a.id == ausencia.id
+        - const left = a.offset * 8
+        - const width = Math.max(a.dias * 8, 12)
+
+        .mb-4
+
+          strong= a.motivo || 'Sin motivo'
+
+          .position-relative.border.rounded.mt-1(
+            style="height:28px; background:#f8f9fa;"
+          )
+
+            div(
+              class=`position-absolute rounded ${esActual ? 'bg-primary' : 'bg-secondary'}`
+              style=`left:${left}px;
+                    width:${width}px;
+                    height:20px;
+                    top:4px;`
+            )
+
+          small.text-muted
+            = a.inicioTexto
+            |  al
+            = a.finTexto
+
+          if esActual
+            span.badge.bg-primary.ms-2 Editando
