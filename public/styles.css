@@ -533,6 +533,8 @@ h1 {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+  will-change: stroke-dashoffset;
+  
 
   /* efecto glow */
   filter: drop-shadow(0 0 4px #00ff7f);
@@ -540,7 +542,7 @@ h1 {
   /* animación tipo monitor */
   stroke-dasharray: 200;
   stroke-dashoffset: 200;
-  animation: ecg-line 1.2s linear infinite;
+  animation: ecg-line 2.2s linear infinite;
 }
 
 @keyframes ecg-line {

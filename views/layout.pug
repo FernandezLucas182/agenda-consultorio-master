@@ -29,17 +29,18 @@ html
 
     // NAVBAR SUPERIOR
     nav.navbar.navbar-expand-lg.navbar-dark.bg-dark.shadow-sm
-      .container
+      .container.navbar-inner
+
         a.navbar-brand.d-flex.align-items-center(href='/')
           img.logo-navbar(src='/img/logo.png', alt='Logo')
           | Consultorio
 
-          // 👇 LINEA ECG ANIMADA
-          div.ecg-line
-            svg(viewBox="0 0 120 20")
-              polyline(
-                points="0,10 10,10 15,4 20,16 25,10 35,10 40,6 45,14 50,10 60,10 65,4 70,16 75,10 90,10 95,6 100,14 105,10 120,10"
-              )
+        div.ecg-line
+          svg(viewBox="0 0 240 20")
+            g.ecg-track
+              polyline(points="0,10 10,10 15,4 20,16 25,10 35,10 40,6 45,14 50,10 60,10 65,4 70,16 75,10 90,10 95,6 100,14 105,10 120,10 130,10 140,4 145,16 150,10 160,10 170,6 175,14 180,10 200,10 210,4 215,16 220,10 240,10")
+            
+              
 
         button.navbar-toggler(type='button', data-bs-toggle='collapse', data-bs-target='#navbarNav')
           span.navbar-toggler-icon
@@ -51,33 +52,42 @@ html
                 href='/'
                 class=(currentPath == '/' ? 'active fw-bold text-warning' : '')
               ) Inicio
+
             li.nav-item
               a.nav-link(
                 href='/turnos'
                 class=(currentPath.startsWith('/turnos') ? 'active fw-bold text-warning' : '')
               ) Turnos
+
             li.nav-item
               a.nav-link(
                 href='/profesionales'
                 class=(currentPath.startsWith('/profesionales') ? 'active fw-bold text-warning' : '')
               ) Profesionales
+
             li.nav-item
               a.nav-link(
                 href='/pacientes'
                 class=(currentPath.startsWith('/pacientes') ? 'active fw-bold text-warning' : '')
               ) Pacientes
+
             li.nav-item
               a.nav-link(
                 href='/agendas'
                 class=(currentPath.startsWith('/agendas') ? 'active fw-bold text-warning' : '')
               ) Agendas
+
             li.nav-item
               a.nav-link(
                 href='/ausencias'
                 class=(currentPath.startsWith('/ausencias') ? 'active fw-bold text-warning' : '')
               ) Ausencias
+
             li.nav-item
-              a.nav-link(href='/turnos/reprogramaciones') Reprogramaciones
+              a.nav-link(
+                href='/turnos/reprogramaciones'
+                class=(currentPath.startsWith('/turnos/reprogramaciones') ? 'active fw-bold text-warning' : '')
+              ) Reprogramaciones
 
     // CONTENIDO
     div.container.mt-4
