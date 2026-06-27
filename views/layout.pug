@@ -30,9 +30,16 @@ html
     // NAVBAR SUPERIOR
     nav.navbar.navbar-expand-lg.navbar-dark.bg-dark.shadow-sm
       .container
-        a.navbar-brand(href='/')
+        a.navbar-brand.d-flex.align-items-center(href='/')
           img.logo-navbar(src='/img/logo.png', alt='Logo')
           | Consultorio
+
+          // 👇 LINEA ECG ANIMADA
+          div.ecg-line
+            svg(viewBox="0 0 120 20")
+              polyline(
+                points="0,10 10,10 15,4 20,16 25,10 35,10 40,6 45,14 50,10 60,10 65,4 70,16 75,10 90,10 95,6 100,14 105,10 120,10"
+              )
 
         button.navbar-toggler(type='button', data-bs-toggle='collapse', data-bs-target='#navbarNav')
           span.navbar-toggler-icon

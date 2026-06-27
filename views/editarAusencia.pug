@@ -34,38 +34,65 @@ block content
       button.btn.btn-warning(type="submit") Actualizar Ausencia
       a.btn.btn-secondary.ms-2(href="/ausencias") Cancelar
 
-  .card.mt-4
-    .card-header
-      h5.mb-0 Historial de ausencias
+  .card.mt-4.historial-ausencias
 
-    .card-body
+      .card-header
+          h5.mb-0 Historial de ausencias
 
-      each a in ausencias
 
-        - const esActual = a.id == ausencia.id
-        - const left = a.offset * 8
-        - const width = Math.max(a.dias * 8, 12)
+      .card-body
 
-        .mb-4
+        .timeline-scroll
 
-          strong= a.motivo || 'Sin motivo'
+          .timeline-content
 
-          .position-relative.border.rounded.mt-1(
-            style="height:28px; background:#f8f9fa;"
-          )
+            .timeline-header
 
-            div(
-              class=`position-absolute rounded ${esActual ? 'bg-primary' : 'bg-secondary'}`
-              style=`left:${left}px;
-                    width:${width}px;
-                    height:20px;
-                    top:4px;`
-            )
+              each mes in ['Jun 2026','Jul 2026','Ago 2026','Sep 2026','Oct 2026']
 
-          small.text-muted
-            = a.inicioTexto
-            |  al
-            = a.finTexto
+                .mes
 
-          if esActual
-            span.badge.bg-primary.ms-2 Editando
+                  .mes-titulo= mes
+
+                  .dias
+
+                    each _, i in Array.from({length:31})
+
+                      span= String(i+1).padStart(2,'0')
+
+
+            each a in ausencias
+
+              - const esActual = a.id == ausencia.id
+              - const PX_DIA = 14
+
+              - const left = a.offset * PX_DIA
+              - const width = a.dias * PX_DIA
+
+
+              .fila-ausencia
+
+                .info
+
+                  strong= a.motivo
+
+                  br
+
+                  small
+                    = a.inicioTexto
+                    |  al
+                    = a.finTexto
+
+
+                .barra-contenedor
+
+                  .barra(
+                    class=esActual ? 'actual' : 'anterior'
+                    style=`left:${left}px;width:${width}px`
+                  )
+
+                  if esActual
+
+                    .badge.bg-primary.editando
+
+                      | Editando

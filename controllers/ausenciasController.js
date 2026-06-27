@@ -133,49 +133,59 @@ exports.mostrarFormularioEditar = (req, res) => {
       (err2, agendas) => {
 
         Ausencia.obtenerPorAgenda(ausencia.agenda_id, (err3, ausencias) => {
-          const fechaBase = new Date(
-            Math.min(
-              ...ausencias.map(a => new Date(a.fecha_inicio))
-            )
-          );
 
-          ausencias = (ausencias || []).map(a => {
+          const fechas = ausencias.map(a => new Date(a.fecha_inicio));
+
+          const fechaBase = new Date(Math.min(...fechas));
+          fechaBase.setHours(0, 0, 0, 0);
+
+
+          ausencias = ausencias.map(a => {
 
             const inicio = new Date(a.fecha_inicio);
             const fin = new Date(a.fecha_fin);
 
-            // 🔥 NORMALIZACIÓN (ACÁ VA TU MEJORA)
             inicio.setHours(0, 0, 0, 0);
             fin.setHours(0, 0, 0, 0);
 
-            const dias = Math.ceil(
-              (fin - inicio) / (1000 * 60 * 60 * 24)
-            ) + 1;
+            const dias =
+              Math.floor(
+                (fin - inicio) / 86400000
+              ) + 1;
 
-            const fechas = ausencias.map(a => new Date(a.fecha_inicio));
 
-            const fechaBase = new Date(Math.min(...fechas));
-            fechaBase.setHours(0, 0, 0, 0);
+            const offset =
+              Math.floor(
+                (inicio - fechaBase) / 86400000
+              );
 
-            const offset = Math.floor(
-              (inicio - fechaBase) / (1000 * 60 * 60 * 24)
-            );
 
             return {
+
               ...a,
+
               dias,
               offset,
+
               inicioTexto: formatearFecha(a.fecha_inicio),
               finTexto: formatearFecha(a.fecha_fin)
+
             };
 
           });
 
-          res.render('editarAusencia', {
+
+          res.render("editarAusencia", {
+
             ausencia,
-            agendas: agendas || [],
-            ausencias: ausencias || [],
+            agendas,
+
+            ausencias,
+
+            fechaBase,
+
             path: req.path
+
           });
 
         });
@@ -204,4 +214,49 @@ exports.editarAusencia = (req, res) => {
       res.redirect(`/ausencias?editado=${id}`);
     }
   );
+};
+
+exports.obtenerAusenciasAgenda = (req, res) => {
+
+  const agenda_id = req.params.id;
+
+  Ausencia.obtenerPorAgenda(agenda_id, (err, ausencias) => {
+
+    if (err)
+      return res.status(500).json([]);
+
+    const fechas = (ausencias || []).map(a => new Date(a.fecha_inicio));
+
+    if (fechas.length === 0) {
+      return res.json([]);
+    }
+
+    const fechaBase = new Date(Math.min(...fechas));
+    fechaBase.setHours(0, 0, 0, 0);
+
+    const resultado = (ausencias || []).map(a => {
+
+      const inicio = new Date(a.fecha_inicio);
+      const fin = new Date(a.fecha_fin);
+
+      inicio.setHours(0, 0, 0, 0);
+      fin.setHours(0, 0, 0, 0);
+
+      const dias = Math.floor((fin - inicio) / 86400000) + 1;
+
+      const offset = Math.floor((inicio - fechaBase) / 86400000);
+
+      return {
+        ...a,
+        dias,
+        offset,
+        inicioTexto: formatearFecha(a.fecha_inicio),
+        finTexto: formatearFecha(a.fecha_fin)
+      };
+    });
+
+    res.json(resultado);
+
+  });
+
 };

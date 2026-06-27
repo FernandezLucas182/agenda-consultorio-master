@@ -28,6 +28,172 @@ block content
     button.btn.btn-primary(type="submit") Registrar Ausencia
     a.btn.btn-secondary.ms-2(href="/ausencias") Cancelar
 
-  div#ausencias-visual.mt-4
-    h5 Ausencias del profesional
-    div#calendar-mini
+  .card.mt-4.historial-ausencias
+
+      .card-header
+          h5.mb-0 Historial de ausencias
+
+
+      .card-body
+
+        #historial-vacio.text-center.text-muted.p-4
+
+            | Seleccione un profesional para visualizar sus ausencias
+
+
+        #timeline-container(style="display:none")
+
+           
+
+  script.
+
+    document.getElementById('agenda_id')
+      .addEventListener('change', cargarAusencias);
+
+
+    async function cargarAusencias(){
+
+
+        const id = this.value;
+
+
+        const res =
+            await fetch('/ausencias/agenda/'+id);
+
+
+        const ausencias =
+            await res.json();
+
+
+        const vacio =
+            document.getElementById('historial-vacio');
+
+        const contenedor =
+            document.getElementById('timeline-container');
+
+        contenedor.innerHTML = '';
+
+
+        if (ausencias.length > 0) {
+
+            vacio.style.display = 'none';
+
+            contenedor.style.display = 'block';
+
+        }
+        else {
+
+            vacio.innerText =
+                'El profesional no tiene ausencias registradas';
+
+            vacio.style.display = 'block';
+
+            contenedor.style.display = 'none';
+
+        }
+       
+        
+        
+
+        let html = '';
+
+        html += `
+        <div class="timeline-scroll">
+        <div class="timeline-content">
+
+        <div class="timeline-header">
+        `;
+
+
+        ['Jun 2026','Jul 2026','Ago 2026','Sep 2026','Oct 2026']
+        .forEach(mes=>{
+
+        html += `
+
+        <div class="mes">
+
+        <div class="mes-titulo">${mes}</div>
+
+        <div class="dias">
+        `;
+
+        for(let i=1;i<=31;i++){
+
+        html += `<span>${String(i).padStart(2,'0')}</span>`;
+
+        }
+
+        html += `
+        </div>
+
+        </div>
+        `;
+
+        });
+
+
+        html += `</div>`;
+
+
+        ausencias.forEach(a=>{
+
+
+        html += `
+
+        <div class="fila-ausencia">
+
+        <div class="info">
+
+        <strong>${a.motivo}</strong>
+
+        <br>
+
+        <small>
+
+        ${a.inicioTexto}
+
+        al
+
+        ${a.finTexto}
+
+        </small>
+
+        </div>
+
+
+        <div class="barra-contenedor">
+
+
+        <div class="barra anterior"
+
+        style="left:${a.offset*14}px;
+        width:${a.dias*14}px">
+
+        </div>
+
+
+        </div>
+
+        </div>
+
+        `;
+
+        });
+
+
+        html += `
+
+        </div>
+
+        </div>
+
+        `;
+
+
+        contenedor.innerHTML = html;
+
+
+    }
+
+
+                

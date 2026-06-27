@@ -150,6 +150,7 @@ router.post('/ausencias/nueva', ausenciasController.crearAusencia);
 router.get('/confirmar-turno/:token', turnosController.confirmarTurno);
 router.get('/ausencias/:id/editar', ausenciasController.mostrarFormularioEditar);
 router.post('/ausencias/:id/editar', ausenciasController.editarAusencia);
+router.get('/ausencias/agenda/:id', ausenciasController.obtenerAusenciasAgenda);
 
 
 // =====================

@@ -13,12 +13,15 @@ function procesarAusencia(agenda_id, fecha_inicio, fecha_fin) {
   console.log("🔥 PROCESANDO AUSENCIA");
 
   const sql = `
-    SELECT *
-    FROM turnos
-    WHERE agenda_id = ?
-      AND fecha BETWEEN ? AND ?
-      AND estado IN ('pendiente','confirmado','reservado')
-  `;
+  SELECT t.*
+  FROM turnos t
+  JOIN agendas a ON a.id = t.agenda_id
+  WHERE a.profesional_id = (
+    SELECT profesional_id FROM agendas WHERE id = ?
+  )
+  AND t.fecha BETWEEN ? AND ?
+  AND t.estado IN ('pendiente','confirmado','reservado')
+`;
 
   db.query(sql, [agenda_id, fecha_inicio, fecha_fin], (err, turnos) => {
 
