@@ -1,4 +1,4 @@
-const db = require('../models/Db'); 
+const db = require('../models/Db');
 const bcrypt = require('bcryptjs');
 
 // Mostrar el formulario de login
@@ -8,43 +8,68 @@ exports.getLogin = (req, res) => {
 
 // Manejar el login
 exports.postLogin = (req, res) => {
+
     const { username, password } = req.body;
 
-    // Consultar usuario en la base de datos
-    const query = 'SELECT * FROM usuarios WHERE username = ?';
+    const query = `
+        SELECT *
+        FROM usuarios
+        WHERE username = ?
+        AND activo = 1
+    `;
 
     db.query(query, [username], (err, result) => {
+
         if (err) {
-            console.log(err);
-            return res.status(500).send('Error en la base de datos');
+            console.error(err);
+            return res.status(500).render('login', {
+                error: 'Error en la base de datos'
+            });
         }
 
         if (result.length === 0) {
-            return res.send('Usuario no encontrado');
+            return res.status(401).render('login', {
+                error: 'Usuario no encontrado o inactivo'
+            });
         }
 
         const user = result[0];
 
-        // Verificar la contraseña
-        if (bcrypt.compareSync(password, user.password)) {
-            req.session.role = user.role;
+        const passwordOk = bcrypt.compareSync(password, user.password);
 
-            // Redireccionar basado en el rol del usuario
-            if (user.role === 'admin') {
-                res.redirect('/agenda/admin');
-            } else if (user.role === 'medico') {
-                res.redirect('/agenda/medico');
-            } else {
-                res.redirect('/agenda/usuario');
-            }
-        } else {
-            res.send('Contraseña incorrecta');
+        if (!passwordOk) {
+            return res.status(401).render('login', {
+                error: 'Contraseña incorrecta'
+            });
         }
+
+        // Guardar sesión
+        req.session.user = {
+            id: user.id,
+            username: user.username,
+            nombre: user.nombre,
+            role: user.rol,
+            sucursal_id: user.sucursal_id,
+            profesional_id: user.profesional_id
+        };
+
+        // Redirección única (no inventamos rutas todavía)
+        return res.redirect('/');
     });
 };
 
 // Cerrar sesión
 exports.logout = (req, res) => {
-    req.session.destroy();
-    res.redirect('/auth/login');
+
+    req.session.destroy(err => {
+
+        if (err) {
+            console.error(err);
+            return res.redirect('/');
+        }
+
+        res.redirect('/login');
+
+    });
+
 };

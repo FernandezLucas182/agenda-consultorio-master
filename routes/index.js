@@ -14,7 +14,10 @@ const profesionalController = require('../controllers/profesionalController');
 const authController = require('../controllers/authController');
 const pacienteController = require('../controllers/pacienteController');
 const ausenciasController = require('../controllers/ausenciasController');
-
+const {
+  isAuthenticated,
+  authorize
+} = require('../middlewares/auth');
 
 console.log("🔥 ROUTER AUSENCIAS CARGADO");
 console.log("Agenda controller keys:", Object.keys(agendaController));
@@ -37,11 +40,15 @@ router.get(
 
 router.get('/', (req, res) => {
 
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+
   const sql = `
-    SELECT COUNT(*) AS total
-    FROM turnos
-    WHERE estado = 'reprogramar'
-  `;
+        SELECT COUNT(*) AS total
+        FROM turnos
+        WHERE estado = 'reprogramar'
+    `;
 
   db.query(sql, (err, rows) => {
 
@@ -64,12 +71,23 @@ router.get('/', (req, res) => {
 router.get('/login', authController.getLogin);
 router.post('/login', authController.postLogin);
 
+router.get('/logout', authController.logout);
+
 
 // =====================
 // AGENDAS
 // =====================
 
-router.get('/agendas', agendaController.mostrarAgendas);
+
+//====================================
+//Middleware - Autorizaciones
+//====================================
+router.get(
+  '/agendas',
+  isAuthenticated,
+  authorize('admin', 'secretaria', 'medico'),
+  agendaController.mostrarAgendas
+);
 
 router.get('/agendas/nueva', agendaController.formularioNuevaAgenda);
 router.post('/agendas/nueva', agendaController.crearAgendaBase);
@@ -196,7 +214,12 @@ router.get(
 // PROFESIONALES
 // =====================
 
-router.get('/profesionales', profesionalController.mostrarProfesional);
+router.get(
+  '/profesionales',
+  isAuthenticated,
+  authorize('admin'),
+  profesionalController.mostrarProfesional
+);
 
 router.get('/profesionales/nuevo', profesionalController.formularioNuevoProfesional);
 router.post('/profesionales/nuevo', profesionalController.crearProfesional);
@@ -249,4 +272,8 @@ router.get('/pacientes/:id/editar', pacienteController.mostrarEditarPaciente);
 router.post('/pacientes/:id/editar', pacienteController.editarPaciente);
 
 
+
+
+
 module.exports = router;
+
