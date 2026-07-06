@@ -44,9 +44,19 @@ block content
 
         span.fw-semibold= ag.profesional
 
-        a.btn.btn-warning.btn-sm(
-          href=`/agendas/${ag.id}/editar`
-        ) Editar agenda
+        div.d-flex.gap-2
+
+          a.btn.btn-warning.btn-sm(
+              href=`/agendas/${ag.id}/editar`
+          )
+              i.bi.bi-pencil
+              |  Editar
+
+          a.btn.btn-info.btn-sm(
+              href=`/agendas/${ag.id}/copiar`
+          )
+              i.bi.bi-files
+              |  Copiar
 
       table.table.table-striped.table-bordered.table-sm.mt-0
 

@@ -251,6 +251,50 @@ exports.activarProfesional = (req, res) => {
 };
 
 
+
+exports.obtenerPorSucursal = (req, res) => {
+
+  const sucursalId = req.params.sucursalId;
+
+  console.log("Sucursal recibida:", sucursalId);
+
+  Profesional.obtenerPorSucursal(sucursalId, (err, data) => {
+
+    console.log("Profesionales encontrados:", data);
+
+    if (err) return res.status(500).json([]);
+
+    res.json(data);
+
+  });
+
+};
+
+exports.obtenerParaCopiarAgenda = (req, res) => {
+
+  const { sucursalId, especialidadId } = req.params;
+
+  console.log("Sucursal:", sucursalId);
+  console.log("Especialidad:", especialidadId);
+
+  Profesional.obtenerParaCopiarAgenda(
+    sucursalId,
+    especialidadId,
+    (err, data) => {
+
+      if (err) {
+        console.error(err);
+        return res.status(500).json([]);
+      }
+      console.log("Profesionales encontrados:", data);
+
+      res.json(data);
+
+    }
+  );
+
+};
+
 // ==========================
 // DEVOLVER SUCURSALES POR PROFESIONAL (API) 🔥
 // ==========================

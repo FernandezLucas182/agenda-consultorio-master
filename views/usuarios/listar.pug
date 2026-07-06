@@ -1,0 +1,74 @@
+extends ../layout
+
+block content
+    if tempPassword
+    h2.mb-4 Usuarios del sistema
+
+    a.btn.btn-success.mb-3(href="/usuarios/nuevo")
+        i.bi.bi-person-plus
+        |  Nuevo usuario
+    .mb-3
+        input#buscarUsuario.form-control(
+            type="text"
+            placeholder="Buscar por usuario, nombre o rol..."
+        )
+
+    table.table.table-striped.table-hover
+
+        thead
+
+            tr
+                th Usuario
+                th Nombre
+                th Rol
+                th Estado
+                th Acciones
+
+        tbody
+
+            each usuario in usuarios
+
+                tr
+
+                    td= usuario.username
+
+                    td= usuario.nombre
+
+                    td= usuario.rol
+
+                    td
+                        if usuario.activo
+                            span.badge.bg-success Activo
+                        else
+                            span.badge.bg-danger Inactivo
+
+                    td
+
+                        a.btn.btn-primary.btn-sm.me-1(
+                            href=`/usuarios/${usuario.id}/editar`
+                        )
+                            i.bi.bi-pencil
+
+                        a.btn.btn-warning.btn-sm(
+                            href=`/usuarios/${usuario.id}/reset-password`
+                            onclick="return confirm('¿Generar una nueva contraseña temporal para este usuario?')"
+                        )
+                            i.bi.bi-key
+
+    script.
+        const buscador = document.getElementById('buscarUsuario');
+
+        buscador.addEventListener('keyup', function () {
+
+            const texto = this.value.toLowerCase();
+
+            document.querySelectorAll('tbody tr').forEach(fila => {
+
+                fila.style.display =
+                    fila.innerText.toLowerCase().includes(texto)
+                        ? ''
+                        : 'none';
+
+            });
+
+        });

@@ -1,0 +1,39 @@
+extends ../layout
+
+block content
+
+    h2.mb-4 Editar usuario
+
+    form(method="POST" action=`/usuarios/${usuario.id}/editar`)
+
+        .mb-3
+            label.form-label Usuario
+            input.form-control(type="text" name="username" value=usuario.username)
+
+        .mb-3
+            label.form-label Nombre
+            input.form-control(type="text" name="nombre" value=usuario.nombre)
+
+        .mb-3
+            label.form-label Email
+            input.form-control(type="email" name="email" value=usuario.email)
+
+        .mb-3
+            label.form-label Teléfono
+            input.form-control(type="text" name="telefono" value=usuario.telefono)
+
+        .mb-3
+            label.form-label Rol
+            select.form-select(name="rol")
+
+                option(value="admin" selected=usuario.rol=="admin") Admin
+                option(value="secretaria" selected=usuario.rol=="secretaria") Secretaria
+                option(value="medico" selected=usuario.rol=="medico") Médico
+
+        .div.d-flex.justify-content-between.mt-4
+
+            a.btn.btn-outline-secondary(href="/usuarios")
+                | ← Volver al listado
+
+            button.btn.btn-primary(type="submit")
+                | Guardar cambios

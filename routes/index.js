@@ -8,6 +8,7 @@ const Agenda = require('../models/Agenda');
 // CONTROLADORES
 // =====================
 
+const usuarioController = require('../controllers/usuarioController');
 const agendaController = require('../controllers/agendaController');
 const turnosController = require('../controllers/turnosController');
 const profesionalController = require('../controllers/profesionalController');
@@ -39,6 +40,7 @@ router.get(
 // =====================
 
 router.get('/', (req, res) => {
+  console.log("SESSION USER:", req.session.user);
 
   if (!req.session.user) {
     return res.redirect('/login');
@@ -61,7 +63,8 @@ router.get('/', (req, res) => {
 
     res.render('index', {
       totalReprogramaciones: rows[0].total,
-      path: req.path
+      path: req.path,
+      usuario: req.session.user
     });
 
   });
@@ -97,6 +100,7 @@ router.post('/agendas/horarios', agendaController.agregarHorario);
 
 router.get('/agendas/:id', agendaController.detalleAgenda);
 router.get('/agendas/:id/editar', agendaController.formularioEditarAgenda);
+router.get('/agendas/:id/copiar', agendaController.formularioCopiarAgenda);
 router.post('/agendas/:id/editar', agendaController.editarAgenda);
 
 //=================
@@ -195,6 +199,7 @@ router.get(
 // AJAX DINÁMICO (RELACIONES)
 // =====================
 
+
 // profesionales por especialidad
 router.get(
   '/profesionales/especialidad/:especialidadId',
@@ -207,7 +212,16 @@ router.get(
   turnosController.obtenerEspecialidadesPorProfesional
 );
 
+// profesionales por sucursal 
+router.get(
+  '/profesionales/sucursal/:sucursalId',
+  profesionalController.obtenerPorSucursal
+);
 
+router.get(
+  '/profesionales/copiar/:sucursalId/:especialidadId',
+  profesionalController.obtenerParaCopiarAgenda
+);
 
 
 // =====================
@@ -230,6 +244,83 @@ router.post('/profesionales/:id/editar', profesionalController.editarProfesional
 router.post('/profesionales/:id/inactivar', profesionalController.inactivarProfesional);
 router.post('/profesionales/:id/activar', profesionalController.activarProfesional);
 
+
+router.get(
+  '/usuarios',
+  isAuthenticated,
+  authorize('admin'),
+  usuarioController.listarUsuarios
+);
+
+router.get(
+  '/usuarios/nuevo',
+  isAuthenticated,
+  authorize('admin'),
+  usuarioController.formularioNuevoUsuario
+);
+
+router.post(
+  '/usuarios/nuevo',
+  isAuthenticated,
+  authorize('admin'),
+  usuarioController.crearUsuario
+);
+
+// ====================
+// EDITAR USUARIO
+// ====================
+
+router.get(
+  '/usuarios/:id/editar',
+  isAuthenticated,
+  authorize('admin'),
+  usuarioController.formularioEditarUsuario
+);
+
+router.post(
+  '/usuarios/:id/editar',
+  isAuthenticated,
+  authorize('admin'),
+  usuarioController.editarUsuario
+
+);
+
+
+// ====================
+// CAMBIAR CONTRASEÑA
+// ====================
+
+router.get(
+  '/usuarios/:id/password',
+  isAuthenticated,
+  authorize('admin'),
+  usuarioController.formularioPassword
+);
+
+router.post(
+  '/usuarios/:id/password',
+  isAuthenticated,
+  authorize('admin'),
+  usuarioController.guardarPassword
+);
+
+// ====================
+// RESETEAR CONTRASEÑA
+// ====================
+
+router.get(
+  '/usuarios/:id/reset-password',
+  isAuthenticated,
+  authorize('admin'),
+  usuarioController.resetPassword
+);
+
+router.get(
+  '/usuarios/:id/password-generada',
+  isAuthenticated,
+  authorize('admin'),
+  usuarioController.mostrarPasswordGenerada
+);
 
 //==========================
 //SUCURSALES-PROFESIONAL

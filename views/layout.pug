@@ -47,6 +47,8 @@ html
 
         .collapse.navbar-collapse#navbarNav
           ul.navbar-nav.ms-auto
+
+            
             li.nav-item
               a.nav-link(
                 href='/'
@@ -88,15 +90,18 @@ html
                 href='/turnos/reprogramaciones'
                 class=(currentPath.startsWith('/turnos/reprogramaciones') ? 'active fw-bold text-warning' : '')
               ) Reprogramaciones
-            if usuario
-              li.nav-item.ms-3
-                span.nav-link.text-light
-                  | #{usuario.nombre}
+            
 
-              li.nav-item
-                a.nav-link.text-danger(href="/logout")
-                  i.bi.bi-box-arrow-right
-                  |  Cerrar sesión  
+            li.nav-item
+              a.nav-link(
+                href='/usuarios'
+                class=(currentPath.startsWith('/usuarios') ? 'active fw-bold text-warning' : '')
+              ) Usuarios  
+
+            li.nav-item
+              a.nav-link.text-danger(href="/logout")
+                i.bi.bi-box-arrow-right
+                |  Cerrar sesión  
 
     // CONTENIDO
     div.container.mt-4

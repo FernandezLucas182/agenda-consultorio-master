@@ -247,6 +247,101 @@ class Profesional {
     });
   }
 
+
+  // ==========================
+  // PROFESIONALES POR SUCURSAL
+  // ==========================
+  static obtenerPorSucursal(sucursalId, callback) {
+
+    const query = `
+    SELECT p.id, p.nombre, p.apellido
+    FROM profesionales p
+    JOIN profesional_sucursal ps 
+      ON p.id = ps.profesional_id
+    WHERE ps.sucursal_id = ?
+      AND p.estado = 'activo'
+    ORDER BY p.apellido, p.nombre
+  `;
+
+    db.query(query, [sucursalId], (err, resultados) => {
+      if (err) return callback(err);
+      callback(null, resultados || []);
+    });
+  }
+
+
+  // ==========================
+  // para copiar agenda
+  // ==========================
+
+  static obtenerParaCopiarAgenda(sucursalId, especialidadId, callback) {
+
+    let query;
+    let params;
+
+    // ===== PROFESIONALES SIN SUCURSAL =====
+    if (sucursalId === 'sin') {
+
+      query = `
+      SELECT DISTINCT
+          p.id,
+          p.nombre,
+          p.apellido
+      FROM profesionales p
+
+      INNER JOIN profesional_especialidad pe
+          ON pe.profesional_id = p.id
+
+      WHERE
+          p.estado = 'activo'
+          AND pe.especialidad_id = ?
+          AND NOT EXISTS (
+              SELECT 1
+              FROM profesional_sucursal ps
+              WHERE ps.profesional_id = p.id
+          )
+
+      ORDER BY p.apellido, p.nombre
+    `;
+
+      params = [especialidadId];
+
+    } else {
+
+      // ===== PROFESIONALES DE UNA SUCURSAL =====
+      query = `
+      SELECT DISTINCT
+          p.id,
+          p.nombre,
+          p.apellido
+      FROM profesionales p
+
+      INNER JOIN profesional_especialidad pe
+          ON pe.profesional_id = p.id
+
+      INNER JOIN profesional_sucursal ps
+          ON ps.profesional_id = p.id
+
+      WHERE
+          p.estado = 'activo'
+          AND pe.especialidad_id = ?
+          AND ps.sucursal_id = ?
+
+      ORDER BY p.apellido, p.nombre
+    `;
+
+      params = [especialidadId, sucursalId];
+    }
+
+    db.query(query, params, (err, resultados) => {
+      if (err) return callback(err);
+
+      callback(null, resultados || []);
+    });
+
+  }
+
+
 }
 
 module.exports = Profesional;

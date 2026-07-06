@@ -48,7 +48,7 @@ exports.postLogin = (req, res) => {
             id: user.id,
             username: user.username,
             nombre: user.nombre,
-            role: user.rol,
+            rol: user.rol,
             sucursal_id: user.sucursal_id,
             profesional_id: user.profesional_id
         };

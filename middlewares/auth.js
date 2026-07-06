@@ -12,7 +12,7 @@ function authorize(...roles) {
       return res.redirect('/login');
     }
 
-    const userRole = req.session.user.role;
+    const userRole = req.session.user.rol;
 
     if (!roles.includes(userRole)) {
       return res.status(403).send('No autorizado');

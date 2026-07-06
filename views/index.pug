@@ -8,7 +8,18 @@ block content
   // Header superior
   header.main-header
     .container.text-center
+
       h1.titulo-sistema Bienvenido al Sistema de Gestión de Consultas Médicas
+
+      if usuario
+        .mt-3.mb-4.text-center
+          h5.mb-1
+            i.bi.bi-person-circle.me-2
+            | #{usuario.nombre}
+
+          p.text-muted.mb-0
+            i.bi.bi-shield-lock.me-2
+            | #{usuario.rol}
 
   // Contenido existente
   div.text-center.mt-5
@@ -16,59 +27,59 @@ block content
     
     
     .container.mt-5
-  .row.justify-content-center.g-4
+      .row.justify-content-center.g-4
 
-    // Turnos
-    .col-md-4
-      a.card.dashboard-card.text-center(href='/turnos')
-        h5 Gestionar Turnos
-        img.icono.mt-3(src='/img/turnos.png')
+        // Turnos
+        .col-md-4
+          a.card.dashboard-card.text-center(href='/turnos')
+            h5 Gestionar Turnos
+            img.icono.mt-3(src='/img/turnos.png')
 
-    // Profesionales
-    .col-md-4
-      a.card.dashboard-card.text-center(href='/profesionales')
-        h5 Gestionar Profesionales
-        img.icono.mt-3(src='/img/profesionales.png')
+        // Profesionales
+        .col-md-4
+          a.card.dashboard-card.text-center(href='/profesionales')
+            h5 Gestionar Profesionales
+            img.icono.mt-3(src='/img/profesionales.png')
 
-    // Pacientes
-    .col-md-4
-      a.card.dashboard-card.text-center(href='/pacientes')
-        h5 Gestionar Pacientes
-        img.icono.mt-3(src='/img/pacientes.png')
+        // Pacientes
+        .col-md-4
+          a.card.dashboard-card.text-center(href='/pacientes')
+            h5 Gestionar Pacientes
+            img.icono.mt-3(src='/img/pacientes.png')
 
-    // Agendas
-    .col-md-4
-      a.card.dashboard-card.text-center(href='/agendas')
-        h5 Gestionar Agendas
-        img.icono.mt-3(src='/img/agendas.png')
+        // Agendas
+        .col-md-4
+          a.card.dashboard-card.text-center(href='/agendas')
+            h5 Gestionar Agendas
+            img.icono.mt-3(src='/img/agendas.png')
 
-    // Ausencias
-    .col-md-4
-      a.card.dashboard-card.text-center(href='/ausencias')
-        h5 Gestionar Ausencias
-        img.icono.mt-3(src='/img/ausencias.png')
+        // Ausencias
+        .col-md-4
+          a.card.dashboard-card.text-center(href='/ausencias')
+            h5 Gestionar Ausencias
+            img.icono.mt-3(src='/img/ausencias.png')
 
-    // Reprogramaciones
-    .col-md-4
+        // Reprogramaciones
+        .col-md-4
 
-      - const alerta = totalReprogramaciones > 0
+          - const alerta = totalReprogramaciones > 0
 
-      a.card.dashboard-card.text-center(
-        href='/turnos/reprogramaciones',
-        style=alerta
-          ? 'background:#ffdddd; border:2px solid red;'
-          : ''
-      )
+          a.card.dashboard-card.text-center(
+            href='/turnos/reprogramaciones',
+            style=alerta
+              ? 'background:#ffdddd; border:2px solid red;'
+              : ''
+          )
 
-        h5
-          | Reprogramaciones
+            h5
+              | Reprogramaciones
 
-          if alerta
-            span.badge.bg-danger.ms-2
-              = totalReprogramaciones
+              if alerta
+                span.badge.bg-danger.ms-2
+                  = totalReprogramaciones
 
-        img.icono.mt-3(src='/img/turnos.png')
+            img.icono.mt-3(src='/img/turnos.png')
 
-        if alerta
-          p.text-danger.mt-2.fw-bold
-            | Hay turnos pendientes
+            if alerta
+              p.text-danger.mt-2.fw-bold
+                | Hay turnos pendientes

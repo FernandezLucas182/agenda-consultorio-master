@@ -481,15 +481,24 @@ class Agenda {
 
   static crearAgendaConHorarios(datos, callback) {
 
-    const { profesional_id, especialidad_id, duracion_turno, horarios, sucursal_id } = datos;
+    const {
+      profesional_id,
+      especialidad_id,
+      duracion_turno,
+      horarios,
+      sucursal_id
+    } = datos;
 
-    const listaHorarios = Array.isArray(horarios) ? horarios : [horarios];
+    const listaHorarios = Array.isArray(horarios)
+      ? horarios
+      : [horarios];
 
     db.getConnection((err, connection) => {
 
       if (err) return callback(err);
 
       connection.beginTransaction(err => {
+
         let errorEncontrado = false;
 
         if (err) {
@@ -497,15 +506,13 @@ class Agenda {
           return callback(err);
         }
 
-
-
         connection.query(
-          `SELECT id 
-           FROM agendas
-           WHERE profesional_id = ?
-             AND especialidad_id = ?
-             AND sucursal_id = ?
-             AND activo = 1`,
+          `SELECT id
+         FROM agendas
+         WHERE profesional_id = ?
+           AND especialidad_id = ?
+           AND sucursal_id = ?
+           AND activo = 1`,
           [profesional_id, especialidad_id, sucursal_id],
           (err, existente) => {
 
@@ -524,16 +531,16 @@ class Agenda {
               return connection.rollback(() => {
                 connection.release();
                 callback({
-                  type: 'BUSINESS_RULE',
-                  message: 'Ya existe una agenda activa para este profesional y especialidad'
+                  type: "BUSINESS_RULE",
+                  message: "Ya existe una agenda activa para este profesional y especialidad"
                 });
               });
             }
 
             connection.query(
               `INSERT INTO agendas
-               (profesional_id, especialidad_id, duracion_turno, sucursal_id, activo)
-               VALUES (?, ?, ?, ?, 1)`,
+             (profesional_id, especialidad_id, duracion_turno, sucursal_id, activo)
+             VALUES (?, ?, ?, ?, 1)`,
               [profesional_id, especialidad_id, duracion_turno, sucursal_id],
               (err, result) => {
 
@@ -547,97 +554,142 @@ class Agenda {
                 }
 
                 const agenda_id = result.insertId;
-                const agendaResult = result;
-                let pendientes = listaHorarios.length;
 
-                listaHorarios.forEach(h => {
+                // Registrar relación profesional-sucursal si no existe
+                connection.query(
+                  `INSERT IGNORE INTO profesional_sucursal
+                 (profesional_id, sucursal_id)
+                 VALUES (?, ?)`,
+                  [profesional_id, sucursal_id],
+                  (err) => {
 
-                  if (h.desde >= h.hasta) {
-                    if (errorEncontrado) return;
-                    errorEncontrado = true;
+                    if (err) {
+                      errorEncontrado = true;
 
-                    return connection.rollback(() => {
-                      connection.release();
-                      callback(new Error("Hora inicio debe ser menor que hora fin"));
-                    });
-                  }
+                      return connection.rollback(() => {
+                        connection.release();
+                        callback(err);
+                      });
+                    }
 
-                  Agenda.verificarSolapamientoProfesional(
-                    connection,
-                    profesional_id,
-                    h.dia,
-                    h.desde,
-                    h.hasta,
-                    (err, existe) => {
-                      if (errorEncontrado) return;
-                      if (err) {
+                    const agendaResult = result;
+                    let pendientes = listaHorarios.length;
+
+                    listaHorarios.forEach(h => {
+
+                      if (h.desde >= h.hasta) {
+
+                        if (errorEncontrado) return;
+
                         errorEncontrado = true;
 
                         return connection.rollback(() => {
                           connection.release();
-                          callback(err);
+                          callback(new Error("Hora inicio debe ser menor que hora fin"));
                         });
+
                       }
 
-                      if (existe) {
-                        errorEncontrado = true;
+                      Agenda.verificarSolapamientoProfesional(
+                        connection,
+                        profesional_id,
+                        h.dia,
+                        h.desde,
+                        h.hasta,
+                        (err, existe) => {
 
-                        return connection.rollback(() => {
-                          connection.release();
-                          callback({
-                            type: "BUSINESS_RULE",
-                            message: "El profesional ya tiene un horario que se solapa"
-                          });
-                        });
-                      }
-
-                      connection.query(
-                        `INSERT INTO agenda_horarios 
-                         (agenda_id, dia_semana, hora_inicio, hora_fin)
-                         VALUES (?, ?, ?, ?)`,
-                        [agenda_id, h.dia, h.desde, h.hasta],
-                        (err) => {
+                          if (errorEncontrado) return;
 
                           if (err) {
-                            if (errorEncontrado) return;
+
                             errorEncontrado = true;
 
                             return connection.rollback(() => {
                               connection.release();
                               callback(err);
                             });
+
                           }
 
-                          pendientes--;
+                          if (existe) {
 
-                          if (pendientes === 0) {
-                            connection.commit(err => {
+                            errorEncontrado = true;
+
+                            return connection.rollback(() => {
+                              connection.release();
+                              callback({
+                                type: "BUSINESS_RULE",
+                                message: "El profesional ya tiene un horario que se solapa"
+                              });
+                            });
+
+                          }
+
+                          connection.query(
+                            `INSERT INTO agenda_horarios
+                           (agenda_id, dia_semana, hora_inicio, hora_fin)
+                           VALUES (?, ?, ?, ?)`,
+                            [agenda_id, h.dia, h.desde, h.hasta],
+                            (err) => {
 
                               if (err) {
+
+                                if (errorEncontrado) return;
+
                                 errorEncontrado = true;
 
                                 return connection.rollback(() => {
                                   connection.release();
                                   callback(err);
                                 });
+
                               }
 
-                              connection.release();
-                              callback(null, agendaResult);
-                            });
-                          }
+                              pendientes--;
+
+                              if (pendientes === 0) {
+
+                                connection.commit(err => {
+
+                                  if (err) {
+
+                                    errorEncontrado = true;
+
+                                    return connection.rollback(() => {
+                                      connection.release();
+                                      callback(err);
+                                    });
+
+                                  }
+
+                                  connection.release();
+                                  callback(null, agendaResult);
+
+                                });
+
+                              }
+
+                            }
+                          );
+
                         }
                       );
-                    }
-                  );
-                });
+
+                    });
+
+                  }
+                );
 
               }
             );
+
           }
         );
+
       });
+
     });
+
   }
 
 

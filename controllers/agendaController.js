@@ -509,3 +509,76 @@ function renderEditarConError(req, res, id, mensaje) {
   req.flash('error', mensaje);
   return res.redirect(`/agendas/${id}/editar`);
 }
+
+
+
+//=================
+//Copias de agendas
+//=================
+
+exports.formularioCopiarAgenda = (req, res) => {
+
+  const agendaId = req.params.id;
+
+  const sqlAgenda = `
+        SELECT *
+        FROM agendas
+        WHERE id = ?
+    `;
+
+  db.query(sqlAgenda, [agendaId], (err, agendaRows) => {
+
+    if (err || agendaRows.length === 0) {
+      console.error(err);
+      return res.redirect('/agendas');
+    }
+
+    const agenda = agendaRows[0];
+
+    const sqlHorarios = `
+            SELECT *
+            FROM agenda_horarios
+            WHERE agenda_id = ?
+            ORDER BY dia_semana, hora_inicio
+        `;
+
+    db.query(sqlHorarios, [agendaId], (err, horarios) => {
+
+      if (err) {
+        console.error(err);
+        return res.redirect('/agendas');
+      }
+
+      // 🔥 FILTRO REAL: eliminar horarios inválidos o incompletos
+      const horariosValidos = horarios.filter(h =>
+        h.dia_semana &&
+        h.hora_inicio &&
+        h.hora_fin
+      );
+
+      Profesional.obtenerParaCopiarAgenda(agenda.sucursal_id, agenda.especialidad_id, (err, profesionales) => {
+        if (err) return res.redirect('/agendas');
+
+        Especialidad.obtenerTodas((err, especialidades) => {
+          if (err) return res.redirect('/agendas');
+
+          db.query("SELECT * FROM sucursales ORDER BY nombre", (err, sucursales) => {
+            if (err) return res.redirect('/agendas');
+
+            res.render('copiarAgenda', {
+              agenda,
+              horarios: horariosValidos,
+              profesionales,
+              especialidades,
+              sucursales
+            });
+
+          });
+        });
+      });
+
+    });
+
+  });
+
+};

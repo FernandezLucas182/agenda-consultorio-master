@@ -1,0 +1,285 @@
+extends layout
+
+block title
+  | Copiar Agenda
+
+block content
+  h1 Copiar Agenda
+
+  form(action="/agendas/nueva" method="POST")
+    // DATOS GENERALES
+    h3.mt-4.mb-3 Datos Generales
+    div.row.g-3
+      div.col-md-6
+        label.form-label(for="profesionalSelect") Profesional
+
+        select.form-select(
+            name="profesional_id"
+            id="profesionalSelect"
+            required
+        )
+            option(value="") -- Selecciona profesional --
+            
+
+      div.col-md-6
+        label.form-label Especialidad
+
+        input(
+            type="text"
+            class="form-control"
+            value=especialidades.find(e => e.id == agenda.especialidad_id).nombre
+            readonly
+        )
+
+        input(
+            type="hidden"
+            name="especialidad_id"
+            value=agenda.especialidad_id
+        )
+      
+      div.col-md-6
+        label.form-label(for="sucursal_id") Sucursal
+        select.form-select(
+            name="sucursal_id"
+            id="sucursalSelect"
+            required
+        )
+
+          each sucursal in sucursales
+            option(
+                value=sucursal.id
+                selected=sucursal.id==agenda.sucursal_id
+            )= sucursal.nombre
+
+          option(value="sin") Sin sucursal
+      div.col-md-6
+        label.form-label Duración del turno
+
+        input.form-control(
+          type="text"
+          value=`${agenda.duracion_turno} minutos`
+          readonly
+        )
+
+        input(
+          type="hidden"
+          name="duracion_turno"
+          value=agenda.duracion_turno
+        )
+
+    div.row
+      div.col-12
+        div#alertaAgendaExistente.alert.alert-danger.mt-2.d-none
+
+      
+
+       
+
+    // DISPONIBILIDAD SEMANAL
+    h3.mt-5.mb-3 Disponibilidad semanal
+
+    - const dias = [{id:1,nombre:"Lunes"},{id:2,nombre:"Martes"},{id:3,nombre:"Miércoles"},{id:4,nombre:"Jueves"},{id:5,nombre:"Viernes"},{id:6,nombre:"Sábado"},{id:7,nombre:"Domingo"}]
+
+    - const diasConHorario = [...new Set(horarios.map(h => h.dia_semana))]
+
+    each dia in dias.filter(d => diasConHorario.includes(d.id))
+      div.card.mb-3
+        div.card-header
+          div.form-check
+            input.form-check-input.check-dia(
+              type="checkbox"
+              data-dia=dia.id
+              id=`check-${dia.id}`
+            )
+            label.form-check-label(for=`check-${dia.id}`)
+              strong #{dia.nombre}
+
+        div.card-body(id=`bloques-${dia.id}`)
+          //- Los bloques se agregarán aquí
+
+        
+
+    div.mt-4
+      button#btnGuardar.btn.btn-success.btn-lg(type="submit")
+        | Guardar Agenda Completa
+      a.btn.btn-secondary.btn-lg.ms-2(href="/agendas") Volver
+
+  // SCRIPT
+  script.
+    document.addEventListener('DOMContentLoaded', () => {
+
+      const profesionalSelect = document.getElementById('profesionalSelect');
+      profesionalSelect.addEventListener('change', verificarDisponibilidad);
+      
+      const sucursalSelect = document.getElementById('sucursalSelect');
+      const btnGuardar = document.getElementById('btnGuardar');
+      const alertaAgendaExistente = document.getElementById('alertaAgendaExistente');
+      
+
+      const horariosDisponibles = [
+        "09:00","09:30","10:00","10:30","11:00","11:30",
+        "12:00","12:30","13:00",
+        "16:00","16:30","17:00","17:30","18:00","18:30",
+        "19:00","19:30","20:00","20:30","21:00"
+      ];
+
+      
+
+        async function cargarProfesionalesSucursal() {
+
+          const sucursalId = sucursalSelect.value;
+
+          if (!sucursalId) return;
+
+          const profesionalActual = "#{agenda.profesional_id}";
+
+          const especialidadId =
+            document.querySelector('input[name="especialidad_id"]').value;
+
+          const res = await fetch(
+            `/profesionales/copiar/${sucursalId}/${especialidadId}`
+          );
+
+          const profesionales = await res.json();
+
+          profesionalSelect.innerHTML =
+            '<option value="">-- Selecciona profesional --</option>';
+
+          profesionales.forEach(p => {
+
+            profesionalSelect.innerHTML += `
+              <option value="${p.id}" ${p.id == profesionalActual ? 'selected' : ''}>
+                ${p.nombre} ${p.apellido}
+              </option>
+            `;
+
+          });
+
+          if (profesionalSelect.value) {
+            verificarDisponibilidad();
+          }
+
+        }
+
+        sucursalSelect.addEventListener('change', cargarProfesionalesSucursal);
+        cargarProfesionalesSucursal();
+
+        //=========================
+        //Verificar disponibilidad
+        //=========================
+        async function verificarDisponibilidad() {
+
+          const profesionalId = profesionalSelect.value;
+          const especialidadId = document.querySelector('input[name="especialidad_id"]').value;
+          const sucursalId =
+            sucursalSelect.value === "sin"
+              ? null
+              : sucursalSelect.value;
+
+          if (!profesionalId || !especialidadId || !sucursalId) return;
+
+          const res = await fetch(
+              `/agendas/disponibilidad/${profesionalId}/${especialidadId}/${sucursalId}`
+          );
+
+          const data = await res.json();
+
+          if (!data.disponible) {
+              btnGuardar.disabled = true;
+              alertaAgendaExistente.classList.remove('d-none');
+              alertaAgendaExistente.innerHTML =
+                  "Ya existe una agenda activa para este profesional, especialidad y sucursal.";
+          } else {
+              btnGuardar.disabled = false;
+              alertaAgendaExistente.classList.add('d-none');
+          }
+      }
+    
+      
+      
+
+
+      // =========================
+      // BLOQUES HORARIOS
+      // =========================
+      window.agregarBloque = function(dia) {
+
+        const contenedor = document.getElementById('bloques-' + dia);
+
+        const uid = Date.now() + Math.random();
+
+        const div = document.createElement('div');
+        div.className = 'row g-2 align-items-center mb-2';
+
+        div.innerHTML = `
+          <input type="hidden" name="horarios[${uid}][dia]" value="${dia}">
+
+          <div class="col-auto">
+            <label>Desde:</label>
+          </div>
+
+          <input type="hidden" name="horarios[${uid}][desde]" class="desde-input">
+
+          <div class="col-auto">
+            <span class="form-control desde-text"></span>
+          </div>
+
+          <div class="col-auto">
+            <label>Hasta:</label>
+          </div>
+
+          <input type="hidden" name="horarios[${uid}][hasta]" class="hasta-input">
+
+          <div class="col-auto">
+            <span class="form-control hasta-text"></span>
+          </div>
+        `;
+
+        contenedor.appendChild(div);
+
+        return div;
+      };
+
+
+       // ======================
+       // CARGAR HORARIOS COPIADOS
+       // ======================
+
+        const horariosCopiados = !{JSON.stringify(horarios)};
+        const usados = {};
+
+        horariosCopiados.forEach(h => {
+
+          const key = `${h.dia_semana}-${h.hora_inicio}-${h.hora_fin}`;
+          if (usados[key]) return;
+          usados[key] = true;
+
+          const check = document.getElementById(`check-${h.dia_semana}`);
+          if (check) check.checked = true;
+
+          const contenedor = document.getElementById('bloques-' + h.dia_semana);
+
+          let bloque;
+
+          if (contenedor.childElementCount === 0) {
+            bloque = agregarBloque(h.dia_semana);
+          } else {
+            bloque = contenedor.lastElementChild;
+          }
+
+          const desdeInput = bloque.querySelector('.desde-input');
+          const hastaInput = bloque.querySelector('.hasta-input');
+
+          const desdeText = bloque.querySelector('.desde-text');
+          const hastaText = bloque.querySelector('.hasta-text');
+
+          const inicio = (h.hora_inicio || '').substring(0, 5);
+          const fin = (h.hora_fin || '').substring(0, 5);
+
+          desdeInput.value = inicio;
+          hastaInput.value = fin;
+
+          desdeText.textContent = inicio;
+          hastaText.textContent = fin;
+        });
+    });

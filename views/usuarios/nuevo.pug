@@ -1,0 +1,104 @@
+extends ../layout
+
+block title
+  | Nuevo Usuario
+
+block content
+
+  h2 Nuevo Usuario
+
+  form(method='POST', action='/usuarios/nuevo')
+
+    // ROL
+    select#rol.form-select(name='rol')
+      option(value='') Seleccionar rol
+      option(value='admin') Administrador
+      option(value='secretaria') Secretaria
+      option(value='medico') Médico
+
+    // USERNAME
+    input.form-control(
+        name='username'
+        placeholder='Usuario'
+        autocomplete='off'
+    )
+
+    // PASSWORD
+    input.form-control(
+        type='password'
+        name='password'
+        placeholder='Contraseña'
+        autocomplete='new-password'
+    )
+
+    hr
+
+    // =========================
+    // CAMPOS MANUALES
+    // =========================
+    div#manualFields
+
+      input.form-control(name='nombre', placeholder='Nombre')
+      input.form-control(name='apellido', placeholder='Apellido')
+      input.form-control(name='email', placeholder='Email')
+      input.form-control(name='telefono', placeholder='Teléfono')
+
+    // =========================
+    // MÉDICO
+    // =========================
+    div#medicoFields(style='display:none')
+
+      select.form-select(name='profesional_id')
+        option(value='') Seleccionar profesional
+
+        each prof in profesionales
+          option(value=prof.id)
+            | #{prof.apellido}, #{prof.nombre}
+
+    button.btn.btn-primary.mt-3(type='submit') Guardar
+    a.btn.btn-secondary.mt-3.ms-2(href='/usuarios')
+        i.bi.bi-arrow-left
+        |  Volver
+
+
+  // =========================
+  // SCRIPT (IMPORTANTE: DENTRO DE BLOCK CONTENT)
+  // =========================
+  script.
+    const rol = document.getElementById('rol');
+    const medicoFields = document.getElementById('medicoFields');
+    const manualFields = document.getElementById('manualFields');
+
+    const inputsManual = manualFields.querySelectorAll('input');
+    const selectMedico = medicoFields.querySelector('select');
+
+    function actualizarUI() {
+
+        if (rol.value === 'medico') {
+
+        medicoFields.style.display = 'block';
+        manualFields.style.display = 'none';
+
+        selectMedico.disabled = false;
+
+        inputsManual.forEach(i => {
+            i.disabled = true;
+        });
+
+        } else {
+
+        medicoFields.style.display = 'none';
+        manualFields.style.display = 'block';
+
+        selectMedico.disabled = true;
+
+        inputsManual.forEach(i => {
+            i.disabled = false;
+        });
+
+        }
+    }
+
+    rol.addEventListener('change', actualizarUI);
+
+    actualizarUI();
