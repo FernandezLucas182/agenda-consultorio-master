@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 24-05-2026 a las 00:06:15
+-- Tiempo de generación: 27-06-2026 a las 23:40:20
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -35,7 +35,7 @@ CREATE TABLE `agendas` (
   `especialidad_id` int(11) NOT NULL,
   `max_sobreturnos` int(11) DEFAULT 0,
   `activo` tinyint(1) DEFAULT 1,
-  `sucursal_id` int(11) DEFAULT NULL
+  `sucursal_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -45,9 +45,9 @@ CREATE TABLE `agendas` (
 INSERT INTO `agendas` (`id`, `profesional_id`, `duracion_turno`, `created_at`, `especialidad_id`, `max_sobreturnos`, `activo`, `sucursal_id`) VALUES
 (1, 1, 10, '2026-02-26 09:38:37', 2, 3, 1, 1),
 (2, 2, 30, '2026-02-26 11:11:40', 5, 2, 1, 1),
-(3, 3, 60, '2026-02-27 22:49:34', 6, 0, 1, NULL),
-(4, 4, 30, '2026-02-27 22:50:55', 6, 0, 1, NULL),
-(6, 7, 40, '2026-05-06 05:45:28', 3, 0, 1, NULL),
+(3, 3, 60, '2026-02-27 22:49:34', 6, 0, 1, 1),
+(4, 4, 30, '2026-02-27 22:50:55', 6, 0, 1, 1),
+(6, 7, 40, '2026-05-06 05:45:28', 3, 0, 1, 1),
 (7, 1, 30, '2026-05-11 20:06:03', 2, 0, 1, 2),
 (8, 8, 20, '2026-05-11 21:22:36', 3, 0, 1, 2),
 (9, 5, 20, '2026-05-20 13:34:41', 3, 0, 1, 2),
@@ -57,8 +57,12 @@ INSERT INTO `agendas` (`id`, `profesional_id`, `duracion_turno`, `created_at`, `
 (13, 9, 30, '2026-05-20 16:29:58', 9, 0, 1, 1),
 (14, 6, 40, '2026-05-20 16:33:43', 4, 0, 1, 1),
 (15, 1, 30, '2026-05-20 21:09:56', 4, 0, 1, 1),
-(17, 2, 20, '2026-05-21 00:37:32', 5, 0, 1, 2),
-(19, 5, 30, '2026-05-21 21:58:04', 8, 0, 1, 1);
+(19, 5, 30, '2026-05-21 21:58:04', 8, 0, 1, 1),
+(23, 11, 30, '2026-06-13 18:43:42', 4, 0, 1, 1),
+(24, 12, 30, '2026-06-13 18:43:42', 2, 0, 1, 1),
+(25, 12, 30, '2026-06-13 18:43:42', 5, 0, 1, 1),
+(26, 12, 30, '2026-06-13 18:43:42', 9, 0, 1, 1),
+(27, 15, 30, '2026-06-13 18:43:42', 12, 0, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -72,7 +76,7 @@ CREATE TABLE `agenda_horarios` (
   `dia_semana` tinyint(4) NOT NULL CHECK (`dia_semana` between 1 and 7),
   `hora_inicio` time NOT NULL,
   `hora_fin` time NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ;
 
 --
 -- Volcado de datos para la tabla `agenda_horarios`
@@ -104,8 +108,6 @@ INSERT INTO `agenda_horarios` (`id`, `agenda_id`, `dia_semana`, `hora_inicio`, `
 (77, 9, 3, '16:00:00', '20:30:00'),
 (78, 9, 4, '09:00:00', '20:30:00'),
 (79, 9, 5, '09:30:00', '18:30:00'),
-(80, 1, 1, '09:00:00', '12:00:00'),
-(81, 1, 3, '09:00:00', '12:00:00'),
 (82, 10, 1, '09:00:00', '20:30:00'),
 (83, 10, 2, '09:00:00', '20:30:00'),
 (84, 10, 3, '09:00:00', '16:00:00'),
@@ -123,8 +125,35 @@ INSERT INTO `agenda_horarios` (`id`, `agenda_id`, `dia_semana`, `hora_inicio`, `
 (96, 14, 1, '09:30:00', '20:30:00'),
 (97, 14, 2, '16:00:00', '20:30:00'),
 (98, 15, 1, '09:30:00', '20:00:00'),
-(99, 17, 1, '11:00:00', '13:00:00'),
-(100, 19, 3, '12:00:00', '16:00:00');
+(100, 19, 3, '12:00:00', '16:00:00'),
+(110, 1, 2, '20:00:00', '21:00:00'),
+(111, 1, 3, '09:00:00', '12:00:00'),
+(112, 23, 1, '09:00:00', '13:00:00'),
+(113, 23, 2, '09:00:00', '13:00:00'),
+(114, 23, 3, '09:00:00', '13:00:00'),
+(115, 23, 4, '09:00:00', '13:00:00'),
+(116, 23, 5, '09:00:00', '13:00:00'),
+(117, 23, 1, '16:00:00', '20:00:00'),
+(118, 23, 2, '16:00:00', '20:00:00'),
+(119, 23, 3, '16:00:00', '20:00:00'),
+(120, 23, 4, '16:00:00', '20:00:00'),
+(121, 23, 5, '16:00:00', '20:00:00'),
+(122, 24, 1, '09:00:00', '13:00:00'),
+(123, 24, 2, '09:00:00', '13:00:00'),
+(124, 24, 3, '09:00:00', '13:00:00'),
+(125, 24, 4, '09:00:00', '13:00:00'),
+(126, 24, 5, '09:00:00', '13:00:00'),
+(127, 25, 1, '16:00:00', '20:00:00'),
+(128, 25, 2, '16:00:00', '20:00:00'),
+(129, 25, 3, '16:00:00', '20:00:00'),
+(130, 25, 4, '16:00:00', '20:00:00'),
+(131, 25, 5, '16:00:00', '20:00:00'),
+(132, 26, 6, '09:00:00', '13:00:00'),
+(133, 27, 1, '09:00:00', '18:00:00'),
+(134, 27, 2, '09:00:00', '18:00:00'),
+(135, 27, 3, '09:00:00', '18:00:00'),
+(136, 27, 4, '09:00:00', '18:00:00'),
+(137, 27, 5, '09:00:00', '18:00:00');
 
 -- --------------------------------------------------------
 
@@ -139,7 +168,7 @@ CREATE TABLE `ausencias` (
   `motivo` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `agenda_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ;
 
 --
 -- Volcado de datos para la tabla `ausencias`
@@ -147,14 +176,22 @@ CREATE TABLE `ausencias` (
 
 INSERT INTO `ausencias` (`id`, `fecha_inicio`, `fecha_fin`, `motivo`, `created_at`, `agenda_id`) VALUES
 (2, '2026-01-07', '2026-01-31', 'Vacaciones', '2026-04-18 22:55:28', 1),
-(3, '2026-06-05', '2026-06-05', 'Vacaciones', '2026-04-20 23:47:28', 2),
+(3, '2026-06-05', '2026-06-13', 'Vacaciones', '2026-04-20 23:47:28', 2),
 (4, '2026-04-23', '2026-04-24', 'viaje laboral', '2026-04-20 23:57:42', 1),
-(5, '2026-09-15', '2026-09-17', 'congreso', '2026-05-22 23:49:19', 2),
-(6, '2026-09-02', '2026-05-16', 'viaje laboral', '2026-05-23 18:59:16', 2),
-(7, '2026-09-15', '2026-05-17', 'por que le dio ganas', '2026-05-23 19:29:07', 2),
-(8, '2026-09-15', '2026-09-17', 'por que le dio ganas', '2026-05-23 19:30:13', 2),
+(5, '2026-09-14', '2026-09-18', 'congreso medico', '2026-05-22 23:49:19', 2),
 (9, '2026-06-23', '2026-06-26', 'viaje', '2026-05-23 19:45:25', 7),
-(10, '2026-05-21', '2026-05-24', 'por que si', '2026-05-23 20:10:18', 9);
+(10, '2026-05-21', '2026-05-24', 'por que si', '2026-05-23 20:10:18', 9),
+(11, '2026-06-23', '2026-06-26', 'viaje laboral', '2026-05-24 21:35:59', 1),
+(12, '2026-06-22', '2026-06-30', 'razones de salud', '2026-06-22 15:03:10', 4),
+(13, '2026-06-25', '2026-06-30', 'viaje', '2026-06-24 22:07:56', 3),
+(14, '2026-07-23', '2026-07-25', 'viaje', '2026-06-25 21:05:08', 10),
+(15, '2026-06-27', '2026-06-29', 'viaje', '2026-06-25 21:46:54', 11),
+(16, '2026-07-30', '2026-07-31', 'congreso', '2026-06-25 21:48:14', 2),
+(17, '2026-06-27', '2026-06-29', 'viaje', '2026-06-25 21:52:05', 19),
+(18, '2026-06-26', '2026-06-28', 'viaje+2dia', '2026-06-26 23:22:12', 7),
+(19, '2026-07-30', '2026-08-31', 'Vacaciones', '2026-06-26 23:37:33', 4),
+(20, '2026-07-09', '2026-07-12', 'curso', '2026-06-26 23:38:14', 4),
+(21, '2026-07-07', '2026-07-29', 'enfermedad', '2026-06-27 21:29:07', 8);
 
 -- --------------------------------------------------------
 
@@ -178,6 +215,7 @@ INSERT INTO `especialidades` (`id`, `nombre`) VALUES
 (11, 'Generalista'),
 (5, 'Kinesiología'),
 (6, 'Odontologia'),
+(13, 'oncologia'),
 (2, 'Pediatría'),
 (10, 'Radiología'),
 (8, 'Traumatología'),
@@ -192,24 +230,30 @@ INSERT INTO `especialidades` (`id`, `nombre`) VALUES
 CREATE TABLE `pacientes` (
   `id` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
+  `apellido` varchar(100) DEFAULT NULL,
   `dni` varchar(20) DEFAULT NULL,
   `obra_social` varchar(100) DEFAULT NULL,
-  `contacto` varchar(100) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `telefono` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `email` varchar(150) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `pacientes`
 --
 
-INSERT INTO `pacientes` (`id`, `nombre`, `dni`, `obra_social`, `contacto`, `created_at`) VALUES
-(1, 'Lucas Fernandez', '33555997', 'Swiss Medical', 'fernandez19lucas13@gmail.com', '2026-02-26 06:55:26'),
-(2, 'ester', '14059365', 'femesa', 'esterJL192634@gmail.com', '2026-03-22 21:37:23'),
-(3, 'Gabriel Guzmán', '14789253', 'sancor', 'GGuzman@gmail.com', '2026-03-24 17:02:49'),
-(4, 'olga Jaime', '24963145', 'dosep', '2665851475', '2026-04-15 01:26:13'),
-(5, 'Manuel', '14758639', 'osde', 'manuelH@gmail.com', '2026-04-21 00:01:00'),
-(6, 'Josefina Duarte', '30569874', 'no', 'jose_fina@gmail.com', '2026-05-11 18:18:26'),
-(7, 'Matilda', '41236589', 'no', 'matimatilda@gmail.com', '2026-05-11 18:24:22');
+INSERT INTO `pacientes` (`id`, `nombre`, `apellido`, `dni`, `obra_social`, `telefono`, `created_at`, `email`) VALUES
+(1, 'Lucas Fernandez', NULL, '33555997', 'Swiss Medical', NULL, '2026-02-26 06:55:26', 'fernandez19lucas13@gmail.com'),
+(2, 'ester', NULL, '14059365', 'femesa', NULL, '2026-03-22 21:37:23', 'esterJL192634@gmail.com'),
+(3, 'Gabriel Guzmán', NULL, '14789253', 'sancor', NULL, '2026-03-24 17:02:49', 'GGuzman@gmail.com'),
+(4, 'olga Jaime', NULL, '24963145', 'dosep', '2665851475', '2026-04-15 01:26:13', NULL),
+(5, 'Manuel', NULL, '14758639', 'osde', NULL, '2026-04-21 00:01:00', 'manuelH@gmail.com'),
+(6, 'Josefina Duarte', NULL, '30569874', 'no', NULL, '2026-05-11 18:18:26', 'jose_fina@gmail.com'),
+(7, 'Matilda', NULL, '41236589', 'no', NULL, '2026-05-11 18:24:22', 'matimatilda@gmail.com'),
+(8, 'Josefina', 'Romero', '32456852', 'medicare', '11456895', '2026-06-11 10:59:13', 'joseRoma@gmail.com'),
+(9, 'Joel', 'Junin', '33222555', 'ninguna', '2664859632', '2026-06-24 19:51:12', 'JoelJu@gmail.com'),
+(10, 'Jaqueline Loretta', 'Gilmur', '47896352', 'osde', '1145896578', '2026-06-24 20:07:13', 'lore_ta@gmail.com'),
+(11, 'roberto', 'Timmo', '17894585', 'no', '2664789158', '2026-06-27 21:19:25', 'timmoRobertt@hotmail.com');
 
 -- --------------------------------------------------------
 
@@ -234,7 +278,7 @@ CREATE TABLE `profesionales` (
 --
 
 INSERT INTO `profesionales` (`id`, `matricula`, `nombre`, `apellido`, `dni`, `telefono`, `email`, `estado`, `created_at`) VALUES
-(1, '258954699', 'Juan', 'Pérez', '39932820', '2664342592', 'juan.perez11@gmail.com', 'activo', '2026-02-26 06:30:05'),
+(1, '258954698', 'Juan Carlos', 'Pérez', '39932888', '2664342588', 'juan.perez18@gmail.com', 'activo', '2026-02-26 06:30:05'),
 (2, '1234', 'Ana', 'Gómez', '27156222', '2664982373', 'ana.gomez2@gmail.com', 'activo', '2026-02-26 06:57:28'),
 (3, '6644979', 'Carlos', 'Lopez', '36572856', '2664281771', 'carlos.lopez3@gmail.com', 'activo', '2026-02-26 07:16:59'),
 (4, '753159', 'María', 'Fernandez', '30478278', '2664112297', 'maría.fernandez4@gmail.com', 'activo', '2026-02-26 07:17:26'),
@@ -248,7 +292,9 @@ INSERT INTO `profesionales` (`id`, `matricula`, `nombre`, `apellido`, `dni`, `te
 (12, '74125893325', 'Anibal', 'Farias', '22789363', '2665888888', 'anibalF@gmail.com', 'activo', '2026-04-16 23:23:09'),
 (13, '55547841', 'Emiliano', 'Ferreyra', '24656892', '2665458585', 'EmilFerr@gmail.com', 'activo', '2026-05-05 04:17:04'),
 (14, '7536986889', 'Luis', 'Carrizo', '19256784', '266789452', 'LuisC19@gmail.com', 'activo', '2026-05-11 17:41:18'),
-(15, '25631478', 'Martin', 'Giuliani', '20456789', '2665874125', 'GiuMartin@gmail.com', 'activo', '2026-05-11 19:53:08');
+(15, '25631478', 'Martin', 'Giuliani', '20456789', '2665874125', 'GiuMartin@gmail.com', 'activo', '2026-05-11 19:53:08'),
+(16, '123587646', 'jose luis', 'gil', '245698753', '2665852369', 'jolui@gmail.com', 'activo', '2026-06-24 17:15:37'),
+(17, '951785469', 'Esteban', 'Ruiz', '27855693', '1145673425', 'estebanquito@gmail.com', 'activo', '2026-06-27 21:17:40');
 
 -- --------------------------------------------------------
 
@@ -284,7 +330,9 @@ INSERT INTO `profesional_especialidad` (`profesional_id`, `especialidad_id`) VAL
 (12, 9),
 (13, 11),
 (14, 8),
-(15, 12);
+(15, 12),
+(16, 11),
+(17, 13);
 
 -- --------------------------------------------------------
 
@@ -354,37 +402,76 @@ CREATE TABLE `turnos` (
 --
 
 INSERT INTO `turnos` (`id`, `agenda_id`, `paciente_id`, `profesional_id`, `especialidad_id`, `sucursal_id`, `fecha`, `hora`, `estado`, `tipo_turno`, `observaciones`, `created_at`) VALUES
-(3, 2, 1, 2, 5, 1, '2026-03-23', '09:30:00', 'pendiente', 'normal', NULL, '2026-03-21 00:09:09'),
-(7, 2, 1, 2, 5, 1, '2026-03-23', '10:00:00', 'pendiente', 'normal', NULL, '2026-03-22 06:13:23'),
-(10, 2, 2, 2, 5, 1, '2026-03-23', '09:30:01', 'pendiente', 'sobreturno', NULL, '2026-03-22 22:50:10'),
-(11, 3, 1, 3, 6, 1, '2026-03-26', '09:00:00', 'pendiente', 'normal', NULL, '2026-03-23 19:54:08'),
-(13, 3, 1, 3, 6, 2, '2026-04-08', '19:00:00', 'pendiente', 'normal', NULL, '2026-04-08 06:01:54'),
-(14, 2, 1, 2, 5, 1, '2026-04-17', '14:00:00', 'pendiente', 'normal', NULL, '2026-04-10 00:59:06'),
 (15, 2, 1, 2, 5, 1, '2026-04-16', '16:00:00', 'pendiente', 'normal', NULL, '2026-04-14 23:19:30'),
 (16, 2, 1, 2, 5, 1, '2026-04-23', '16:00:00', 'pendiente', 'normal', NULL, '2026-04-14 23:43:17'),
-(17, 2, 1, 2, 5, NULL, '2026-04-29', '10:00:00', 'confirmado', 'normal', NULL, '2026-04-14 23:55:50'),
 (18, 2, 1, 2, 5, 1, '2026-04-16', '16:30:01', 'pendiente', 'sobreturno', NULL, '2026-04-15 01:25:22'),
-(19, 2, 4, 2, 5, 1, '2026-04-21', '19:00:00', 'pendiente', 'normal', NULL, '2026-04-15 01:27:17'),
-(20, 2, 1, 2, 5, 1, '2026-04-14', '13:00:00', 'pendiente', 'normal', NULL, '2026-04-18 21:52:07'),
 (22, 1, 1, 1, 2, 1, '2026-05-13', '10:00:00', 'pendiente', 'normal', NULL, '2026-05-05 04:51:59'),
 (24, 1, 2, 1, 2, 1, '2026-05-20', '11:30:00', 'pendiente', 'normal', NULL, '2026-05-06 00:51:15'),
 (25, 1, 4, 1, 2, 1, '2026-05-11', '10:00:00', 'pendiente', 'normal', NULL, '2026-05-06 01:01:07'),
-(26, 1, 2, 1, 2, NULL, '2026-05-27', '09:00:00', 'confirmado', 'normal', NULL, '2026-05-06 01:17:49'),
-(27, 1, 1, 1, 2, 1, '2026-05-27', '10:00:00', 'pendiente', 'normal', NULL, '2026-05-06 04:19:06'),
+(26, 1, 2, 1, 2, 1, '2026-05-27', '11:40:00', 'confirmado', 'normal', NULL, '2026-05-06 01:17:49'),
+(27, 1, 1, 1, 2, 1, '2026-05-27', '11:30:00', 'pendiente', 'normal', NULL, '2026-05-06 04:19:06'),
 (29, 2, 4, 2, 5, 1, '2026-05-19', '17:00:00', 'pendiente', 'normal', NULL, '2026-05-12 21:39:31'),
-(30, 1, 5, 1, 4, 1, '2026-06-24', '10:00:00', 'pendiente', 'normal', NULL, '2026-05-12 21:47:12'),
-(31, 3, 6, 3, 6, NULL, '2026-05-18', '11:00:00', 'pendiente', 'normal', NULL, '2026-05-12 21:52:39'),
-(32, 3, 7, 3, 6, NULL, '2026-06-15', '11:00:00', 'pendiente', 'normal', NULL, '2026-05-12 21:55:03'),
+(30, 1, 5, 6, 4, 1, '2026-05-26', '17:20:00', 'confirmado', 'normal', NULL, '2026-05-12 21:47:12'),
+(31, 3, 6, 3, 6, 1, '2026-05-18', '11:00:00', 'pendiente', 'normal', NULL, '2026-05-12 21:52:39'),
+(32, 3, 7, 3, 6, 1, '2026-06-15', '11:00:00', 'pendiente', 'normal', NULL, '2026-05-12 21:55:03'),
 (33, 2, 5, 2, 5, 1, '2026-05-19', '16:30:00', 'pendiente', 'normal', NULL, '2026-05-12 21:55:27'),
-(34, 6, 3, 7, 3, NULL, '2026-05-13', '17:40:00', 'pendiente', 'normal', NULL, '2026-05-12 21:57:08'),
+(34, 6, 3, 7, 3, 1, '2026-05-13', '17:40:00', 'pendiente', 'normal', NULL, '2026-05-12 21:57:08'),
 (35, 1, 2, 1, 2, 1, '2026-05-13', '11:30:00', 'pendiente', 'normal', NULL, '2026-05-12 21:57:27'),
 (36, 1, 1, 1, 2, 1, '2026-05-13', '09:30:00', 'pendiente', 'normal', NULL, '2026-05-13 00:26:26'),
-(37, 2, 2, 2, 5, 1, '2026-09-15', '14:00:00', '', 'normal', NULL, '2026-05-13 00:33:35'),
-(38, 2, 1, 2, 5, 1, '2026-09-15', '14:00:01', '', 'sobreturno', NULL, '2026-05-13 00:43:58'),
-(39, 1, 1, 1, 2, 1, '2026-05-13', '08:00:00', 'pendiente', 'normal', NULL, '2026-05-13 02:05:36'),
-(40, 2, 1, 2, 5, 1, '2026-05-21', '14:00:00', 'pendiente', 'normal', NULL, '2026-05-20 15:43:36'),
-(41, 9, 2, 5, 3, NULL, '2026-06-10', '09:00:00', 'confirmado', 'normal', NULL, '2026-05-20 15:58:29'),
-(42, 10, 7, 13, 11, 2, '2026-05-20', '09:00:00', 'pendiente', 'normal', NULL, '2026-05-20 16:02:11');
+(37, 11, 2, 10, 10, 2, '2026-07-01', '10:30:00', 'confirmado', 'normal', NULL, '2026-05-13 00:33:35'),
+(38, 14, 1, 6, 4, 1, '2026-06-29', '09:30:00', 'pendiente', 'sobreturno', NULL, '2026-05-13 00:43:58'),
+(40, 2, 1, 2, 5, 1, '2026-05-21', '17:00:00', 'pendiente', 'normal', NULL, '2026-05-20 15:43:36'),
+(41, 8, 2, 8, 3, 2, '2026-07-08', '18:00:00', 'reprogramar', 'normal', NULL, '2026-05-20 15:58:29'),
+(42, 10, 7, 13, 11, 2, '2026-05-20', '09:00:00', 'pendiente', 'normal', NULL, '2026-05-20 16:02:11'),
+(43, 2, 1, 2, 5, 1, '2026-05-28', '17:00:00', 'reservado', 'normal', NULL, '2026-05-25 00:15:38'),
+(44, 11, 2, 10, 10, 2, '2026-05-27', '19:30:00', 'reservado', 'normal', NULL, '2026-05-25 01:39:32'),
+(45, 1, 2, 1, 4, 1, '2026-05-25', '11:50:00', 'reservado', 'normal', NULL, '2026-05-25 01:41:21'),
+(46, 11, 3, 10, 10, 2, '2026-05-25', '17:00:00', 'confirmado', 'normal', NULL, '2026-05-25 01:48:42'),
+(47, 11, 3, 10, 10, 2, '2026-05-25', '10:00:00', 'reservado', 'sobreturno', NULL, '2026-05-25 01:49:03'),
+(48, 14, 8, 6, 4, 1, '2026-06-16', '16:40:00', 'reservado', 'normal', NULL, '2026-06-11 11:27:36'),
+(49, 9, 2, 5, 3, 2, '2026-06-16', '16:50:00', 'reservado', 'normal', NULL, '2026-06-13 16:13:28'),
+(50, 14, 1, 6, 4, 1, '2026-06-15', '18:10:00', 'reservado', 'normal', NULL, '2026-06-13 16:59:53'),
+(51, 9, 2, 5, 3, 2, '2026-06-16', '16:30:00', 'reservado', 'normal', NULL, '2026-06-13 17:00:24'),
+(52, 9, 4, 5, 3, 2, '2026-06-17', '17:40:00', 'reservado', 'normal', NULL, '2026-06-13 17:00:47'),
+(53, 9, 4, 5, 8, 2, '2026-06-16', '17:30:00', 'reservado', 'normal', NULL, '2026-06-13 17:02:03'),
+(55, 4, 2, 4, 6, 1, '2026-06-05', '10:00:00', 'confirmado', 'normal', NULL, '2026-06-22 15:02:54'),
+(56, 3, 1, 3, 6, 1, '2026-06-22', '09:00:00', 'reservado', 'normal', NULL, '2026-06-22 15:03:57'),
+(57, 3, 2, 3, 6, 1, '2026-06-22', '10:00:00', 'reservado', 'normal', NULL, '2026-06-22 20:34:42'),
+(58, 3, 1, 3, 6, 1, '2026-06-22', '11:00:00', 'reservado', 'normal', NULL, '2026-06-22 20:37:13'),
+(59, 1, 1, 1, 2, 1, '2026-07-07', '20:00:00', 'confirmado', 'normal', NULL, '2026-06-22 21:04:39'),
+(60, 9, 1, 5, 3, 2, '2026-06-25', '17:00:00', 'reservado', 'normal', NULL, '2026-06-24 02:38:56'),
+(61, 14, 2, 6, 4, 1, '2026-06-23', '16:00:00', 'reservado', 'normal', NULL, '2026-06-24 02:50:53'),
+(62, 11, 5, 10, 10, 2, '2026-07-08', '17:30:00', 'reservado', 'normal', NULL, '2026-06-24 17:13:43'),
+(63, 10, 9, 13, 11, 2, '2026-06-25', '09:00:00', 'cancelado', 'normal', NULL, '2026-06-24 19:51:49'),
+(64, 14, 10, 6, 4, 1, '2026-07-07', '16:00:00', 'confirmado', 'normal', NULL, '2026-06-24 20:07:46'),
+(65, 27, 1, 15, 12, 1, '2026-07-02', '09:00:00', 'confirmado', 'normal', NULL, '2026-06-27 00:10:57'),
+(66, 4, 6, 4, 6, 1, '2026-07-03', '10:00:00', 'confirmado', 'normal', NULL, '2026-06-27 21:15:59');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `usuarios`
+--
+
+CREATE TABLE `usuarios` (
+  `id` int(11) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `rol` enum('admin','secretaria','medico') NOT NULL,
+  `sucursal_id` int(11) DEFAULT NULL,
+  `profesional_id` int(11) DEFAULT NULL,
+  `activo` tinyint(1) DEFAULT 1,
+  `creado_en` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `usuarios`
+--
+
+INSERT INTO `usuarios` (`id`, `username`, `password`, `nombre`, `email`, `rol`, `sucursal_id`, `profesional_id`, `activo`, `creado_en`) VALUES
+(1, 'admin', '$2a$10$hrZiTl1I2Ahpswp1q2/cgeZUBq9BWH2WUvXh2q3vIRNIVQInhxMsO', 'Administrador', 'admin@consultorio.com', 'admin', NULL, NULL, 1, '2026-06-27 20:39:37');
 
 --
 -- Índices para tablas volcadas
@@ -402,14 +489,14 @@ ALTER TABLE `agendas`
 --
 ALTER TABLE `agenda_horarios`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_agenda_horarios_agenda` (`agenda_id`);
+  ADD KEY `idx_horarios_agenda_dia` (`agenda_id`,`dia_semana`);
 
 --
 -- Indices de la tabla `ausencias`
 --
 ALTER TABLE `ausencias`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_ausencias_agenda` (`agenda_id`);
+  ADD KEY `idx_ausencias_agenda_fechas` (`agenda_id`,`fecha_inicio`,`fecha_fin`);
 
 --
 -- Indices de la tabla `especialidades`
@@ -458,10 +545,20 @@ ALTER TABLE `sucursales`
 ALTER TABLE `turnos`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `profesional_id` (`profesional_id`,`fecha`,`hora`),
-  ADD KEY `agenda_id` (`agenda_id`),
   ADD KEY `paciente_id` (`paciente_id`),
   ADD KEY `fk_turno_especialidad` (`especialidad_id`),
-  ADD KEY `fk_turno_sucursal` (`sucursal_id`);
+  ADD KEY `fk_turno_sucursal` (`sucursal_id`),
+  ADD KEY `idx_turnos_prof_fecha_hora` (`profesional_id`,`fecha`,`hora`),
+  ADD KEY `idx_turnos_agenda_fecha` (`agenda_id`,`fecha`);
+
+--
+-- Indices de la tabla `usuarios`
+--
+ALTER TABLE `usuarios`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `username` (`username`),
+  ADD KEY `sucursal_id` (`sucursal_id`),
+  ADD KEY `profesional_id` (`profesional_id`);
 
 --
 -- AUTO_INCREMENT de las tablas volcadas
@@ -471,37 +568,37 @@ ALTER TABLE `turnos`
 -- AUTO_INCREMENT de la tabla `agendas`
 --
 ALTER TABLE `agendas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT de la tabla `agenda_horarios`
 --
 ALTER TABLE `agenda_horarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=106;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `ausencias`
 --
 ALTER TABLE `ausencias`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `especialidades`
 --
 ALTER TABLE `especialidades`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT de la tabla `pacientes`
 --
 ALTER TABLE `pacientes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de la tabla `profesionales`
 --
 ALTER TABLE `profesionales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT de la tabla `profesional_sucursal`
@@ -519,7 +616,13 @@ ALTER TABLE `sucursales`
 -- AUTO_INCREMENT de la tabla `turnos`
 --
 ALTER TABLE `turnos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
+
+--
+-- AUTO_INCREMENT de la tabla `usuarios`
+--
+ALTER TABLE `usuarios`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Restricciones para tablas volcadas
