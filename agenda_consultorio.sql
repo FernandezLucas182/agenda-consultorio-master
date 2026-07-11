@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 27-06-2026 a las 23:40:20
+-- Tiempo de generación: 07-07-2026 a las 01:41:53
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -62,7 +62,8 @@ INSERT INTO `agendas` (`id`, `profesional_id`, `duracion_turno`, `created_at`, `
 (24, 12, 30, '2026-06-13 18:43:42', 2, 0, 1, 1),
 (25, 12, 30, '2026-06-13 18:43:42', 5, 0, 1, 1),
 (26, 12, 30, '2026-06-13 18:43:42', 9, 0, 1, 1),
-(27, 15, 30, '2026-06-13 18:43:42', 12, 0, 1, 1);
+(27, 15, 30, '2026-06-13 18:43:42', 12, 0, 1, 1),
+(30, 2, 10, '2026-07-03 19:33:47', 2, 0, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -153,7 +154,9 @@ INSERT INTO `agenda_horarios` (`id`, `agenda_id`, `dia_semana`, `hora_inicio`, `
 (134, 27, 2, '09:00:00', '18:00:00'),
 (135, 27, 3, '09:00:00', '18:00:00'),
 (136, 27, 4, '09:00:00', '18:00:00'),
-(137, 27, 5, '09:00:00', '18:00:00');
+(137, 27, 5, '09:00:00', '18:00:00'),
+(139, 30, 2, '20:00:00', '21:00:00'),
+(140, 30, 3, '09:00:00', '12:00:00');
 
 -- --------------------------------------------------------
 
@@ -191,7 +194,8 @@ INSERT INTO `ausencias` (`id`, `fecha_inicio`, `fecha_fin`, `motivo`, `created_a
 (18, '2026-06-26', '2026-06-28', 'viaje+2dia', '2026-06-26 23:22:12', 7),
 (19, '2026-07-30', '2026-08-31', 'Vacaciones', '2026-06-26 23:37:33', 4),
 (20, '2026-07-09', '2026-07-12', 'curso', '2026-06-26 23:38:14', 4),
-(21, '2026-07-07', '2026-07-29', 'enfermedad', '2026-06-27 21:29:07', 8);
+(21, '2026-07-07', '2026-07-29', 'enfermedad', '2026-06-27 21:29:07', 8),
+(22, '2026-07-15', '2026-07-17', 'tratamiento privado', '2026-07-06 23:38:40', 2);
 
 -- --------------------------------------------------------
 
@@ -211,6 +215,7 @@ CREATE TABLE `especialidades` (
 INSERT INTO `especialidades` (`id`, `nombre`) VALUES
 (3, 'Cardiología'),
 (4, 'Dermatología'),
+(14, 'endocrinología'),
 (12, 'Gastroenterología'),
 (11, 'Generalista'),
 (5, 'Kinesiología'),
@@ -243,7 +248,7 @@ CREATE TABLE `pacientes` (
 --
 
 INSERT INTO `pacientes` (`id`, `nombre`, `apellido`, `dni`, `obra_social`, `telefono`, `created_at`, `email`) VALUES
-(1, 'Lucas Fernandez', NULL, '33555997', 'Swiss Medical', NULL, '2026-02-26 06:55:26', 'fernandez19lucas13@gmail.com'),
+(1, 'Lucas Maximiliano', 'Fernandez', '33555997', 'Swiss Medical', '2665250181', '2026-02-26 06:55:26', 'fernandez19lucas13@gmail.com'),
 (2, 'ester', NULL, '14059365', 'femesa', NULL, '2026-03-22 21:37:23', 'esterJL192634@gmail.com'),
 (3, 'Gabriel Guzmán', NULL, '14789253', 'sancor', NULL, '2026-03-24 17:02:49', 'GGuzman@gmail.com'),
 (4, 'olga Jaime', NULL, '24963145', 'dosep', '2665851475', '2026-04-15 01:26:13', NULL),
@@ -294,7 +299,10 @@ INSERT INTO `profesionales` (`id`, `matricula`, `nombre`, `apellido`, `dni`, `te
 (14, '7536986889', 'Luis', 'Carrizo', '19256784', '266789452', 'LuisC19@gmail.com', 'activo', '2026-05-11 17:41:18'),
 (15, '25631478', 'Martin', 'Giuliani', '20456789', '2665874125', 'GiuMartin@gmail.com', 'activo', '2026-05-11 19:53:08'),
 (16, '123587646', 'jose luis', 'gil', '245698753', '2665852369', 'jolui@gmail.com', 'activo', '2026-06-24 17:15:37'),
-(17, '951785469', 'Esteban', 'Ruiz', '27855693', '1145673425', 'estebanquito@gmail.com', 'activo', '2026-06-27 21:17:40');
+(17, '951785469', 'Esteban', 'Ruiz', '27855693', '1145673425', 'estebanquito@gmail.com', 'activo', '2026-06-27 21:17:40'),
+(18, '222759337', 'adrian jeremias', 'peralta', '23567457', '2665852753', 'peralteAdrian1@gmail.com', 'activo', '2026-07-03 21:07:44'),
+(19, '9856478234566', 'Jacobo Martin', 'Lopez', '41258932', '2664789456', 'JacobMartinL@gmail.com', 'activo', '2026-07-06 22:45:20'),
+(20, '555566678', 'Joselin Beatriz', 'Marquez', '2833569851', '11545688796', 'BettyJosie@gmail.com', 'activo', '2026-07-06 22:53:59');
 
 -- --------------------------------------------------------
 
@@ -314,6 +322,7 @@ CREATE TABLE `profesional_especialidad` (
 INSERT INTO `profesional_especialidad` (`profesional_id`, `especialidad_id`) VALUES
 (1, 2),
 (1, 4),
+(2, 2),
 (2, 5),
 (3, 6),
 (4, 6),
@@ -332,7 +341,10 @@ INSERT INTO `profesional_especialidad` (`profesional_id`, `especialidad_id`) VAL
 (14, 8),
 (15, 12),
 (16, 11),
-(17, 13);
+(17, 13),
+(18, 3),
+(19, 14),
+(20, 2);
 
 -- --------------------------------------------------------
 
@@ -352,9 +364,23 @@ CREATE TABLE `profesional_sucursal` (
 
 INSERT INTO `profesional_sucursal` (`id`, `profesional_id`, `sucursal_id`) VALUES
 (1, 1, 1),
+(9, 1, 2),
 (2, 2, 1),
+(7, 3, 1),
+(8, 4, 1),
+(17, 5, 1),
+(11, 5, 2),
+(16, 6, 1),
 (3, 7, 1),
-(6, 7, 2);
+(6, 7, 2),
+(10, 8, 2),
+(15, 9, 1),
+(13, 10, 2),
+(18, 11, 1),
+(19, 12, 1),
+(12, 13, 2),
+(14, 14, 1),
+(20, 15, 1);
 
 -- --------------------------------------------------------
 
@@ -445,7 +471,8 @@ INSERT INTO `turnos` (`id`, `agenda_id`, `paciente_id`, `profesional_id`, `espec
 (63, 10, 9, 13, 11, 2, '2026-06-25', '09:00:00', 'cancelado', 'normal', NULL, '2026-06-24 19:51:49'),
 (64, 14, 10, 6, 4, 1, '2026-07-07', '16:00:00', 'confirmado', 'normal', NULL, '2026-06-24 20:07:46'),
 (65, 27, 1, 15, 12, 1, '2026-07-02', '09:00:00', 'confirmado', 'normal', NULL, '2026-06-27 00:10:57'),
-(66, 4, 6, 4, 6, 1, '2026-07-03', '10:00:00', 'confirmado', 'normal', NULL, '2026-06-27 21:15:59');
+(66, 4, 6, 4, 6, 1, '2026-07-03', '10:00:00', 'confirmado', 'normal', NULL, '2026-06-27 21:15:59'),
+(67, 10, 1, 13, 11, 2, '2026-07-14', '09:50:00', 'reservado', 'normal', NULL, '2026-07-03 21:06:49');
 
 -- --------------------------------------------------------
 
@@ -463,15 +490,18 @@ CREATE TABLE `usuarios` (
   `sucursal_id` int(11) DEFAULT NULL,
   `profesional_id` int(11) DEFAULT NULL,
   `activo` tinyint(1) DEFAULT 1,
-  `creado_en` timestamp NOT NULL DEFAULT current_timestamp()
+  `creado_en` timestamp NOT NULL DEFAULT current_timestamp(),
+  `telefono` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `usuarios`
 --
 
-INSERT INTO `usuarios` (`id`, `username`, `password`, `nombre`, `email`, `rol`, `sucursal_id`, `profesional_id`, `activo`, `creado_en`) VALUES
-(1, 'admin', '$2a$10$hrZiTl1I2Ahpswp1q2/cgeZUBq9BWH2WUvXh2q3vIRNIVQInhxMsO', 'Administrador', 'admin@consultorio.com', 'admin', NULL, NULL, 1, '2026-06-27 20:39:37');
+INSERT INTO `usuarios` (`id`, `username`, `password`, `nombre`, `email`, `rol`, `sucursal_id`, `profesional_id`, `activo`, `creado_en`, `telefono`) VALUES
+(1, 'admin', '$2a$10$hrZiTl1I2Ahpswp1q2/cgeZUBq9BWH2WUvXh2q3vIRNIVQInhxMsO', 'Administrador', 'admin@consultorio.com', 'admin', NULL, NULL, 1, '2026-06-27 20:39:37', NULL),
+(2, 'admin2', '$2a$10$eoWRj.D2qRPwA.vnrIPDOO0Bpw6oOTXbRkCEDdG7/MXEXoaOzeIEa', 'roberto Ferreira', 'RFerreira@gmail.com', 'admin', NULL, NULL, 1, '2026-06-30 20:55:56', NULL),
+(3, 'secretaria1', '$2a$10$6aXi16IkGk5uWlAcPqVMqOTW/m2ua85glpWuiq/wJih/KIGkXSBZK', 'Isabela Rosales', 'isaRosa@gmail.com', 'secretaria', NULL, NULL, 1, '2026-06-30 20:56:57', NULL);
 
 --
 -- Índices para tablas volcadas
@@ -568,7 +598,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `agendas`
 --
 ALTER TABLE `agendas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT de la tabla `agenda_horarios`
@@ -586,7 +616,7 @@ ALTER TABLE `ausencias`
 -- AUTO_INCREMENT de la tabla `especialidades`
 --
 ALTER TABLE `especialidades`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT de la tabla `pacientes`
@@ -598,13 +628,13 @@ ALTER TABLE `pacientes`
 -- AUTO_INCREMENT de la tabla `profesionales`
 --
 ALTER TABLE `profesionales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT de la tabla `profesional_sucursal`
 --
 ALTER TABLE `profesional_sucursal`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT de la tabla `sucursales`
@@ -616,13 +646,13 @@ ALTER TABLE `sucursales`
 -- AUTO_INCREMENT de la tabla `turnos`
 --
 ALTER TABLE `turnos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Restricciones para tablas volcadas
