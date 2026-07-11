@@ -46,7 +46,11 @@ block content
               : ''
           )
             td= paciente.id
-            td= paciente.nombre
+            td
+              if paciente.apellido
+                = `${paciente.apellido}, ${paciente.nombre}`
+              else
+                = paciente.nombre
 
               if paciente.recienCreado
                 span.badge.bg-success.ms-2 NUEVO
@@ -56,7 +60,50 @@ block content
 
             td= paciente.dni
             td= paciente.obra_social
-            td= paciente.contacto
+            td
+              button.btn.btn-info.btn-sm(
+                type="button"
+                data-bs-toggle="modal"
+                data-bs-target=`#contactoModal${paciente.id}`
+              )
+                i.bi.bi-telephone.me-1
+                | Contacto
+
+              .modal.fade(
+                id=`contactoModal${paciente.id}`
+                tabindex="-1"
+                aria-hidden="true"
+              )
+                .modal-dialog
+                  .modal-content
+
+                    .modal-header
+                      h5.modal-title Datos de contacto
+                      button.btn-close(
+                        type="button"
+                        data-bs-dismiss="modal"
+                      )
+
+                    .modal-body
+
+                      p
+                        strong Paciente:
+                        |  #{paciente.nombre} #{paciente.apellido || ''}
+
+                      p
+                        strong Teléfono:
+                        |  #{paciente.telefono || 'Sin teléfono'}
+
+                      p
+                        strong Email:
+                        |  #{paciente.email || 'Sin email'}
+
+                    .modal-footer
+                      button.btn.btn-secondary(
+                        type="button"
+                        data-bs-dismiss="modal"
+                      )
+                        Cerrar
             td
               a(href=`/pacientes/${paciente.id}` class="btn btn-info btn-sm me-1") Ver Detalle
               a(href=`/pacientes/${paciente.id}/editar` class="btn btn-warning btn-sm me-1") Editar

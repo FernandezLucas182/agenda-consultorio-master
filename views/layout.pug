@@ -58,7 +58,7 @@ html
             li.nav-item
               a.nav-link(
                 href='/turnos'
-                class=(currentPath.startsWith('/turnos') ? 'active fw-bold text-warning' : '')
+                class=(currentPath === '/turnos' ? 'active fw-bold text-warning' : '')
               ) Turnos
 
             li.nav-item
@@ -88,8 +88,13 @@ html
             li.nav-item
               a.nav-link(
                 href='/turnos/reprogramaciones'
-                class=(currentPath.startsWith('/turnos/reprogramaciones') ? 'active fw-bold text-warning' : '')
-              ) Reprogramaciones
+                class=(currentPath === '/turnos/reprogramaciones' ? 'active fw-bold text-warning' : '')
+              )
+                | Reprogramaciones
+
+                if cantidadReprogramaciones > 0
+                  span.ms-2.text-danger.fw-bold
+                    | #{cantidadReprogramaciones}
             
 
             li.nav-item
@@ -117,6 +122,13 @@ html
     // Flatpickr
     script(src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js")
     script(src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js")
+    //calendario
+    script(src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js")
+
+    script(src="/js/calendarioTurnos.js")
+
+
+    
     script.
       function showToast(message, type) {
 

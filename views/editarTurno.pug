@@ -22,7 +22,7 @@ block content
 
           p.mb-1
             strong Paciente:
-            |  #{turno.paciente_nombre}
+            |  #{turno.paciente_nombre} #{turno.paciente_apellido || ''}
 
           a.btn.btn-warning.mt-2(
             href=`/pacientes/${turno.paciente_id}/editar`
@@ -133,6 +133,7 @@ block content
                 option(value="confirmado" selected=(turno.estado == 'confirmado')) Confirmado
                 option(value="cancelado" selected=(turno.estado == 'cancelado')) Cancelado
                 option(value="pendiente" selected=(turno.estado == 'pendiente')) Pendiente
+                option(value="reservado" selected=(turno.estado == 'reservado')) Reservado
                 option(value="reservado" selected=(turno.estado == 'reservado')) Reservado
 
           

@@ -28,6 +28,7 @@ class Turno {
         t.tipo_turno,
 
         p.nombre AS paciente_nombre,
+        p.apellido AS paciente_apellido,
         p.telefono AS paciente_telefono,
         p.email AS paciente_email,
         p.obra_social AS paciente_obra_social,
@@ -61,20 +62,32 @@ class Turno {
   //Obtener Por Id
   //=======================
   static obtenerPorId(id, callback) {
+
     const sql = `
-    SELECT 
-      t.*,
-      p.telefono,
-      p.email,
-      p.obra_social,
+    SELECT
+      t.id,
+      t.agenda_id,
+      t.paciente_id,
+      t.profesional_id,
+      t.especialidad_id,
+      t.sucursal_id,
+      t.fecha,
+      t.hora,
+      t.estado,
+      t.tipo_turno,
+
       p.nombre AS paciente_nombre,
+      p.apellido AS paciente_apellido,
+      p.telefono AS paciente_telefono,
+      p.email AS paciente_email,
+      p.obra_social AS paciente_obra_social,
 
       CONCAT(pr.nombre, ' ', pr.apellido)
         AS profesional_nombre,
 
       e.nombre AS especialidad_nombre,
       s.nombre AS sucursal_nombre
-      
+
     FROM turnos t
 
     JOIN pacientes p
@@ -104,6 +117,7 @@ class Turno {
       callback(null, rows[0]);
 
     });
+
   }
 
 
@@ -125,7 +139,7 @@ class Turno {
       ],
       (err, result) => {
 
-        
+
 
         console.log("ERROR CREAR:", err);
 
@@ -769,6 +783,7 @@ LIMIT 1
       t.tipo_turno,
 
       p.nombre AS paciente_nombre,
+      p.apellido AS paciente_apellido,
 
       CONCAT(pr.nombre, ' ', pr.apellido)
         AS profesional_nombre,

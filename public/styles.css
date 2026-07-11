@@ -706,3 +706,165 @@ ESTRELLAS LOGIN
   }
 
 }
+
+
+/* ==========================================
+   FULLCALENDAR - AGENDA MÉDICA
+========================================== */
+
+#calendar {
+  background: #fff;
+  border-radius: 12px;
+  padding: 15px;
+}
+
+/* Título */
+.fc-toolbar-title {
+  font-size: 1.5rem !important;
+  font-weight: 700;
+  color: #0d6efd;
+}
+
+/* Botones */
+.fc .fc-button {
+  border-radius: 8px !important;
+}
+
+/* Cabecera días */
+.fc-col-header-cell {
+  background: #f8f9fa;
+}
+
+/* Día actual */
+.fc .fc-day-today {
+  background-color: rgba(13, 110, 253, .08) !important;
+}
+
+
+/* ==========================================
+   TARJETA TURNO
+========================================== */
+
+.fc-event {
+
+  border: none !important;
+
+  border-radius: 8px !important;
+
+  padding: 3px 5px !important;
+
+  min-height: auto !important;
+
+  font-size: 11px;
+
+  cursor: pointer;
+
+  overflow: hidden;
+
+  transition: .2s;
+
+}
+
+
+/* Hover */
+.fc-event:hover {
+
+  transform: scale(1.02);
+
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .25);
+
+}
+
+
+/* Contenido interno */
+
+.fc-turno {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 1px;
+
+  line-height: 1.15;
+
+}
+
+
+/* Hora */
+
+.fc-turno-hora {
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+}
+
+
+/* Paciente */
+
+.fc-turno-paciente {
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+}
+
+
+/* Profesional */
+
+.fc-turno-profesional {
+
+  font-size: 10px;
+
+  opacity: .85;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+}
+
+
+
+/*=======resaltado de fecha filtrada en turnero*/
+.fc-day-today {
+  background-color: rgba(255, 193, 7, 0.15) !important;
+}
+
+
+.fc-highlight {
+  background-color: rgba(13, 110, 253, 0.25) !important;
+}
+
+
+
+
+
+.dia-filtro-activo {
+  background-color: rgba(255, 193, 7, 0.20) !important;
+}
+
+
+
+.header-dia-filtro {
+    background-color: rgba(255, 193, 7, 0.35) !important;
+}
+
+
+
+
+
+.columna-filtro-activa {
+    background-color: rgba(255, 193, 7, 0.10) !important;
+}

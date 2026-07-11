@@ -11,23 +11,41 @@ block content
   div#toast-container.position-fixed.top-0.end-0.p-3(style="z-index: 9999")
 
   // 🔍 BUSCADOR
-  div.d-flex.gap-2.mb-3
-    form(method="GET" action="/turnos" style="flex:1; display:flex; gap:8px;")
-      input.form-control(
-        type="text"
-        name="q"
-        placeholder="Buscar por paciente, profesional o fecha..."
-        value=q
-      )
-      button.btn.btn-primary(type="submit") Buscar
+  form(method="GET" action="/turnos")
+    .row.g-2.mb-3
 
-    a.btn.btn-secondary(href="/turnos") Mostrar todos
+      .col-md-6
+        input.form-control(
+          type="text"
+          name="q"
+          placeholder="Buscar paciente, profesional o especialidad"
+          value=q
+        )
 
+      .col-md-3
+        input.form-control(
+          type="date"
+          name="fecha"
+          value=fecha
+        )
+
+      .col-md-3.d-flex.gap-2
+        button.btn.btn-primary(type="submit")
+          | Buscar
+
+        a.btn.btn-secondary(href="/turnos")
+          | Mostrar todos
 
   // 🔽 BOTONES ABAJO
   div.d-flex.gap-2.mb-3
     a.btn.btn-primary(href="/turnos/nuevo") Crear nuevo turno
     a.btn.btn-secondary(href="/") Volver al inicio
+  
+  hr
+
+  div.card.shadow.mb-4
+    div.card-body
+      #calendar
 
   
 
@@ -58,7 +76,7 @@ block content
             td= turno.especialidad_nombre
             td= turno.sucursal_nombre
             td= turno.fecha
-            td= turno.hora
+            td= turno.hora.substring(0,5)
             td= turno.estado
             td= turno.tipo_turno || 'normal'
             td

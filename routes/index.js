@@ -129,6 +129,7 @@ router.get('/agendas/disponibilidad/:profesionalId/:especialidadId/:sucursalId',
 console.log("confirmarTurno:", typeof turnosController.confirmarTurno);
 
 router.get('/turnos', turnosController.mostrarTurnos);
+router.get('/turnos/eventos', turnosController.obtenerEventos);
 
 router.get('/turnos/nuevo', turnosController.mostrarFormularioNuevoTurno);
 router.post('/turnos', turnosController.crearTurno);

@@ -32,12 +32,13 @@ block content
           each turno in turnos
 
             tr
-              td= turno.paciente_nombre
+              td
+                | #{turno.paciente_nombre} #{turno.paciente_apellido || ''}
               td= turno.profesional_nombre
               td= turno.especialidad_nombre
               td= turno.sucursal_nombre
               td= new Date(turno.fecha).toLocaleDateString('es-AR')
-              td= turno.hora
+              td= turno.hora.substring(0,5)
               td= turno.tipo_turno
               td
                 span.badge.bg-warning.text-dark

@@ -30,10 +30,13 @@ function formatearFecha(fecha) {
 exports.mostrarTurnos = (req, res) => {
 
   const q = req.query.q?.toLowerCase() || "";
+  const fecha = req.query.fecha || "";
   const nuevoId = req.query.nuevo;
   const editadoId = req.query.editado;
 
   Turno.obtenerTodos((err, turnos) => {
+
+    console.log(turnos[0]);
     if (err) {
       console.error("ERROR REAL:", err);
       return res.status(500).send(err.message);
@@ -41,14 +44,20 @@ exports.mostrarTurnos = (req, res) => {
 
     if (q) {
       turnos = turnos.filter(t => {
+
+        const paciente =
+          `${t.paciente_nombre || ""} ${t.paciente_apellido || ""}`.toLowerCase();
+
         return (
-          (t.paciente_nombre || "").toLowerCase().includes(q) ||
+          paciente.includes(q) ||
           (t.profesional_nombre || "").toLowerCase().includes(q) ||
-          (t.especialidad_nombre || "").toLowerCase().includes(q) ||
-          (t.fecha || "").toString().toLowerCase().includes(q) ||
-          (t.hora || "").toString().toLowerCase().includes(q)
+          (t.especialidad_nombre || "").toLowerCase().includes(q)
         );
+
       });
+    }
+    if (fecha) {
+      turnos = turnos.filter(t => t.fecha === fecha);
     }
 
     turnos = turnos.map(t => ({
@@ -78,6 +87,7 @@ exports.mostrarTurnos = (req, res) => {
     res.render('turnos', {
       turnos,
       q,
+      fecha,
       nuevoTurnoId: req.query.nuevo,
       turnoEditadoId: req.query.editado,
       path: req.path
@@ -760,5 +770,110 @@ exports.obtenerDisponibilidadCalendario = (req, res) => {
 
     }
   );
+
+};
+
+
+exports.obtenerEventos = (req, res) => {
+
+  Turno.obtenerTodos((err, turnos) => {
+
+    if (err) {
+      return res.status(500).json([]);
+    }
+
+    const eventos = turnos.map(t => {
+
+      const fecha = new Date(t.fecha).toISOString().split("T")[0];
+
+
+      // ==========================
+      // FORMATEO PACIENTE
+      // ==========================
+
+      let nombreMostrar = "";
+
+      const nombre = t.paciente_nombre || "";
+      const apellido = t.paciente_apellido || "";
+
+      const partesNombre = nombre.trim().split(" ");
+
+      if (apellido && partesNombre.length > 0) {
+
+        const inicialSegundoNombre =
+          partesNombre.length > 1
+            ? ` ${partesNombre[1].charAt(0)}.`
+            : "";
+
+        nombreMostrar =
+          `${apellido}, ${partesNombre[0]}${inicialSegundoNombre}`;
+
+      } else {
+
+        nombreMostrar = nombre;
+
+      }
+
+
+      // ==========================
+      // HORA SIN SEGUNDOS
+      // ==========================
+
+      const horaMostrar =
+        t.hora ? t.hora.substring(0, 5) : "";
+
+
+      return {
+
+        id: t.id,
+
+        title:
+          `🕘 ${horaMostrar}
+            👤 ${nombreMostrar}
+            🩺 ${t.profesional_nombre}`,
+
+
+        start: `${fecha}T${t.hora}`,
+
+
+        extendedProps: {
+
+          profesional: t.profesional_nombre,
+          especialidad: t.especialidad_nombre,
+          estado: t.estado,
+          sucursal: t.sucursal_nombre,
+          hora: horaMostrar
+
+        },
+
+
+        backgroundColor:
+          t.estado === "confirmado" ? "#198754" :
+            t.estado === "pendiente" ? "#ffc107" :
+              t.estado === "reservado" ? "#0d6efd" :
+                t.estado === "reprogramar" ? "#fd7e14" :
+                  t.estado === "cancelado" ? "#dc3545" :
+                    "#6c757d",
+
+
+        borderColor:
+          t.estado === "confirmado" ? "#198754" :
+            t.estado === "pendiente" ? "#ffc107" :
+              t.estado === "reservado" ? "#0d6efd" :
+                t.estado === "reprogramar" ? "#fd7e14" :
+                  t.estado === "cancelado" ? "#dc3545" :
+                    "#6c757d",
+
+
+        textColor: "#ffffff"
+
+      };
+
+    });
+
+
+    res.json(eventos);
+
+  });
 
 };

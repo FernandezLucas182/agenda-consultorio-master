@@ -8,8 +8,9 @@ exports.mostrarPacientes = (req, res) => {
   const nuevoId = req.query.nuevo;
   const editadoId = req.query.editado;
 
-
   const procesar = pacientes => {
+    
+    console.log("PACIENTES:", pacientes);
 
     pacientes = pacientes.map(p => ({
 
@@ -119,6 +120,8 @@ exports.mostrarEditarPaciente = (req, res) => {
 exports.editarPaciente = (req, res) => {
   const pacienteId = req.params.id;
   const pacienteData = req.body;
+  console.log("PACIENTE ID:", pacienteId);
+  console.log("DATOS RECIBIDOS:", pacienteData);
 
   Paciente.editar(pacienteId, pacienteData, (err) => {
     if (err) {

@@ -59,6 +59,36 @@ app.use((req, res, next) => {
   next();
 });
 
+// =====================
+// CONTADOR REPROGRAMACIONES
+// =====================
+const db = require('./models/Db');
+
+app.use((req, res, next) => {
+
+  db.query(
+    `
+    SELECT COUNT(*) AS total
+    FROM turnos
+    WHERE estado = 'reprogramar'
+    `,
+    (err, rows) => {
+
+      if (err) {
+        console.error("ERROR CONTADOR REPROGRAMACIONES:", err);
+        res.locals.cantidadReprogramaciones = 0;
+      } else {
+        res.locals.cantidadReprogramaciones = rows[0].total;
+      }
+
+      next();
+
+    }
+  );
+
+});
+
+
 
 // =====================
 // routes
