@@ -23,6 +23,8 @@ exports.listarUsuarios = (req, res) => {
 
         if (err) {
             console.error(err);
+
+            
             return res.status(500).send('Error al obtener usuarios');
         }
 

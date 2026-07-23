@@ -5,50 +5,104 @@ class Profesional {
   // ==========================
   // LISTAR TODOS (para gestión)
   // ==========================
-  static obtenerTodos(filtro, callback) {
+  static obtenerTodos(filtro, limite, offset, callback) {
 
     let where = '';
     let params = [];
 
     if (filtro && filtro.trim() !== '') {
       where = `
-      WHERE 
+      WHERE
         p.nombre LIKE ? OR
         p.apellido LIKE ? OR
         p.dni LIKE ? OR
         p.matricula LIKE ?
     `;
+
       const like = `%${filtro}%`;
       params = [like, like, like, like];
     }
 
     const query = `
-    SELECT 
-      p.id, 
-      p.nombre, 
+    SELECT
+      p.id,
+      p.nombre,
       p.apellido,
       p.dni,
       p.telefono,
       p.email,
-      p.estado, 
+      p.estado,
       p.matricula,
       GROUP_CONCAT(e.nombre) AS especialidades
     FROM profesionales p
-    LEFT JOIN profesional_especialidad pe 
+    LEFT JOIN profesional_especialidad pe
       ON p.id = pe.profesional_id
-    LEFT JOIN especialidades e 
+    LEFT JOIN especialidades e
       ON pe.especialidad_id = e.id
     ${where}
     GROUP BY p.id
+    ORDER BY p.apellido, p.nombre
+    LIMIT ?
+    OFFSET ?
   `;
 
-    db.query(query, params, (err, resultados) => {
-      if (err) {
-        console.error("ERROR SQL:", err);
-        return callback(err);
+    db.query(
+      query,
+      [...params, limite, offset],
+      (err, resultados) => {
+
+        if (err) {
+          console.error("ERROR SQL:", err);
+          return callback(err);
+        }
+
+        callback(null, resultados || []);
+
       }
-      callback(null, resultados || []);
-    });
+    );
+
+  }
+
+  static contarTodos(filtro, callback) {
+
+    let where = '';
+    let params = [];
+
+    if (filtro && filtro.trim() !== '') {
+
+      where = `
+      WHERE
+        nombre LIKE ?
+        OR apellido LIKE ?
+        OR dni LIKE ?
+        OR matricula LIKE ?
+    `;
+
+      const like = `%${filtro}%`;
+      params = [like, like, like, like];
+
+    }
+
+    db.query(
+
+      `
+    SELECT COUNT(*) AS total
+    FROM profesionales
+    ${where}
+    `,
+
+      params,
+
+      (err, rows) => {
+
+        if (err) return callback(err);
+
+        callback(null, rows[0].total);
+
+      }
+
+    );
+
   }
 
 

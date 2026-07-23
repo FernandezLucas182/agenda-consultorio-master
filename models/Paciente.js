@@ -114,6 +114,45 @@ class Paciente {
     );
   }
 
+  static obtenerPaginados(limit, offset, callback) {
+
+    db.query(
+      `
+      SELECT *
+      FROM pacientes
+      ORDER BY apellido, nombre
+      LIMIT ? OFFSET ?
+      `,
+      [limit, offset],
+      (err, resultados) => {
+
+        if (err) return callback(err);
+
+        callback(null, resultados || []);
+
+      }
+    );
+
+  }
+
+  static contarPacientes(callback) {
+
+    db.query(
+      `
+      SELECT COUNT(*) AS total
+      FROM pacientes
+      `,
+      (err, resultados) => {
+
+        if (err) return callback(err);
+
+        callback(null, resultados[0].total);
+
+      }
+    );
+
+  }
+
 }
 
 module.exports = Paciente;

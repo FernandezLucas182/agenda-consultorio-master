@@ -47,10 +47,18 @@ router.get('/', (req, res) => {
   }
 
   const sql = `
-        SELECT COUNT(*) AS total
-        FROM turnos
-        WHERE estado = 'reprogramar'
-    `;
+    SELECT 
+      COUNT(*) AS totalReprogramaciones
+    FROM turnos
+    WHERE estado = 'reprogramar'
+`;
+
+  const sqlAusencias = `
+    SELECT 
+      COUNT(*) AS totalSolicitudesAusencias
+    FROM solicitudes_ausencias
+    WHERE estado = 'pendiente'
+`;
 
   db.query(sql, (err, rows) => {
 
@@ -61,10 +69,21 @@ router.get('/', (req, res) => {
       });
     }
 
-    res.render('index', {
-      totalReprogramaciones: rows[0].total,
-      path: req.path,
-      usuario: req.session.user
+    db.query(sqlAusencias, (err2, rows2) => {
+
+      res.render('index', {
+
+        totalReprogramaciones: rows[0].total,
+
+        cantidadSolicitudesAusencias:
+          rows2[0].totalSolicitudesAusencias,
+
+        path: req.path,
+
+        usuario: req.session.user
+
+      });
+
     });
 
   });
@@ -85,28 +104,30 @@ router.get('/logout', authController.logout);
 //====================================
 //Middleware - Autorizaciones
 //====================================
-router.get(
-  '/agendas',
-  isAuthenticated,
-  authorize('admin', 'secretaria', 'medico'),
-  agendaController.mostrarAgendas
-);
+router.get('/agendas', isAuthenticated, authorize('admin', 'secretaria', 'medico'), agendaController.mostrarAgendas);
 
-router.get('/agendas/nueva', agendaController.formularioNuevaAgenda);
-router.post('/agendas/nueva', agendaController.crearAgendaBase);
+router.get('/agendas/nueva', isAuthenticated, authorize('admin', 'secretaria'), agendaController.formularioNuevaAgenda);
 
-router.get('/agendas/horarios/nuevo', agendaController.formularioNuevoHorario);
-router.post('/agendas/horarios', agendaController.agregarHorario);
+router.post('/agendas/nueva', isAuthenticated, authorize('admin', 'secretaria'), agendaController.crearAgendaBase);
 
-router.get('/agendas/:id', agendaController.detalleAgenda);
-router.get('/agendas/:id/editar', agendaController.formularioEditarAgenda);
-router.get('/agendas/:id/copiar', agendaController.formularioCopiarAgenda);
-router.post('/agendas/:id/editar', agendaController.editarAgenda);
+router.get('/agendas/horarios/nuevo', isAuthenticated, authorize('admin', 'secretaria'), agendaController.formularioNuevoHorario);
+
+router.post('/agendas/horarios', isAuthenticated, authorize('admin', 'secretaria'), agendaController.agregarHorario);
+
+
+
+router.get('/agendas/:id/editar', isAuthenticated, authorize('admin', 'secretaria'), agendaController.formularioEditarAgenda);
+
+
+router.get('/agendas/:id/copiar', isAuthenticated, authorize('admin', 'secretaria'), agendaController.formularioCopiarAgenda);
+
+
+router.post('/agendas/:id/editar', isAuthenticated, authorize('admin', 'secretaria'), agendaController.editarAgenda);
 
 //=================
 //DISPONIBILIDAD
 //=================
-router.get('/agendas/disponibilidad/:profesionalId/:especialidadId/:sucursalId', (req, res) => {
+router.get('/agendas/disponibilidad/:profesionalId/:especialidadId/:sucursalId', isAuthenticated, authorize('admin', 'secretaria', 'medico'), (req, res) => {
 
   Agenda.verificarDisponibilidad(
     req.params.profesionalId,
@@ -121,6 +142,8 @@ router.get('/agendas/disponibilidad/:profesionalId/:especialidadId/:sucursalId',
   );
 });
 
+router.get('/agendas/:id', isAuthenticated, authorize('admin', 'secretaria', 'medico'), agendaController.detalleAgenda);
+
 
 // =====================
 // TURNOS
@@ -128,10 +151,17 @@ router.get('/agendas/disponibilidad/:profesionalId/:especialidadId/:sucursalId',
 
 console.log("confirmarTurno:", typeof turnosController.confirmarTurno);
 
-router.get('/turnos', turnosController.mostrarTurnos);
-router.get('/turnos/eventos', turnosController.obtenerEventos);
+router.get('/mis-turnos', isAuthenticated, authorize('medico'), turnosController.mostrarMisTurnos);
+
+router.get('/turnos', isAuthenticated, authorize('admin', 'secretaria'), turnosController.mostrarTurnos);
+
+router.get('/turnos/eventos', isAuthenticated, authorize('admin', 'secretaria'), turnosController.obtenerEventosTodos);
+
+
+router.get('/mis-turnos/eventos', isAuthenticated, authorize('medico'), turnosController.obtenerEventosMisTurnos);
 
 router.get('/turnos/nuevo', turnosController.mostrarFormularioNuevoTurno);
+
 router.post('/turnos', turnosController.crearTurno);
 
 router.get(
@@ -145,15 +175,11 @@ router.get(
 //ruteo para reprogramacionTurnos
 //================================
 
-router.get(
-  '/turnos/reprogramaciones',
-  turnosController.mostrarReprogramaciones
-);
+router.get('/turnos/reprogramaciones', turnosController.mostrarReprogramaciones);
 
+router.get('/turnos/:id/editar', isAuthenticated, authorize('admin', 'secretaria'), turnosController.mostrarFormularioEditarTurno);
 
-
-router.get('/turnos/:id/editar', turnosController.mostrarFormularioEditarTurno);
-router.post('/turnos/:id/editar', turnosController.editarTurno);
+router.post('/turnos/:id/editar', isAuthenticated, authorize('admin', 'secretaria'), turnosController.editarTurno);
 
 router.post('/turnos/:id/eliminar', turnosController.eliminarTurno);
 
@@ -167,13 +193,42 @@ router.get('/turnos/:id', turnosController.mostrarTurno);
 
 
 
-router.get('/ausencias', ausenciasController.listarAusencias);
-router.get('/ausencias/nueva', ausenciasController.mostrarFormulario);
-router.post('/ausencias/nueva', ausenciasController.crearAusencia);
+router.get('/ausencias', isAuthenticated, authorize('admin', 'secretaria', 'medico'), ausenciasController.listarAusencias);
+
+router.get(
+  '/ausencias/solicitar',
+  isAuthenticated,
+  authorize('medico'),
+  ausenciasController.mostrarFormularioSolicitud
+);
+
+
+router.post('/ausencias/solicitar', isAuthenticated, authorize('medico'), ausenciasController.crearSolicitudAusencia);
+
+router.post('/ausencias/solicitud/:id/aprobar', isAuthenticated, authorize('admin','secretaria'), ausenciasController.aprobarSolicitud);
+
+
+router.post('/ausencias/solicitud/:id/rechazar', isAuthenticated, authorize('admin','secretaria'), ausenciasController.rechazarSolicitud);
+
+
+
+
+
+router.get('/ausencias/nueva', isAuthenticated, authorize('admin'), ausenciasController.mostrarFormulario);
+
+
+router.post('/ausencias/nueva', isAuthenticated, authorize('admin'), ausenciasController.crearAusencia);
+
 router.get('/confirmar-turno/:token', turnosController.confirmarTurno);
-router.get('/ausencias/:id/editar', ausenciasController.mostrarFormularioEditar);
-router.post('/ausencias/:id/editar', ausenciasController.editarAusencia);
+
+router.get('/ausencias/:id/editar', isAuthenticated, authorize('admin', 'secretaria'), ausenciasController.mostrarFormularioEditar);
+
+router.post('/ausencias/:id/editar', isAuthenticated, authorize('admin', 'secretaria'), ausenciasController.editarAusencia);
+
 router.get('/ausencias/agenda/:id', ausenciasController.obtenerAusenciasAgenda);
+
+
+
 
 
 // =====================
@@ -229,99 +284,51 @@ router.get(
 // PROFESIONALES
 // =====================
 
-router.get(
-  '/profesionales',
-  isAuthenticated,
-  authorize('admin'),
-  profesionalController.mostrarProfesional
-);
+router.get('/profesionales', isAuthenticated, authorize('admin'), profesionalController.mostrarProfesional);
 
 router.get('/profesionales/nuevo', profesionalController.formularioNuevoProfesional);
+
 router.post('/profesionales/nuevo', profesionalController.crearProfesional);
 
 router.get('/profesionales/:id/editar', profesionalController.formularioEditarProfesional);
+
 router.post('/profesionales/:id/editar', profesionalController.editarProfesional);
 
 router.post('/profesionales/:id/inactivar', profesionalController.inactivarProfesional);
+
 router.post('/profesionales/:id/activar', profesionalController.activarProfesional);
 
 
-router.get(
-  '/usuarios',
-  isAuthenticated,
-  authorize('admin'),
-  usuarioController.listarUsuarios
-);
+router.get('/usuarios', isAuthenticated, authorize('admin'), usuarioController.listarUsuarios);
 
-router.get(
-  '/usuarios/nuevo',
-  isAuthenticated,
-  authorize('admin'),
-  usuarioController.formularioNuevoUsuario
-);
+router.get('/usuarios/nuevo', isAuthenticated, authorize('admin'), usuarioController.formularioNuevoUsuario);
 
-router.post(
-  '/usuarios/nuevo',
-  isAuthenticated,
-  authorize('admin'),
-  usuarioController.crearUsuario
-);
+router.post('/usuarios/nuevo', isAuthenticated, authorize('admin'), usuarioController.crearUsuario);
 
 // ====================
 // EDITAR USUARIO
 // ====================
 
-router.get(
-  '/usuarios/:id/editar',
-  isAuthenticated,
-  authorize('admin'),
-  usuarioController.formularioEditarUsuario
-);
+router.get('/usuarios/:id/editar', isAuthenticated, authorize('admin'), usuarioController.formularioEditarUsuario);
 
-router.post(
-  '/usuarios/:id/editar',
-  isAuthenticated,
-  authorize('admin'),
-  usuarioController.editarUsuario
-
-);
+router.post('/usuarios/:id/editar', isAuthenticated, authorize('admin'), usuarioController.editarUsuario);
 
 
 // ====================
 // CAMBIAR CONTRASEÑA
 // ====================
 
-router.get(
-  '/usuarios/:id/password',
-  isAuthenticated,
-  authorize('admin'),
-  usuarioController.formularioPassword
-);
+router.get('/usuarios/:id/password', isAuthenticated, authorize('admin'), usuarioController.formularioPassword);
 
-router.post(
-  '/usuarios/:id/password',
-  isAuthenticated,
-  authorize('admin'),
-  usuarioController.guardarPassword
-);
+router.post('/usuarios/:id/password', isAuthenticated, authorize('admin'), usuarioController.guardarPassword);
 
 // ====================
 // RESETEAR CONTRASEÑA
 // ====================
 
-router.get(
-  '/usuarios/:id/reset-password',
-  isAuthenticated,
-  authorize('admin'),
-  usuarioController.resetPassword
-);
+router.get('/usuarios/:id/reset-password', isAuthenticated, authorize('admin'), usuarioController.resetPassword);
 
-router.get(
-  '/usuarios/:id/password-generada',
-  isAuthenticated,
-  authorize('admin'),
-  usuarioController.mostrarPasswordGenerada
-);
+router.get('/usuarios/:id/password-generada', isAuthenticated, authorize('admin'), usuarioController.mostrarPasswordGenerada);
 
 //==========================
 //SUCURSALES-PROFESIONAL

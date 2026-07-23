@@ -122,33 +122,45 @@ class Turno {
 
 
   static crear(data, callback) {
-    console.log("INSERTANDO", data);
-    db.query(
-      `INSERT INTO turnos
-     (agenda_id, paciente_id, profesional_id, especialidad_id, sucursal_id, fecha, hora, estado, tipo_turno)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'reservado', ?)`,
-      [
-        data.agenda_id,
-        data.paciente_id,
-        data.profesional_id,
-        data.especialidad_id,
-        data.sucursal_id,
-        data.fecha,
-        data.hora,
-        data.tipo_turno || 'normal'
-      ],
-      (err, result) => {
 
+    this.existeTurnoEnHorario(
+      data.profesional_id,
+      data.fecha,
+      normalizarHora(data.hora),
+      (err, existe) => {
 
+        if (err) {
+          return callback(err);
+        }
 
-        console.log("ERROR CREAR:", err);
+        if (existe && data.tipo_turno === "normal") {
+          return callback(
+            new Error("Horario ocupado")
+          );
+        }
 
-        console.log("RESULTADO INSERT:", result);
+        console.log("INSERTANDO", data);
 
-        callback(err, result);
+        db.query(
+          `INSERT INTO turnos
+                (agenda_id,paciente_id,profesional_id,especialidad_id,sucursal_id,fecha,hora,estado,tipo_turno)
+                VALUES (?,?,?,?,?,?,?,'reservado',?)`,
+          [
+            data.agenda_id,
+            data.paciente_id,
+            data.profesional_id,
+            data.especialidad_id,
+            data.sucursal_id,
+            data.fecha,
+            data.hora,
+            data.tipo_turno || "normal"
+          ],
+          callback
+        );
+
       }
-
     );
+
   }
 
   static actualizar(id, data, callback) {
@@ -156,6 +168,7 @@ class Turno {
     console.log(id);
     console.log(data);
 
+    const hora = normalizarHora(data.hora);
 
     const sql = `
 
@@ -746,7 +759,7 @@ LIMIT 1
     FROM turnos
     WHERE profesional_id = ?
       AND fecha BETWEEN ? AND ?
-      AND estado IN ('reservado', 'confirmado')
+      AND estado IN ('reservado','confirmado','pendiente')
     GROUP BY fecha
   `;
 
@@ -816,8 +829,59 @@ LIMIT 1
   }
 
 
+  //=========================================
+  // TURNOS DE UN PROFESIONAL
+  //=========================================
+  static obtenerPorProfesional(profesionalId, callback) {
+
+    const sql = `
+      SELECT
+        t.id,
+        t.fecha,
+        t.hora,
+        t.estado,
+        t.tipo_turno,
+
+        p.nombre AS paciente_nombre,
+        p.apellido AS paciente_apellido,
+        p.telefono AS paciente_telefono,
+        p.email AS paciente_email,
+        p.obra_social AS paciente_obra_social,
+
+        CONCAT(pr.nombre, ' ', pr.apellido)
+          AS profesional_nombre,
+
+        e.nombre AS especialidad_nombre,
+        s.nombre AS sucursal_nombre
+
+      FROM turnos t
+
+      JOIN pacientes p
+        ON t.paciente_id = p.id
+
+      JOIN profesionales pr
+        ON t.profesional_id = pr.id
+
+      JOIN especialidades e
+        ON t.especialidad_id = e.id
+
+      LEFT JOIN sucursales s
+        ON t.sucursal_id = s.id
+
+      WHERE t.profesional_id = ?
+
+      ORDER BY t.fecha DESC, t.hora ASC
+    `;
+
+    db.query(sql, [profesionalId], callback);
+
+  }
 
 }
+
+
+
+
 
 
 

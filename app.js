@@ -63,6 +63,7 @@ app.use((req, res, next) => {
 // CONTADOR REPROGRAMACIONES
 // =====================
 const db = require('./models/Db');
+const SolicitudAusencia = require('./models/SolicitudAusencia');
 
 app.use((req, res, next) => {
 
@@ -88,6 +89,43 @@ app.use((req, res, next) => {
 
 });
 
+
+
+
+// =====================
+// CONTADOR SOLICITUDES AUSENCIAS
+// =====================
+
+
+
+app.use((req, res, next) => {
+
+  if (
+    req.session.user &&
+    (req.session.user.rol === 'admin' || req.session.user.rol === 'secretaria')
+  ) {
+
+    SolicitudAusencia.contarPendientes((err, total) => {
+
+      if (err) {
+        console.error("ERROR CONTADOR AUSENCIAS:", err);
+        res.locals.cantidadSolicitudesAusencias = 0;
+      } else {
+        res.locals.cantidadSolicitudesAusencias = total;
+      }
+
+      next();
+
+    });
+
+  } else {
+
+    res.locals.cantidadSolicitudesAusencias = 0;
+    next();
+
+  }
+
+});
 
 
 // =====================

@@ -1,24 +1,23 @@
 extends layout
 
 block title
-  | Lista de Turnos
+  | Mis Turnos
 
 block content
-  h1 Lista de Turnos
+  h1 Mis Turnos
 
-  
   // 🔔 MENSAJES FLASH
   div#toast-container.position-fixed.top-0.end-0.p-3(style="z-index: 9999")
 
   // 🔍 BUSCADOR
-  form(method="GET" action="/turnos")
+  form(method="GET" action="/mis-turnos")
     .row.g-2.mb-3
 
       .col-md-6
         input.form-control(
           type="text"
           name="q"
-          placeholder="Buscar paciente, profesional o especialidad"
+          placeholder="Buscar paciente o especialidad"
           value=q
         )
 
@@ -33,74 +32,54 @@ block content
         button.btn.btn-primary(type="submit")
           | Buscar
 
-        a.btn.btn-secondary(href="/turnos")
+        a.btn.btn-secondary(href="/mis-turnos")
           | Mostrar todos
 
-  // 🔽 BOTONES ABAJO
+  // 🔽 BOTONES
   div.d-flex.gap-2.mb-3
-    a.btn.btn-primary(href="/turnos/nuevo") Crear nuevo turno
     a.btn.btn-secondary(href="/") Volver al inicio
-  
+
   hr
 
   div.card.shadow.mb-4
     div.card-body
       #calendar
 
-  
-
   if turnos.length > 0
     table.table.table-striped
       thead
         tr
           th Paciente
-          th Profesional
           th Especialidad
-          th Sucursal
           th Fecha
           th Hora
           th Estado
           th Tipo
           th Acciones
+
       tbody
-        
+
         each turno in turnos
           tr(class={
             'turno-recien-creado': turno.recienCreado,
             'turno-recien-editado': turno.recienEditado
           })
-                    
-          
+
             td= turno.paciente_nombre
-            td= turno.profesional_nombre
             td= turno.especialidad_nombre
-            td= turno.sucursal_nombre
             td= turno.fecha
             td= turno.hora.substring(0,5)
             td= turno.estado
             td= turno.tipo_turno || 'normal'
+
             td
-              form(action=`/turnos/${turno.id}/eliminar`, method='POST', style='display:inline')
-                button(type='submit' class='btn btn-danger btn-sm me-1') Eliminar
-
-              a.btn.btn-warning.btn-sm.me-1(
-                href=`/turnos/${turno.id}/editar`
-              ) Editar
-
-              a.btn.btn-info.btn-sm.me-1(
+              a(
                 href=`/turnos/${turno.id}`
-              ) Ver detalle
+                class='btn btn-info btn-sm'
+              ) Ver Detalle
 
-              a.btn.btn-success.btn-sm(
-                href=`/turnos?fecha=${turno.fechaISO}`
-              ) ver en📅 
   else
     p.alert.alert-info No hay turnos disponibles.
 
   div.mt-3
-    a(href='/turnos/nuevo' class="btn btn-primary") Crear nuevo turno
-    a(href='/' class="btn btn-secondary ms-2") Volver al inicio
-
-
-
-  
+    a(href='/' class="btn btn-secondary") Volver al inicio

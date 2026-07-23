@@ -31,7 +31,11 @@ class Agenda {
 
 
 
-  static obtenerAgendaCompleta(buscar, callback) {
+  static obtenerAgendaCompleta(buscar, usuario, callback) {
+    if (typeof buscar !== 'string') {
+      buscar = '';
+    }
+
 
     let sql = `
       SELECT 
@@ -59,6 +63,15 @@ class Agenda {
     `;
 
     let params = [];
+
+    // 🔥 FILTRO POR ROL MÉDICO
+    if (usuario && usuario.rol === 'medico') {
+      sql += `
+        AND a.profesional_id = ?
+      `;
+
+      params.push(usuario.profesional_id);
+    }
 
     if (buscar) {
       sql += `
@@ -507,13 +520,23 @@ class Agenda {
         }
 
         connection.query(
-          `SELECT id
-         FROM agendas
-         WHERE profesional_id = ?
-           AND especialidad_id = ?
-           AND sucursal_id = ?
-           AND activo = 1`,
-          [profesional_id, especialidad_id, sucursal_id],
+          `
+          SELECT id
+          FROM agendas
+          WHERE profesional_id = ?
+            AND especialidad_id = ?
+            AND (
+                  sucursal_id = ?
+                  OR (? IS NULL AND sucursal_id IS NULL)
+                )
+            AND activo = 1
+          `,
+          [
+            profesional_id,
+            especialidad_id,
+            sucursal_id,
+            sucursal_id
+          ],
           (err, existente) => {
 
             if (err) {
@@ -732,7 +755,29 @@ class Agenda {
 
   static verificarDisponibilidad(profesional_id, especialidad_id, sucursal_id, callback) {
 
-    const sql = `
+    let sql;
+    let params;
+
+    if (!sucursal_id || sucursal_id === "null" || sucursal_id === "sin") {
+
+      sql = `
+      SELECT id
+      FROM agendas
+      WHERE profesional_id = ?
+        AND especialidad_id = ?
+        AND sucursal_id IS NULL
+        AND activo = 1
+      LIMIT 1
+    `;
+
+      params = [
+        profesional_id,
+        especialidad_id
+      ];
+
+    } else {
+
+      sql = `
       SELECT id
       FROM agendas
       WHERE profesional_id = ?
@@ -742,10 +787,22 @@ class Agenda {
       LIMIT 1
     `;
 
-    db.query(sql, [profesional_id, especialidad_id, sucursal_id], (err, rows) => {
+      params = [
+        profesional_id,
+        especialidad_id,
+        sucursal_id
+      ];
+    }
+
+
+    db.query(sql, params, (err, rows) => {
+
       if (err) return callback(err);
+
       callback(null, rows.length === 0);
+
     });
+
   }
 
 }

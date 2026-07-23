@@ -1,0 +1,63 @@
+extends layout
+
+block title
+  | Solicitar Ausencia
+
+block content
+
+  h1 Solicitar Ausencia
+
+  form(
+    action="/ausencias/solicitar"
+    method="POST"
+  )
+
+    // El médico no elige el profesional
+    input(
+      type="hidden"
+      name="agenda_id"
+      value=agenda.id
+    )
+
+    .mb-3
+      label.form-label Profesional
+
+      input.form-control(
+        type="text"
+        value=agenda.nombre_completo
+        readonly
+      )
+
+    .mb-3
+      label.form-label Desde
+
+      input.form-control(
+        type="date"
+        name="fecha_inicio"
+        required
+      )
+
+    .mb-3
+      label.form-label Hasta
+
+      input.form-control(
+        type="date"
+        name="fecha_fin"
+        required
+      )
+
+    .mb-3
+      label.form-label Motivo
+
+      textarea.form-control(
+        name="motivo"
+        rows="4"
+        required
+      )
+
+    .mt-4
+      button.btn.btn-primary(type="submit")
+        | Enviar Solicitud
+
+      a.btn.btn-secondary.ms-2(href="/ausencias")
+        | Cancelar

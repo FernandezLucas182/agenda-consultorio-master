@@ -9,44 +9,61 @@ exports.mostrarProfesional = (req, res) => {
   const nuevoId = req.query.nuevo;
   const editadoId = req.query.editado;
 
-  Profesional.obtenerTodos(filtro, (err, profesionales) => {
+  const pagina = parseInt(req.query.page) || 1;
+  const limite = 15;
+  const offset = (pagina - 1) * limite;
+
+  Profesional.contarTodos(filtro, (err, total) => {
 
     if (err)
-      return res.status(500).send('Error al obtener los profesionales');
+      return res.status(500).send('Error al contar profesionales');
 
 
-    profesionales = profesionales.map(p => ({
+    const totalPaginas = Math.ceil(total / limite);
 
-      ...p,
+    Profesional.obtenerTodos(filtro, limite, offset, (err, profesionales) => {
 
-      recienCreado:
-        Number(p.id) === Number(nuevoId),
-
-      recienEditado:
-        Number(p.id) === Number(editadoId)
-
-    }));
+      if (err)
+        return res.status(500).send('Error al obtener los profesionales');
 
 
-    profesionales.sort((a, b) => {
+      profesionales = profesionales.map(p => ({
 
-      if (a.recienCreado !== b.recienCreado)
-        return a.recienCreado ? -1 : 1;
+        ...p,
 
-      if (a.recienEditado !== b.recienEditado)
-        return a.recienEditado ? -1 : 1;
+        recienCreado:
+          Number(p.id) === Number(nuevoId),
 
-      return 0;
+        recienEditado:
+          Number(p.id) === Number(editadoId)
 
-    });
+      }));
 
 
-    res.render('listaProfesional', {
+      profesionales.sort((a, b) => {
 
-      profesionales,
-      filtro,
+        if (a.recienCreado !== b.recienCreado)
+          return a.recienCreado ? -1 : 1;
 
-      path: req.path
+        if (a.recienEditado !== b.recienEditado)
+          return a.recienEditado ? -1 : 1;
+
+        return 0;
+
+      });
+
+
+      res.render('listaProfesional', {
+
+        profesionales,
+        filtro,
+
+        pagina,
+        totalPaginas,
+
+        path: req.path
+
+      });
 
     });
 

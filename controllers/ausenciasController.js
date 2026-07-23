@@ -2,6 +2,7 @@ const Ausencia = require('../models/Ausencia');
 const db = require('../models/Db');
 const { formatearFecha } = require('../utils/fechas');
 const { procesarAusencia } = require('../services/reprogramacionService');
+const SolicitudAusencia = require('../models/SolicitudAusencia');
 
 exports.mostrarFormulario = (req, res) => {
 
@@ -28,6 +29,44 @@ exports.mostrarFormulario = (req, res) => {
   );
 };
 
+// ==========================
+// FORMULARIO SOLICITAR AUSENCIA (MÉDICO)
+// ==========================
+
+exports.mostrarFormularioSolicitud = (req, res) => {
+
+  const profesionalId = req.session.user.profesional_id;
+
+  db.query(
+    `
+      SELECT
+        ag.id,
+        CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo
+      FROM agendas ag
+      JOIN profesionales p
+        ON ag.profesional_id = p.id
+      WHERE ag.profesional_id = ?
+        AND ag.activo = 1
+    `,
+    [profesionalId],
+    (err, profesionales) => {
+
+      if (err) {
+        console.error(err);
+        return res.status(500).send("Error cargando formulario");
+      }
+
+      res.render("solicitarAusencia", {
+        agenda: profesionales[0],
+        usuario: req.session.user,
+        path: req.path
+      });
+
+    }
+  );
+
+};
+
 exports.crearAusencia = (req, res) => {
   console.log("🔥 BODY AUSENCIA:", req.body);
 
@@ -52,54 +91,138 @@ exports.crearAusencia = (req, res) => {
   );
 };
 
+
+// ==========================
+// CREAR SOLICITUD DE AUSENCIA (MÉDICO)
+// ==========================
+
+exports.crearSolicitudAusencia = (req, res) => {
+
+  console.log("🔥 BODY SOLICITUD AUSENCIA:", req.body);
+
+
+  const {
+    agenda_id,
+    fecha_inicio,
+    fecha_fin,
+    motivo
+  } = req.body;
+
+
+  SolicitudAusencia.crear(
+    {
+      agenda_id,
+      fecha_inicio,
+      fecha_fin,
+      motivo
+    },
+
+    (err) => {
+
+      if (err) {
+        console.error("❌ ERROR SOLICITUD:", err);
+        return res.status(500).send(err.sqlMessage || err.message);
+      }
+
+
+      console.log("✅ SOLICITUD CREADA");
+
+
+      res.redirect('/ausencias');
+    }
+  );
+
+};
+
+
 exports.listarAusencias = (req, res) => {
 
   const buscar = req.query.buscar || '';
+  const fecha = req.query.fecha || '';
+
+  const usuario = req.session.user;
 
   const nuevoId = req.query.nuevo;
   const editadoId = req.query.editado;
 
-  Ausencia.obtenerTodas(buscar, (err, ausencias) => {
+  Ausencia.obtenerConfirmadas(buscar, fecha, usuario, (err, ausencias) => {
 
     if (err) {
       console.error("ERROR EN AUSENCIAS:", err);
       return res.status(500).send("Error en ausencias");
     }
 
-    ausencias = (ausencias || []).map(a => ({
 
-      ...a,
+    // =====================================
+    // SOLICITUDES PENDIENTES ADMIN
+    // =====================================
 
-      fecha_inicio: formatearFecha(a.fecha_inicio),
-      fecha_fin: formatearFecha(a.fecha_fin),
+    SolicitudAusencia.obtenerPendientes((err2, solicitudes) => {
+      console.log("SOLICITUDES PENDIENTES:", solicitudes);
 
-      recienCreado:
-        Number(a.id) === Number(nuevoId),
 
-      recienEditado:
-        Number(a.id) === Number(editadoId)
+      if (err2) {
 
-    }));
+        console.error(
+          "ERROR SOLICITUDES AUSENCIA:",
+          err2
+        );
 
-    ausencias.sort((a, b) => {
+        solicitudes = [];
 
-      if (a.recienCreado !== b.recienCreado)
-        return a.recienCreado ? -1 : 1;
+      }
 
-      if (a.recienEditado !== b.recienEditado)
-        return a.recienEditado ? -1 : 1;
 
-      return 0;
+
+      ausencias = (ausencias || []).map(a => ({
+
+
+        ...a,
+
+
+        fecha_inicio: formatearFecha(a.fecha_inicio),
+
+        fecha_fin: formatearFecha(a.fecha_fin),
+
+
+        recienCreado:
+          Number(a.id) === Number(nuevoId),
+
+
+        recienEditado:
+          Number(a.id) === Number(editadoId)
+
+
+      }));
+
+      console.log("ENVIANDO A PUG:", solicitudes);
+
+
+
+
+      res.render('ausencias', {
+
+        ausencias,
+
+        solicitudes,
+
+
+        buscar,
+
+        path: req.path,
+
+        fecha,
+
+        usuario: req.session.user
+
+      });
+
+
 
     });
 
-    res.render('ausencias', {
-      ausencias,
-      buscar,
-      path: req.path
-    });
+
   });
-
 };
 
 exports.mostrarFormularioEditar = (req, res) => {
@@ -258,5 +381,81 @@ exports.obtenerAusenciasAgenda = (req, res) => {
     res.json(resultado);
 
   });
+
+};
+
+
+exports.aprobarSolicitud = (req, res) => {
+
+
+  const id = req.params.id;
+
+
+  db.query(
+    `
+    SELECT *
+    FROM solicitudes_ausencias
+    WHERE id=?
+    `,
+    [id],
+    (err, solicitud) => {
+
+
+      if (err || !solicitud[0]) {
+        return res.redirect('/ausencias');
+      }
+
+
+      const s = solicitud[0];
+
+
+      Ausencia.crear(
+        {
+          agenda_id: s.agenda_id,
+          fecha_inicio: s.fecha_inicio,
+          fecha_fin: s.fecha_fin,
+          motivo: s.motivo
+        },
+
+        () => {
+
+
+          SolicitudAusencia.aprobar(
+            id,
+            () => {
+
+              procesarAusencia(
+                s.agenda_id,
+                s.fecha_inicio,
+                s.fecha_fin
+              );
+
+
+              res.redirect('/ausencias');
+
+            }
+          );
+
+        }
+      );
+
+
+    }
+  );
+
+
+};
+
+
+exports.rechazarSolicitud = (req, res) => {
+
+
+  SolicitudAusencia.rechazar(
+    req.params.id,
+    () => {
+      res.redirect('/ausencias');
+    }
+  );
+
 
 };

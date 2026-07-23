@@ -19,13 +19,44 @@ block content
     a.btn.btn-secondary(href="/profesionales") Mostrar todos
   
 
-    
-
   .actions.mb-3
     a(href="/profesionales/nuevo" class="btn btn-primary") Agregar Nuevo Profesional
     a(href="/" class="btn btn-secondary ms-2") Volver a pagina principal
 
+
   if profesionales.length > 0
+
+    // ==========================
+    // PAGINACION ARRIBA
+    // ==========================
+    if totalPaginas > 1
+      nav.mt-3
+        ul.pagination.justify-content-center
+
+          li.page-item(class=pagina <= 1 ? 'disabled' : '')
+            a.page-link(
+              href=`/profesionales?page=${pagina - 1}&buscar=${filtro}`
+            )
+              | ← Anterior
+
+
+          each numero in [...Array(totalPaginas).keys()].map(i => i + 1)
+
+            li.page-item(class=numero === pagina ? 'active' : '')
+              a.page-link(
+                href=`/profesionales?page=${numero}&buscar=${filtro}`
+              )
+                = numero
+
+
+          li.page-item(class=pagina >= totalPaginas ? 'disabled' : '')
+            a.page-link(
+              href=`/profesionales?page=${pagina + 1}&buscar=${filtro}`
+            )
+              | Siguiente →
+
+
+
     div.table-responsive
       table.table.table-striped.table-bordered.table-hover
         thead
@@ -39,37 +70,126 @@ block content
             th Estado
             th Especialidades
             th Acciones
+
         tbody
           each profesional in profesionales
-            tr(class=profesional.recienCreado ? 'table-success' : profesional.recienEditado ? 'table-warning' : '')
+
+            tr(
+              class=profesional.recienCreado 
+              ? 'table-success' 
+              : profesional.recienEditado 
+              ? 'table-warning' 
+              : ''
+            )
+
               td= profesional.matricula
-              td= profesional.nombre
+
+              td
+                = profesional.nombre
+
                 if profesional.recienCreado
                   span.badge.bg-success.ms-2 NUEVO
 
                 if profesional.recienEditado
                   span.badge.bg-warning.text-dark.ms-2 EDITADO
+
               td= profesional.apellido
+
               td= profesional.dni
+
               td= profesional.telefono || '-'
+
               td= profesional.email || '-'
+
               td
-                span(class=`badge ${profesional.estado === 'activo' ? 'bg-success' : 'bg-danger'}`)= profesional.estado
+                span(
+                  class=`badge ${profesional.estado === 'activo' ? 'bg-success' : 'bg-danger'}`
+                )= profesional.estado
+
+
               td
                 if profesional.especialidades
+
                   ul.list-unstyled.mb-0
                     each especialidad in profesional.especialidades.split(',')
+
                       li= especialidad.trim()
+
                 else
+
                   span.text-muted No tiene
+
+
               td
-                a(href=`/profesionales/${profesional.id}/editar`, class='btn btn-warning btn-sm me-1') Editar
-                form(action=`/profesionales/${profesional.id}/${profesional.estado === 'activo' ? 'inactivar' : 'activar'}`, method="POST", style="display:inline")
-                  button(type="submit" class=`btn btn-sm ${profesional.estado === 'activo' ? 'btn-danger' : 'btn-success'}`) #{profesional.estado === 'activo' ? 'Inactivar' : 'Activar'}
+
+                a(
+                  href=`/profesionales/${profesional.id}/editar`
+                  class='btn btn-warning btn-sm me-1'
+                )
+                  | Editar
+
+
+                form(
+                  action=`/profesionales/${profesional.id}/${profesional.estado === 'activo' ? 'inactivar' : 'activar'}`
+                  method="POST"
+                  style="display:inline"
+                )
+
+                  button(
+                    type="submit"
+                    class=`btn btn-sm ${profesional.estado === 'activo' ? 'btn-danger' : 'btn-success'}`
+                  )
+                    #{profesional.estado === 'activo' ? 'Inactivar' : 'Activar'}
+
+
+    // ==========================
+    // PAGINACION ABAJO
+    // ==========================
+    if totalPaginas > 1
+
+      nav.mt-4
+        ul.pagination.justify-content-center
+
+          li.page-item(class=pagina <= 1 ? 'disabled' : '')
+            a.page-link(
+              href=`/profesionales?page=${pagina - 1}&buscar=${filtro}`
+            )
+              | ← Anterior
+
+
+          each numero in [...Array(totalPaginas).keys()].map(i => i + 1)
+
+            li.page-item(class=numero === pagina ? 'active' : '')
+
+              a.page-link(
+                href=`/profesionales?page=${numero}&buscar=${filtro}`
+              )
+                = numero
+
+
+          li.page-item(class=pagina >= totalPaginas ? 'disabled' : '')
+
+            a.page-link(
+              href=`/profesionales?page=${pagina + 1}&buscar=${filtro}`
+            )
+              | Siguiente →
+
+
   else
+
     p.alert.alert-info No hay profesionales registrados.
 
+
   div.mt-4
-    a(href="/profesionales/nuevo" class="btn btn-primary") Agregar Nuevo Profesional
-    a(href="/" class="btn btn-secondary ms-2") Volver a pagina principal
-      
+
+    a(
+      href="/profesionales/nuevo"
+      class="btn btn-primary"
+    )
+      | Agregar Nuevo Profesional
+
+    a(
+      href="/"
+      class="btn btn-secondary ms-2"
+    )
+      | Volver a pagina principal

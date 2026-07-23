@@ -5,11 +5,15 @@ exports.mostrarPacientes = (req, res) => {
 
   const dni = req.query.dni || '';
 
+  const pagina = parseInt(req.query.page) || 1;
+  const porPagina = 15;
+  const offset = (pagina - 1) * porPagina;
+
   const nuevoId = req.query.nuevo;
   const editadoId = req.query.editado;
 
   const procesar = pacientes => {
-    
+
     console.log("PACIENTES:", pacientes);
 
     pacientes = pacientes.map(p => ({
@@ -43,7 +47,10 @@ exports.mostrarPacientes = (req, res) => {
       pacientes,
       dni,
 
-      path: req.path
+      path: req.path,
+
+      pagina: 1,
+      totalPaginas: 1
 
     });
 
@@ -64,12 +71,35 @@ exports.mostrarPacientes = (req, res) => {
   }
   else {
 
-    Paciente.obtenerTodos((err, pacientes) => {
+    Paciente.contarPacientes((err, totalPacientes) => {
 
       if (err)
         return res.status(500).send('Error');
 
-      procesar(pacientes);
+      Paciente.obtenerPaginados(
+        porPagina,
+        offset,
+        (err, pacientes) => {
+
+          if (err)
+            return res.status(500).send('Error');
+
+          res.render('pacientes', {
+
+            pacientes,
+
+            dni,
+
+            path: req.path,
+
+            pagina,
+
+            totalPaginas: Math.ceil(totalPacientes / porPagina)
+
+          });
+
+        }
+      );
 
     });
 

@@ -6,6 +6,19 @@ block content
 
     h1.mb-4 Turnos para Reprogramar
 
+    // Botones superiores
+    .mb-3
+      button.btn.btn-secondary.me-2(
+        type="button"
+        onclick="history.back()"
+      )
+        i.bi.bi-arrow-left.me-2
+        | Volver
+
+      a.btn.btn-primary(href='/turnos')
+        i.bi.bi-calendar-week.me-2
+        | Ir a Turnos
+
     if turnos.length === 0
 
       .alert.alert-success
@@ -49,3 +62,16 @@ block content
                   href=`/turnos/${turno.id}/editar`
                 )
                   | Reprogramar
+
+      // Botones inferiores
+      .mt-3
+        button.btn.btn-secondary.me-2(
+          type="button"
+          onclick="history.back()"
+        )
+          i.bi.bi-arrow-left.me-2
+          | Volver
+
+        a.btn.btn-primary(href='/turnos')
+          i.bi.bi-calendar-week.me-2
+          | Ir a Turnos

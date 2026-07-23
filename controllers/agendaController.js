@@ -77,7 +77,7 @@ const generarHorarios = () => {
 // FORM CREAR AGENDA BASE
 // ==========================
 exports.formularioNuevaAgenda = (req, res) => {
-  Profesional.obtenerTodos(null, (err, profesionales) => {
+  Profesional.obtenerTodos(null, 1000, 0, (err, profesionales) => {
     if (err) profesionales = [];
 
     Especialidad.obtenerTodas((err2, especialidades) => {
@@ -233,7 +233,9 @@ exports.agregarHorario = (req, res) => {
 // ==========================
 exports.mostrarAgendas = (req, res) => {
 
-  const buscar = req.query.buscar || "";
+  const usuario = req.session.user;
+  console.log("USUARIO:", usuario);
+  const buscar = String(req.query.buscar || "");
   const q = normalizar(buscar);
   const meses = {
     enero: 0,
@@ -258,7 +260,9 @@ exports.mostrarAgendas = (req, res) => {
     }
   }
 
-  Agenda.obtenerAgendaCompleta(buscar, (err, agenda) => {
+  console.log("BUSCAR:", buscar, typeof buscar);
+
+  Agenda.obtenerAgendaCompleta(buscar, usuario, (err, agenda) => {
 
     if (err) {
       req.flash('error', 'Error en QUERY agenda');
@@ -340,7 +344,7 @@ exports.mostrarAgendas = (req, res) => {
     res.render('agendas', {
       agendas,
       nuevaAgendaId,
-
+      usuario,
       path: req.path
     });
   });

@@ -12,7 +12,7 @@ block content
       li Paciente: #{turno.paciente}
       li Profesional: #{turno.profesional}
       li Fecha: #{turno.fecha}
-      li Hora: #{turno.hora}
+      li Hora: #{turno.hora.substring(0,5)}
       li Estado: #{turno.estado}
       li Tipo de turno: #{turno.tipo_turno === 'sobreturno' ? 'Sobreturno' : 'Normal'}
 
@@ -34,6 +34,14 @@ block content
   else
     p Turno no encontrado
 
-  a.btn.btn-secondary.mt-3(href='/turnos') Volver a lista de turnos
+  if usuario && usuario.rol === 'medico'
+    a.btn.btn-secondary.mt-3(href='/mis-turnos') Volver a Mis Turnos
+  else
+    if usuario.rol === 'medico'
+      a.btn.btn-secondary(href="/mis-turnos")
+        | Volver a Mis Turnos
+    else
+      a.btn.btn-secondary(href="/turnos")
+        | Volver a la lista de turnos
   br
   a(href='/') Volver al inicio

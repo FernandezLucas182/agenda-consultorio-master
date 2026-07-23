@@ -14,34 +14,71 @@ class Ausencia {
     db.query(sql, [agenda_id, fecha_inicio, fecha_fin, motivo], callback);
   }
 
-  static obtenerTodas(buscar, callback) {
+  static obtenerTodas(buscar, usuario, callback) {
 
     let sql = `
     SELECT 
-      a.*, 
-      CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo
+      a.id,
+      a.fecha_inicio,
+      a.fecha_fin,
+      a.motivo,
+
+      CONCAT(p.nombre,' ',p.apellido) AS nombre_completo
+
     FROM ausencias a
-    JOIN agendas ag ON a.agenda_id = ag.id
-    JOIN profesionales p ON ag.profesional_id = p.id
+
+    JOIN agendas ag
+      ON a.agenda_id = ag.id
+
+    JOIN profesionales p
+      ON ag.profesional_id = p.id
+
+    WHERE 1=1
   `;
+
 
     const params = [];
 
-    if (buscar) {
+
+    if (usuario.rol === 'medico') {
+
       sql += `
-      WHERE 
-        p.nombre LIKE ? OR
-        p.apellido LIKE ? OR
-        a.motivo LIKE ?
+      AND ag.profesional_id = ?
+    `;
+
+      params.push(usuario.profesional_id);
+
+    }
+
+
+    if (buscar) {
+
+      sql += `
+      AND (
+        p.nombre LIKE ?
+        OR p.apellido LIKE ?
+        OR a.motivo LIKE ?
+      )
     `;
 
       const like = `%${buscar}%`;
-      params.push(like, like, like);
+
+      params.push(
+        like,
+        like,
+        like
+      );
+
     }
 
-    sql += ` ORDER BY a.fecha_inicio DESC`;
+
+    sql += `
+    ORDER BY a.fecha_inicio DESC
+  `;
+
 
     db.query(sql, params, callback);
+
   }
 
 
@@ -118,6 +155,101 @@ class Ausencia {
   `;
 
     db.query(sql, [agenda_id], callback);
+
+  }
+
+  static contarPendientes(callback) {
+
+    const sql = `
+    SELECT COUNT(*) AS total
+    FROM solicitudes_ausencias
+    WHERE estado = 'pendiente'
+  `;
+
+
+    db.query(sql, (err, rows) => {
+
+      if (err) return callback(err);
+
+      callback(null, rows[0].total);
+
+    });
+
+  }
+
+  static obtenerConfirmadas(buscar, fecha, usuario, callback) {
+
+    let sql = `
+
+  SELECT
+      a.*,
+      CONCAT(p.nombre,' ',p.apellido) AS nombre_completo
+
+  FROM ausencias a
+
+  JOIN agendas ag
+      ON a.agenda_id = ag.id
+
+  JOIN profesionales p
+      ON ag.profesional_id = p.id
+
+  WHERE 1=1
+
+  `;
+
+
+    const params = [];
+
+
+    if (usuario.rol === 'medico') {
+
+      sql += `
+      AND ag.profesional_id = ?
+    `;
+
+      params.push(usuario.profesional_id);
+
+    }
+
+
+    if (buscar) {
+
+      sql += `
+      AND (
+        p.nombre LIKE ?
+        OR p.apellido LIKE ?
+        OR a.motivo LIKE ?
+      )
+    `;
+
+
+      const like = `%${buscar}%`;
+
+      params.push(
+        like,
+        like,
+        like
+      );
+
+    }
+
+    if (fecha) {
+
+      sql += `
+    AND ? BETWEEN a.fecha_inicio AND a.fecha_fin
+  `;
+
+      params.push(fecha);
+
+    }
+
+
+    sql += `
+    ORDER BY a.fecha_inicio DESC
+  `;
+
+
+    db.query(sql, params, callback);
 
   }
 

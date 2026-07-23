@@ -4,6 +4,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let fechaSeleccionada = null;
 
+    let todosLosEventos = [];
+
+    function normalizarTexto(texto = "") {
+        return texto
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .trim();
+    }
+
     if (!calendarEl) return;
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -83,21 +93,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         events: function (info, successCallback, failureCallback) {
-            console.log("INFO START:", info.startStr);
-            console.log("INFO END:", info.endStr);
 
-            const params = new URLSearchParams(window.location.search);
-
-            const q = params.get("q") || "";
-            const fecha = params.get("fecha") || "";
-
-            fetch(
-                `/turnos/eventos?q=${encodeURIComponent(q)}&fecha=${encodeURIComponent(fecha)}&start=${info.startStr}&end=${info.endStr}`
-            )
+            fetch(`/mis-turnos/eventos?start=${info.startStr}&end=${info.endStr}`)
                 .then(response => response.json())
                 .then(data => {
 
-                    successCallback(data);
+                    todosLosEventos = data;
+
+                    const buscador = document.querySelector('input[name="q"]');
+                    const texto = normalizarTexto(buscador?.value || "");
+
+                    if (!texto) {
+                        successCallback(data);
+                        return;
+                    }
+
+                    const filtrados = data.filter(evento => {
+
+                        const contenido = normalizarTexto(
+                            [
+                                evento.title,
+                                evento.extendedProps.profesional,
+                                evento.extendedProps.especialidad,
+                                evento.extendedProps.estado,
+                                evento.extendedProps.sucursal
+                            ].join(" ")
+                        );
+
+                        return contenido.includes(texto);
+
+                    });
+
+                    successCallback(filtrados);
 
                 })
                 .catch(error => {
@@ -111,14 +138,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
         eventContent: function (arg) {
 
+            const paciente =
+                arg.event.title.split("\n")[1]
+                    ?.replace("👤 ", "")
+                || "";
+
             return {
                 html: `
             <div class="fc-turno">
+
                 <div class="fc-turno-hora">
-                🕘 ${arg.event.extendedProps.hora.substring(0, 5)}
+                    🕘 ${arg.event.extendedProps.hora}
                 </div>
-                <div class="fc-turno-paciente">👤 ${arg.event.title.split("\n")[1]?.replace("👤 ", "") || ""}</div>
-                <div class="fc-turno-profesional">🩺 ${arg.event.extendedProps.profesional}</div>
+
+                <div class="fc-turno-paciente">
+                    👤 ${paciente}
+                </div>
+
             </div>
         `
             };
@@ -167,11 +203,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         calendar.gotoDate(fechaFiltro);
 
-        setTimeout(() => {
-            calendar.refetchEvents();
-        }, 50);
-
     }
+
 
     // =============================
     // SINCRONIZAR FILTRO DE FECHA
@@ -200,5 +233,38 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
+    const buscador = document.querySelector('input[name="q"]');
+
+    if (buscador) {
+
+        buscador.addEventListener("input", () => {
+
+            const texto = normalizarTexto(buscador.value);
+
+            calendar.removeAllEvents();
+
+            const filtrados = !texto
+                ? todosLosEventos
+                : todosLosEventos.filter(evento => {
+
+                    const contenido = normalizarTexto(
+                        [
+                            evento.title,
+                            evento.extendedProps.profesional,
+                            evento.extendedProps.especialidad,
+                            evento.extendedProps.estado,
+                            evento.extendedProps.sucursal
+                        ].join(" ")
+                    );
+
+                    return contenido.includes(texto);
+
+                });
+
+            calendar.addEventSource(filtrados);
+
+        });
+
+    }
 
 });

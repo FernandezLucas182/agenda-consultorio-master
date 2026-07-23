@@ -173,10 +173,10 @@ block content
           const especialidadId = document.querySelector('input[name="especialidad_id"]').value;
           const sucursalId =
             sucursalSelect.value === "sin"
-              ? null
+              ? "sin"
               : sucursalSelect.value;
 
-          if (!profesionalId || !especialidadId || !sucursalId) return;
+          if (!profesionalId || !especialidadId) return;
 
           const res = await fetch(
               `/agendas/disponibilidad/${profesionalId}/${especialidadId}/${sucursalId}`

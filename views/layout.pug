@@ -1,135 +1,228 @@
-
-
 doctype html
 html
   head
     title
       block title
         | Agenda Consultorio
-    // Bootstrap CSS
+
     link(
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
     )
 
-    // Flatpickr CSS
-    link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css")
+    link(
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    )
 
-    // Bootstrap Icons
     link(
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
     )
 
-    // Custom CSS
     link(rel='stylesheet', href='/styles.css')
 
-  body
-    - const currentPath = typeof path !== 'undefined' ? path : ''
 
-    // NAVBAR SUPERIOR
+  body
+
+    - const currentPath = typeof path !== 'undefined' ? path : ''
+    - const usuarioActual = typeof usuario !== 'undefined' ? usuario : null
+
+
     nav.navbar.navbar-expand-lg.navbar-dark.bg-dark.shadow-sm
+
       .container.navbar-inner
 
         a.navbar-brand.d-flex.align-items-center(href='/')
           img.logo-navbar(src='/img/logo.png', alt='Logo')
           | Consultorio
 
+
         div.ecg-line
           svg(viewBox="0 0 240 20")
             g.ecg-track
               polyline(points="0,10 10,10 15,4 20,16 25,10 35,10 40,6 45,14 50,10 60,10 65,4 70,16 75,10 90,10 95,6 100,14 105,10 120,10 130,10 140,4 145,16 150,10 160,10 170,6 175,14 180,10 200,10 210,4 215,16 220,10 240,10")
-            
-              
 
-        button.navbar-toggler(type='button', data-bs-toggle='collapse', data-bs-target='#navbarNav')
+
+        button.navbar-toggler(
+          type='button'
+          data-bs-toggle='collapse'
+          data-bs-target='#navbarNav'
+        )
           span.navbar-toggler-icon
 
+
         .collapse.navbar-collapse#navbarNav
+
           ul.navbar-nav.ms-auto
 
-            
+
             li.nav-item
               a.nav-link(
                 href='/'
                 class=(currentPath == '/' ? 'active fw-bold text-warning' : '')
-              ) Inicio
-
-            li.nav-item
-              a.nav-link(
-                href='/turnos'
-                class=(currentPath === '/turnos' ? 'active fw-bold text-warning' : '')
-              ) Turnos
-
-            li.nav-item
-              a.nav-link(
-                href='/profesionales'
-                class=(currentPath.startsWith('/profesionales') ? 'active fw-bold text-warning' : '')
-              ) Profesionales
-
-            li.nav-item
-              a.nav-link(
-                href='/pacientes'
-                class=(currentPath.startsWith('/pacientes') ? 'active fw-bold text-warning' : '')
-              ) Pacientes
-
-            li.nav-item
-              a.nav-link(
-                href='/agendas'
-                class=(currentPath.startsWith('/agendas') ? 'active fw-bold text-warning' : '')
-              ) Agendas
-
-            li.nav-item
-              a.nav-link(
-                href='/ausencias'
-                class=(currentPath.startsWith('/ausencias') ? 'active fw-bold text-warning' : '')
-              ) Ausencias
-
-            li.nav-item
-              a.nav-link(
-                href='/turnos/reprogramaciones'
-                class=(currentPath === '/turnos/reprogramaciones' ? 'active fw-bold text-warning' : '')
               )
-                | Reprogramaciones
+                | Inicio
 
-                if cantidadReprogramaciones > 0
-                  span.ms-2.text-danger.fw-bold
-                    | #{cantidadReprogramaciones}
-            
+
+
+            if usuarioActual && (usuarioActual.rol == 'admin' || usuarioActual.rol == 'secretaria')
+              li.nav-item
+                a.nav-link(
+                  href='/turnos'
+                  class=(currentPath === '/turnos' ? 'active fw-bold text-warning' : '')
+                )
+                  | Turnos
+
+
+
+            if usuarioActual && usuarioActual.rol == 'medico'
+              li.nav-item
+                a.nav-link(
+                  href='/mis-turnos'
+                  class=(currentPath.startsWith('/mis-turnos') ? 'active fw-bold text-warning' : '')
+                )
+                  | Mis Turnos
+
+
+
+            if usuarioActual && usuarioActual.rol == 'admin'
+              li.nav-item
+                a.nav-link(
+                  href='/profesionales'
+                  class=(currentPath.startsWith('/profesionales') ? 'active fw-bold text-warning' : '')
+                )
+                  | Profesionales
+
+
+
+            if usuarioActual && (usuarioActual.rol == 'admin' || usuarioActual.rol == 'secretaria')
+              li.nav-item
+                a.nav-link(
+                  href='/pacientes'
+                  class=(currentPath.startsWith('/pacientes') ? 'active fw-bold text-warning' : '')
+                )
+                  | Pacientes
+
+
+
+            if usuarioActual && (usuarioActual.rol == 'admin' || usuarioActual.rol == 'secretaria' || usuarioActual.rol == 'medico')
+              li.nav-item
+                a.nav-link(
+                  href='/agendas'
+                  class=(currentPath.startsWith('/agendas') ? 'active fw-bold text-warning' : '')
+                )
+                  | Agendas
+
+
+
+            // AUSENCIAS MEDICO
+            if usuarioActual && usuarioActual.rol == 'medico'
+
+              li.nav-item
+                a.nav-link(
+                  href='/ausencias'
+                  class=(currentPath.startsWith('/ausencias') ? 'active fw-bold text-warning' : '')
+                )
+                  | Ausencias
+
+
+
+            // AUSENCIAS ADMIN / SECRETARIA CON CONTADOR
+            if usuarioActual && (usuarioActual.rol == 'admin' || usuarioActual.rol == 'secretaria')
+
+              li.nav-item
+                a.nav-link(
+                  href='/ausencias'
+                  class=(currentPath.startsWith('/ausencias') ? 'active fw-bold text-warning' : '')
+                )
+
+                  | Ausencias
+
+                  if cantidadSolicitudesAusencias > 0
+                    span.ms-2.text-danger.fw-bold
+                      | #{cantidadSolicitudesAusencias}
+
+
+
+
+            // REPROGRAMACIONES
+
+            if usuarioActual && (usuarioActual.rol == 'admin' || usuarioActual.rol == 'secretaria')
+
+              li.nav-item
+                a.nav-link(
+                  href='/turnos/reprogramaciones'
+                  class=(currentPath === '/turnos/reprogramaciones' ? 'active fw-bold text-warning' : '')
+                )
+
+                  | Reprogramaciones
+
+                  if cantidadReprogramaciones > 0
+                    span.ms-2.text-danger.fw-bold
+                      | #{cantidadReprogramaciones}
+
+
+
+
+
+            if usuarioActual && usuarioActual.rol == 'admin'
+
+              li.nav-item
+                a.nav-link(
+                  href='/usuarios'
+                  class=(currentPath.startsWith('/usuarios') ? 'active fw-bold text-warning' : '')
+                )
+                  | Usuarios
+
+
 
             li.nav-item
-              a.nav-link(
-                href='/usuarios'
-                class=(currentPath.startsWith('/usuarios') ? 'active fw-bold text-warning' : '')
-              ) Usuarios  
 
-            li.nav-item
               a.nav-link.text-danger(href="/logout")
-                i.bi.bi-box-arrow-right
-                |  Cerrar sesión  
 
-    // CONTENIDO
+                i.bi.bi-box-arrow-right
+                |  Cerrar sesión
+
+
+
+
+
     div.container.mt-4
+
       block content
 
-    // 🔔 TOAST GLOBAL
+
+
+
+
     div#toast-container.position-fixed.top-50.start-50.translate-middle(
       style="z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;"
     )
 
-    // Bootstrap JS Bundle
+
+
+
+
     script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js")
-    // Flatpickr
+
     script(src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js")
+
     script(src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js")
-    //calendario
+
+
     script(src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js")
 
-    script(src="/js/calendarioTurnos.js")
+
+    if calendario
+      script(src=`/js/${calendario}.js`)
 
 
-    
+
+
+
     script.
+
       function showToast(message, type) {
 
         const container = document.getElementById('toast-container');
@@ -142,40 +235,52 @@ html
         toast.style.top = '50%';
         toast.style.left = '50%';
         toast.style.transform = 'translate(-50%, -50%)';
-        
         toast.style.zIndex = '9999';
-
         toast.style.minWidth = '350px';
         toast.style.textAlign = 'center';
-
         toast.style.opacity = '0.9';
 
-        
-        toast.style.transition = 'opacity 0.5s ease, background-color 0.5s ease';
+        toast.style.transition =
+          'opacity 0.5s ease, background-color 0.5s ease';
+
 
         toast.innerText = message;
 
         container.appendChild(toast);
 
+
         setTimeout(() => {
+
           toast.style.opacity = '0';
 
           setTimeout(() => {
-            toast.remove();
-          }, 500);
 
-        }, 5000);
+            toast.remove();
+
+          },500);
+
+
+        },5000);
+
       }
+
+
 
       const successMsg = !{JSON.stringify(success || [])};
+
       const errorMsg = !{JSON.stringify(error || [])};
 
-      if (successMsg.length > 0) {
+
+
+      if(successMsg.length > 0){
+
         showToast(successMsg[0], 'success');
+
       }
 
-      if (errorMsg.length > 0) {
+
+      if(errorMsg.length > 0){
+
         showToast(errorMsg[0], 'danger');
+
       }
-      
-    

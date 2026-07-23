@@ -17,7 +17,7 @@ block content
 
     button.btn.btn-primary(type="submit" formmethod="GET") Buscar
     a.btn.btn-secondary(href="/pacientes") Mostrar todos
-  
+
   div.mb-3.d-flex.gap-2
     a(href="/pacientes/nuevo" class="btn btn-primary") Crear nuevo paciente
     a(href="/" class="btn btn-secondary") Volver al inicio
@@ -26,6 +26,31 @@ block content
     p.alert.alert-warning Paciente no encontrado.
     a.btn.btn-primary(href="/pacientes/nuevo") Crear nuevo paciente
   else
+
+    // PAGINACIÓN SUPERIOR
+    if totalPaginas > 1
+
+      nav.mb-3
+        ul.pagination.justify-content-center
+
+          // Anterior
+          li.page-item(class=pagina <= 1 ? 'disabled' : '')
+            a.page-link(href=`/pacientes?page=${pagina - 1}&dni=${dni}`)
+              | ← Anterior
+
+          // Números
+          each numero in [...Array(totalPaginas).keys()].map(i => i + 1)
+
+            li.page-item(class=numero === pagina ? 'active' : '')
+
+              a.page-link(href=`/pacientes?page=${numero}&dni=${dni}`)
+                = numero
+
+          // Siguiente
+          li.page-item(class=pagina >= totalPaginas ? 'disabled' : '')
+            a.page-link(href=`/pacientes?page=${pagina + 1}&dni=${dni}`)
+              | Siguiente →
+
     table.table.table-striped
       thead
         tr
@@ -104,11 +129,36 @@ block content
                         data-bs-dismiss="modal"
                       )
                         Cerrar
+
             td
               a(href=`/pacientes/${paciente.id}` class="btn btn-info btn-sm me-1") Ver Detalle
               a(href=`/pacientes/${paciente.id}/editar` class="btn btn-warning btn-sm me-1") Editar
               a(href=`/turnos/nuevo?paciente_id=${paciente.id}` class="btn btn-success btn-sm") Asignar Turno
 
+    // PAGINACIÓN INFERIOR
+    if totalPaginas > 1
+
+      nav.mt-4
+        ul.pagination.justify-content-center
+
+          // Anterior
+          li.page-item(class=pagina <= 1 ? 'disabled' : '')
+            a.page-link(href=`/pacientes?page=${pagina - 1}&dni=${dni}`)
+              | ← Anterior
+
+          // Números
+          each numero in [...Array(totalPaginas).keys()].map(i => i + 1)
+
+            li.page-item(class=numero === pagina ? 'active' : '')
+
+              a.page-link(href=`/pacientes?page=${numero}&dni=${dni}`)
+                = numero
+
+          // Siguiente
+          li.page-item(class=pagina >= totalPaginas ? 'disabled' : '')
+            a.page-link(href=`/pacientes?page=${pagina + 1}&dni=${dni}`)
+              | Siguiente →
+
   div.mt-3
-    a(href='/pacientes/nuevo' class="btn btn-primary") Crear nuevo paciente
-    a(href='/' class="btn btn-secondary ms-2") Volver al inicio
+    a(href="/pacientes/nuevo" class="btn btn-primary") Crear nuevo paciente
+    a(href="/" class="btn btn-secondary ms-2") Volver al inicio

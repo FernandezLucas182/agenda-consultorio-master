@@ -6,32 +6,106 @@ block title
 block content
   h1 Lista de Ausencias
 
-  // 🔍 BUSCADOR
-  div.d-flex.gap-2.mb-3
-    form(method="GET" action="/ausencias" style="flex:1; display:flex; gap:8px;")
-      input.form-control(
-        type="text"
-        name="buscar"
-        placeholder="Buscar por profesional o motivo"
-        value=buscar
-      )
-      button.btn.btn-primary(type="submit") Buscar
+    // 🔍 BUSCADOR
+    div.d-flex.gap-2.mb-3
+      form(method="GET" action="/ausencias" style="flex:1; display:flex; gap:8px;")
 
-    a.btn.btn-secondary(href="/ausencias") Mostrar todos
+        input.form-control(
+          type="text"
+          name="buscar"
+          placeholder= usuario.rol === 'medico'
+            ? "Buscar por motivo"
+            : "Buscar por profesional o motivo"
+          value=buscar
+        )
+
+        input.form-control(
+          type="date"
+          name="fecha"
+          value=fecha
+          style="max-width:180px;"
+        )
+
+        button.btn.btn-primary(type="submit") Buscar
+
+      a.btn.btn-secondary(href="/ausencias") Mostrar todos
 
   div.mb-3
     a(href="/" class="btn btn-secondary me-2") ← Volver al inicio
-    a(href="/ausencias/nueva" class="btn btn-primary") Nueva Ausencia
+
+    if usuario.rol === 'medico'
+      a(
+        href="/ausencias/solicitar"
+        class="btn btn-primary"
+      ) Solicitar Ausencia
+    else
+      a(
+        href="/ausencias/nueva"
+        class="btn btn-primary"
+      ) Nueva Ausencia
+
+  // =====================================
+  // SOLICITUDES PENDIENTES DE AUSENCIA
+  // =====================================
+
+  if (usuario.rol === 'admin' || usuario.rol === 'secretaria') && solicitudes.length > 0
+
+    hr
+
+    h3 Solicitudes pendientes de ausencia
+
+    table.table.table-bordered.table-warning
+
+      thead
+        tr
+          th Profesional
+          th Desde
+          th Hasta
+          th Motivo
+          th Acción
+
+      tbody
+
+        each s in solicitudes
+
+          tr
+            td= s.profesional
+            td= s.fecha_inicio
+            td= s.fecha_fin
+            td= s.motivo
+
+            td
+
+              form(
+                action=`/ausencias/solicitud/${s.id}/aprobar`
+                method="POST"
+                style="display:inline"
+              )
+                button.btn.btn-success.btn-sm(type="submit")
+                  | Aprobar
+
+              form(
+                action=`/ausencias/solicitud/${s.id}/rechazar`
+                method="POST"
+                style="display:inline"
+              )
+                button.btn.btn-danger.btn-sm.ms-2(type="submit")
+                  | Rechazar
 
   table.table.table-striped
+
     thead
       tr
         th Profesional
         th Desde
         th Hasta
         th Motivo
-        th Acciones
+
+        if usuario.rol !== 'medico'
+          th Acción
+
     tbody
+
       each a in ausencias
 
         tr(class={
@@ -43,11 +117,10 @@ block content
           td= a.fecha_inicio
           td= a.fecha_fin
           td= a.motivo
-          td
-            a(
-              href=`/ausencias/${a.id}/editar`
-              class="btn btn-sm btn-warning"
-            ) Editar
-  div.mb-4
-    a(href="/" class="btn btn-secondary me-2") ← Volver al inicio
-    a(href="/ausencias/nueva" class="btn btn-primary") Nueva Ausencia
+
+          if usuario.rol !== 'medico'
+            td
+              a(
+                href=`/ausencias/${a.id}/editar`
+                class="btn btn-sm btn-warning"
+              ) Editar

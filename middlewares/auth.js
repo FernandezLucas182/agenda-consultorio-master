@@ -8,21 +8,37 @@ function isAuthenticated(req, res, next) {
 
 function authorize(...roles) {
   return (req, res, next) => {
+
     if (!req.session || !req.session.user) {
       return res.redirect('/login');
     }
 
-    const userRole = req.session.user.rol;
-
-    if (!roles.includes(userRole)) {
-      return res.status(403).send('No autorizado');
+    if (!roles.includes(req.session.user.rol)) {
+      return res.status(403).render("error", {
+        message: "No tiene permisos para acceder a esta sección.",
+        error: {}
+      });
     }
 
     next();
   };
 }
 
+// Atajos
+
+const soloAdmin = authorize("admin");
+
+const soloSecretaria = authorize("secretaria");
+
+const soloProfesional = authorize("profesional");
+
+const adminOSecretaria = authorize("admin", "secretaria");
+
 module.exports = {
   isAuthenticated,
-  authorize
+  authorize,
+  soloAdmin,
+  soloSecretaria,
+  soloProfesional,
+  adminOSecretaria
 };

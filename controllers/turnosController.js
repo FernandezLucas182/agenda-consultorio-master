@@ -9,10 +9,12 @@ const Ausencia = require('../models/Ausencia');
 
 function sumarSegundos(hora, segundos) {
   const [h, m, s] = hora.split(':').map(Number);
+
   const date = new Date();
   date.setHours(h, m, s || 0);
   date.setSeconds(date.getSeconds() + segundos);
-  return date.toTimeString().slice(0, 8);
+
+  return date.toTimeString().slice(0, 5);
 }
 
 function formatearFecha(fecha) {
@@ -23,13 +25,21 @@ function formatearFecha(fecha) {
   });
 }
 
+function normalizarTexto(texto = "") {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 // ==========================
 // TURNOS CRUD
 // ==========================
 
 exports.mostrarTurnos = (req, res) => {
 
-  const q = req.query.q?.toLowerCase() || "";
+  const q = normalizarTexto(req.query.q);
   const fecha = req.query.fecha || "";
   const nuevoId = req.query.nuevo;
   const editadoId = req.query.editado;
@@ -45,33 +55,46 @@ exports.mostrarTurnos = (req, res) => {
     if (q) {
       turnos = turnos.filter(t => {
 
-        const paciente =
-          `${t.paciente_nombre || ""} ${t.paciente_apellido || ""}`.toLowerCase();
+        const paciente = normalizarTexto(
+          `${t.paciente_nombre || ""} ${t.paciente_apellido || ""}`
+        );
+
+        const profesional = normalizarTexto(t.profesional_nombre);
+        const especialidad = normalizarTexto(t.especialidad_nombre);
 
         return (
           paciente.includes(q) ||
-          (t.profesional_nombre || "").toLowerCase().includes(q) ||
-          (t.especialidad_nombre || "").toLowerCase().includes(q)
+          profesional.includes(q) ||
+          especialidad.includes(q)
         );
 
       });
     }
     if (fecha) {
-      turnos = turnos.filter(t => t.fecha === fecha);
+      turnos = turnos.filter(t => {
+        const fechaTurno = new Date(t.fecha)
+          .toISOString()
+          .split("T")[0];
+
+        return fechaTurno === fecha;
+      });
     }
 
     turnos = turnos.map(t => ({
 
       ...t,
 
+      fechaISO: new Date(t.fecha).toISOString().split("T")[0],
+
       fecha: formatearFecha(t.fecha),
+
       recienCreado:
         Number(t.id) === Number(nuevoId),
 
       recienEditado:
         Number(t.id) === Number(editadoId)
-    }));
 
+    }));
     turnos.sort((a, b) => {
 
       if (a.recienCreado !== b.recienCreado)
@@ -90,7 +113,8 @@ exports.mostrarTurnos = (req, res) => {
       fecha,
       nuevoTurnoId: req.query.nuevo,
       turnoEditadoId: req.query.editado,
-      path: req.path
+      path: req.path,
+      calendario: "calendarioTurnos"
     });
   });
 };
@@ -104,7 +128,81 @@ exports.mostrarTurno = (req, res) => {
     }
 
     turno.fecha = formatearFecha(turno.fecha);
-    res.render('turno', { turno });
+
+    // Ocultar segundos
+    turno.hora = turno.hora
+      ? turno.hora.substring(0, 5)
+      : "";
+
+    res.render('turno', {
+      turno,
+      usuario: req.session.user
+    });
+
+  });
+
+};
+
+
+// ==========================
+// MIS TURNOS (PROFESIONAL)
+// ==========================
+
+exports.mostrarMisTurnos = (req, res) => {
+
+  const profesionalId = req.session.user.profesional_id;
+
+  const q = normalizarTexto(req.query.q);
+  const fecha = req.query.fecha || "";
+
+  Turno.obtenerPorProfesional(profesionalId, (err, turnos) => {
+
+    if (err) {
+      console.error(err);
+      return res.status(500).send(err.message);
+    }
+
+    if (q) {
+
+      turnos = turnos.filter(t => {
+
+        const paciente = normalizarTexto(
+          `${t.paciente_nombre || ""} ${t.paciente_apellido || ""}`
+        );
+
+        const especialidad = normalizarTexto(t.especialidad_nombre);
+
+        return (
+          paciente.includes(q) ||
+          especialidad.includes(q)
+        );
+
+      });
+
+    }
+
+    if (fecha) {
+      turnos = turnos.filter(t => {
+        const fechaTurno = new Date(t.fecha)
+          .toISOString()
+          .split("T")[0];
+
+        return fechaTurno === fecha;
+      });
+    }
+
+    turnos = turnos.map(t => ({
+      ...t,
+      fecha: formatearFecha(t.fecha)
+    }));
+
+    res.render("misTurnos", {
+      turnos,
+      q,
+      fecha,
+      path: req.path,
+      calendario: "calendarioMisTurnos"
+    });
 
   });
 
@@ -300,7 +398,7 @@ exports.crearTurno = (req, res) => {
           return res.status(400).send("Máximo sobreturnos");
         }
 
-        const nuevaHora = sumarSegundos(horaNormalizada, cantidad + 1);
+        const nuevaHora = sumarSegundos(horaNormalizada, (cantidad + 1) * 60);
 
         console.log("HORA NORMALIZADA:", horaNormalizada);
         console.log("HORA RECIBIDA:", hora);
@@ -774,9 +872,59 @@ exports.obtenerDisponibilidadCalendario = (req, res) => {
 };
 
 
-exports.obtenerEventos = (req, res) => {
+exports.obtenerEventosTodos = (req, res) => {
+
+  const q = normalizarTexto(req.query.q || "");
+  const fecha = req.query.fecha || "";
 
   Turno.obtenerTodos((err, turnos) => {
+    console.log("FECHA RECIBIDA:", fecha);
+
+    console.log(
+      turnos.map(t => ({
+        id: t.id,
+        fecha: t.fecha,
+        iso: new Date(t.fecha).toISOString().split("T")[0]
+      }))
+    );
+
+    if (q) {
+
+      turnos = turnos.filter(t => {
+
+        const paciente = normalizarTexto(
+          `${t.paciente_nombre || ""} ${t.paciente_apellido || ""}`
+        );
+
+        const profesional = normalizarTexto(t.profesional_nombre);
+        const especialidad = normalizarTexto(t.especialidad_nombre);
+        const sucursal = normalizarTexto(t.sucursal_nombre);
+
+        return (
+          paciente.includes(q) ||
+          profesional.includes(q) ||
+          especialidad.includes(q) ||
+          sucursal.includes(q)
+        );
+
+      });
+
+    }
+
+    if (fecha) {
+
+      turnos = turnos.filter(t => {
+
+        const fechaTurno = new Date(t.fecha)
+          .toLocaleDateString("sv-SE", {
+            timeZone: "America/Argentina/Buenos_Aires"
+          });
+
+        return fechaTurno === fecha;
+
+      });
+
+    }
 
     if (err) {
       return res.status(500).json([]);
@@ -784,12 +932,10 @@ exports.obtenerEventos = (req, res) => {
 
     const eventos = turnos.map(t => {
 
-      const fecha = new Date(t.fecha).toISOString().split("T")[0];
-
-
-      // ==========================
-      // FORMATEO PACIENTE
-      // ==========================
+      const fechaEvento = new Date(t.fecha)
+        .toLocaleDateString("sv-SE", {
+          timeZone: "America/Argentina/Buenos_Aires"
+        });
 
       let nombreMostrar = "";
 
@@ -815,10 +961,6 @@ exports.obtenerEventos = (req, res) => {
       }
 
 
-      // ==========================
-      // HORA SIN SEGUNDOS
-      // ==========================
-
       const horaMostrar =
         t.hora ? t.hora.substring(0, 5) : "";
 
@@ -829,12 +971,10 @@ exports.obtenerEventos = (req, res) => {
 
         title:
           `🕘 ${horaMostrar}
-            👤 ${nombreMostrar}
-            🩺 ${t.profesional_nombre}`,
+          👤 ${nombreMostrar}
+          🩺 ${t.profesional_nombre}`,
 
-
-        start: `${fecha}T${t.hora}`,
-
+        start: `${fechaEvento}T${t.hora}`,
 
         extendedProps: {
 
@@ -846,7 +986,6 @@ exports.obtenerEventos = (req, res) => {
 
         },
 
-
         backgroundColor:
           t.estado === "confirmado" ? "#198754" :
             t.estado === "pendiente" ? "#ffc107" :
@@ -854,7 +993,6 @@ exports.obtenerEventos = (req, res) => {
                 t.estado === "reprogramar" ? "#fd7e14" :
                   t.estado === "cancelado" ? "#dc3545" :
                     "#6c757d",
-
 
         borderColor:
           t.estado === "confirmado" ? "#198754" :
@@ -864,8 +1002,67 @@ exports.obtenerEventos = (req, res) => {
                   t.estado === "cancelado" ? "#dc3545" :
                     "#6c757d",
 
-
         textColor: "#ffffff"
+
+      };
+
+    });
+
+
+    res.json(eventos);
+
+  });
+
+};
+
+
+exports.obtenerEventosMisTurnos = (req, res) => {
+
+  const profesionalId = req.session.user.profesional_id;
+
+
+  Turno.obtenerPorProfesional(profesionalId, (err, turnos) => {
+
+    if (err) {
+      return res.status(500).json([]);
+    }
+
+
+    req.session.user.profesional_id = profesionalId;
+
+
+    const eventos = turnos.map(t => {
+
+      const fecha = new Date(t.fecha).toISOString().split("T")[0];
+
+      const horaMostrar =
+        t.hora ? t.hora.substring(0, 5) : "";
+
+
+      const nombreMostrar =
+        `${t.paciente_apellido}, ${t.paciente_nombre}`;
+
+
+      return {
+
+        id: t.id,
+
+        title:
+          `🕘 ${horaMostrar}
+👤 ${nombreMostrar}
+🩺 ${t.profesional_nombre}`,
+
+        start: `${fecha}T${t.hora}`,
+
+        extendedProps: {
+
+          profesional: t.profesional_nombre,
+          especialidad: t.especialidad_nombre,
+          estado: t.estado,
+          sucursal: t.sucursal_nombre,
+          hora: horaMostrar
+
+        }
 
       };
 
