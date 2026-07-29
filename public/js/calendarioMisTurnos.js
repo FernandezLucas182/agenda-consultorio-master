@@ -20,7 +20,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
         locale: "es",
 
-        initialView: "timeGridWeek",
+        selectable: true,
+
+        dateClick: function (info) {
+
+            console.log("CLICK DIA MEDICO:", info.dateStr);
+
+            const params =
+                new URLSearchParams(window.location.search);
+
+            params.set("fecha", info.dateStr);
+
+            window.location.href =
+                window.location.pathname + "?" + params.toString();
+
+        },
+
+
+
+        initialView: "dayGridMonth",
 
         allDayText: 'Hs',
 
@@ -44,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
             day: "Día"
         },
 
-        navLinks: true,
+        navLinks: false,
 
         nowIndicator: true,
 
@@ -53,6 +71,8 @@ document.addEventListener("DOMContentLoaded", () => {
         selectable: true,
 
         dayMaxEvents: true,
+
+
 
         dayCellClassNames: function (arg) {
 
@@ -94,14 +114,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
         events: function (info, successCallback, failureCallback) {
 
-            fetch(`/mis-turnos/eventos?start=${info.startStr}&end=${info.endStr}`)
+            const params = new URLSearchParams(window.location.search);
+
+            const fecha =
+                params.get("fecha") || "";
+
+            const especialidad =
+                params.get("especialidad") || "";
+
+
+            console.log("======================");
+            console.log("CALENDARIO MIS TURNOS");
+            console.log("URL:", window.location.search);
+            console.log("FECHA:", fecha);
+            console.log("ESPECIALIDAD:", especialidad);
+            console.log("======================");
+
+
+            fetch(
+                `/mis-turnos/eventos?start=${info.startStr}&end=${info.endStr}&especialidad=${especialidad}&fecha=${fecha}`
+            )
                 .then(response => response.json())
                 .then(data => {
 
                     todosLosEventos = data;
 
                     const buscador = document.querySelector('input[name="q"]');
-                    const texto = normalizarTexto(buscador?.value || "");
+
+
+                    const texto =
+                        normalizarTexto(
+                            params.get("q") || buscador?.value || ""
+                        );
 
                     if (!texto) {
                         successCallback(data);
@@ -145,18 +189,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
             return {
                 html: `
-            <div class="fc-turno">
+    <div class="fc-turno">
 
-                <div class="fc-turno-hora">
-                    🕘 ${arg.event.extendedProps.hora}
-                </div>
+        <div class="fc-turno-hora">
+            🕘 ${arg.event.extendedProps.hora}
+        </div>
 
-                <div class="fc-turno-paciente">
-                    👤 ${paciente}
-                </div>
+        <div class="fc-turno-paciente">
+            👤 ${paciente}
+        </div>
 
-            </div>
-        `
+    </div>
+`
             };
 
         },
@@ -175,15 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         eventClick: function (info) {
 
-            if (info.event.extendedProps.estado === "reprogramar") {
-
-                window.location.href = "/turnos/reprogramaciones";
-
-            } else {
-
-                window.location.href = `/turnos/${info.event.id}/editar`;
-
-            }
+            window.location.href = `/turnos/${info.event.id}`;
 
         }
 

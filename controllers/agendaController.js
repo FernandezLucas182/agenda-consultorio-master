@@ -104,10 +104,22 @@ exports.formularioNuevaAgenda = (req, res) => {
 
 
 exports.crearAgendaBase = (req, res) => {
+  console.log("ENTRE A CREAR AGENDA");
+
+  console.log("BODY:");
+  console.log(req.body);
 
   const { profesional_id, especialidad_id, duracion_turno, sucursal_id } = req.body;
 
   const horarios = req.body.horarios;
+  console.log("DATOS:", {
+    profesional_id,
+    especialidad_id,
+    duracion_turno,
+    sucursal_id
+  });
+
+  console.log("ANTES DE LLAMAR AL MODELO");
 
   if (!horarios || Object.keys(horarios).length === 0) {
     return res.status(400).send("Debe agregar al menos un bloque horario");
@@ -488,14 +500,26 @@ exports.editarAgenda = (req, res) => {
       }
 
       Agenda.reemplazarHorarios(id, listaHorarios, (err) => {
-        let errorEncontrado = false;
+
         if (err) {
+
           console.error(err);
+
+          // Si el modelo envía un error de regla de negocio
+          if (err.type === "BUSINESS_RULE") {
+            return renderEditarConError(
+              req,
+              res,
+              id,
+              err.message
+            );
+          }
+
           return renderEditarConError(
             req,
             res,
             id,
-            err.message
+            "Error al actualizar la agenda"
           );
         }
 

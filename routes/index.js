@@ -164,13 +164,7 @@ router.get('/turnos/nuevo', turnosController.mostrarFormularioNuevoTurno);
 
 router.post('/turnos', turnosController.crearTurno);
 
-router.get(
-
-  '/turnos/sucursal/:profesionalId/:especialidadId',
-
-  turnosController.obtenerSucursalAgenda
-
-);
+router.get('/turnos/sucursal/:profesionalId/:especialidadId', turnosController.obtenerSucursalAgenda);
 //==================================
 //ruteo para reprogramacionTurnos
 //================================
@@ -183,7 +177,7 @@ router.post('/turnos/:id/editar', isAuthenticated, authorize('admin', 'secretari
 
 router.post('/turnos/:id/eliminar', turnosController.eliminarTurno);
 
-router.get('/turnos/:id', turnosController.mostrarTurno);
+router.get( '/turnos/:id', isAuthenticated, authorize('admin', 'secretaria', 'medico'), turnosController.mostrarTurno);
 
 
 //=====================
@@ -195,12 +189,7 @@ router.get('/turnos/:id', turnosController.mostrarTurno);
 
 router.get('/ausencias', isAuthenticated, authorize('admin', 'secretaria', 'medico'), ausenciasController.listarAusencias);
 
-router.get(
-  '/ausencias/solicitar',
-  isAuthenticated,
-  authorize('medico'),
-  ausenciasController.mostrarFormularioSolicitud
-);
+router.get('/ausencias/solicitar', isAuthenticated, authorize('medico'), ausenciasController.mostrarFormularioSolicitud);
 
 
 router.post('/ausencias/solicitar', isAuthenticated, authorize('medico'), ausenciasController.crearSolicitudAusencia);

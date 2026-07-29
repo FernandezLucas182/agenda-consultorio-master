@@ -21,11 +21,13 @@ class Turno {
 
     const sql = `
       SELECT 
-        t.id,
-        t.fecha,
-        t.hora,
-        t.estado,
-        t.tipo_turno,
+  t.id,
+  t.fecha,
+  t.hora,
+  t.estado,
+  t.tipo_turno,
+  t.profesional_id,
+  t.especialidad_id,
 
         p.nombre AS paciente_nombre,
         p.apellido AS paciente_apellido,
@@ -841,12 +843,10 @@ LIMIT 1
         t.hora,
         t.estado,
         t.tipo_turno,
+        t.especialidad_id,
 
         p.nombre AS paciente_nombre,
         p.apellido AS paciente_apellido,
-        p.telefono AS paciente_telefono,
-        p.email AS paciente_email,
-        p.obra_social AS paciente_obra_social,
 
         CONCAT(pr.nombre, ' ', pr.apellido)
           AS profesional_nombre,
@@ -874,6 +874,92 @@ LIMIT 1
     `;
 
     db.query(sql, [profesionalId], callback);
+
+  }
+
+
+  static obtenerPorProfesionalPaginado(
+    profesionalId,
+    limite,
+    offset,
+    callback
+  ) {
+
+    const sql = `
+    SELECT
+      t.id,
+      t.fecha,
+      t.hora,
+      t.estado,
+      t.tipo_turno,
+      t.especialidad_id,
+
+      p.nombre AS paciente_nombre,
+      p.apellido AS paciente_apellido,
+
+      CONCAT(pr.nombre,' ',pr.apellido)
+        AS profesional_nombre,
+
+      e.nombre AS especialidad_nombre,
+      s.nombre AS sucursal_nombre
+
+    FROM turnos t
+
+    JOIN pacientes p
+      ON t.paciente_id = p.id
+
+    JOIN profesionales pr
+      ON t.profesional_id = pr.id
+
+    JOIN especialidades e
+      ON t.especialidad_id = e.id
+
+    LEFT JOIN sucursales s
+      ON t.sucursal_id = s.id
+
+    WHERE t.profesional_id = ?
+
+    ORDER BY t.fecha DESC, t.hora ASC
+
+    LIMIT ?
+    OFFSET ?
+  `;
+
+    db.query(
+      sql,
+      [profesionalId, limite, offset],
+      callback
+    );
+
+  }
+
+  static contarTurnosPorProfesional(
+    profesionalId,
+    callback
+  ) {
+
+    db.query(
+      `
+    SELECT COUNT(*) AS total
+    FROM turnos
+    WHERE profesional_id = ?
+    `,
+      [profesionalId],
+      callback
+    );
+
+  }
+
+
+  static obtenerTodasEspecialidades(callback) {
+
+    const sql = `
+      SELECT id,nombre
+      FROM especialidades
+      ORDER BY nombre
+    `;
+
+    db.query(sql, callback);
 
   }
 

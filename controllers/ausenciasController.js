@@ -15,12 +15,18 @@ exports.mostrarFormulario = (req, res) => {
     WHERE ag.activo = 1`,
     (err, profesionales) => {
 
-      Ausencia.obtenerTodas('', (err2, ausencias) => {
+      Ausencia.obtenerTodas('', req.session.user, (err2, ausencias) => {
+
+        if (err2) {
+          console.error("ERROR CARGANDO AUSENCIAS:", err2);
+          return res.status(500).send("Error cargando ausencias");
+        }
 
         res.render('nuevaAusencia', {
           agendas: profesionales || [],
           ausencias: ausencias || [],
-          path: req.path
+          path: req.path,
+          usuario: req.session.user
         });
 
       });

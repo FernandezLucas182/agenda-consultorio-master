@@ -11,6 +11,11 @@ block content
 
   // 🔍 BUSCADOR
   form(method="GET" action="/mis-turnos")
+    input(
+      type="hidden"
+      name="especialidad"
+      value=especialidadId
+    )
     .row.g-2.mb-3
 
       .col-md-6
@@ -39,11 +44,53 @@ block content
   div.d-flex.gap-2.mb-3
     a.btn.btn-secondary(href="/") Volver al inicio
 
+  // =================
+  // FILTRO ESPECIALIDAD
+  // =================
+
+  div.mb-3
+
+    a.btn.btn-outline-primary.me-2(
+      href="/mis-turnos"
+    )
+      | Todas
+
+
+    each esp in especialidades
+
+      a.btn.btn-outline-primary.me-2(
+        href=`/mis-turnos?especialidad=${esp.id}`
+      )
+        = esp.nombre
+
   hr
 
   div.card.shadow.mb-4
     div.card-body
       #calendar
+      
+  if totalPaginas > 1
+    nav.mb-3
+      ul.pagination.justify-content-center
+
+        if pagina > 1
+          li.page-item
+            a.page-link(
+              href=`?pagina=${pagina-1}&q=${q || ''}&fecha=${fecha || ''}&especialidad=${especialidadId || ''}`
+            ) ← Anterior
+
+        - for (let i = 1; i <= totalPaginas; i++)
+          li.page-item(class=pagina === i ? 'active' : '')
+            a.page-link(
+              href=`?pagina=${i}&q=${q || ''}&fecha=${fecha || ''}&especialidad=${especialidadId || ''}`
+            )= i
+
+        if pagina < totalPaginas
+          li.page-item
+            a.page-link(
+              href=`?pagina=${pagina+1}&q=${q || ''}&fecha=${fecha || ''}&especialidad=${especialidadId || ''}`
+            ) Siguiente →
+    
 
   if turnos.length > 0
     table.table.table-striped
@@ -73,13 +120,41 @@ block content
             td= turno.tipo_turno || 'normal'
 
             td
-              a(
+
+              a.btn.btn-info.btn-sm.me-1(
                 href=`/turnos/${turno.id}`
-                class='btn btn-info btn-sm'
-              ) Ver Detalle
+              )
+                | Ver detalle
+
+              a.btn.btn-success.btn-sm(
+                href=`/mis-turnos?fecha=${turno.fechaISO}&q=${q || ""}`
+              )
+                | Ver en 📅
 
   else
     p.alert.alert-info No hay turnos disponibles.
+
+  if totalPaginas > 1
+    nav.mt-4
+      ul.pagination.justify-content-center
+
+        if pagina > 1
+          li.page-item
+            a.page-link(
+              href=`?pagina=${pagina-1}&q=${q || ''}&fecha=${fecha || ''}&especialidad=${especialidadId || ''}`
+            ) ← Anterior
+
+        - for (let i = 1; i <= totalPaginas; i++)
+          li.page-item(class=pagina === i ? 'active' : '')
+            a.page-link(
+              href=`?pagina=${i}&q=${q || ''}&fecha=${fecha || ''}&especialidad=${especialidadId || ''}`
+            )= i
+
+        if pagina < totalPaginas
+          li.page-item
+            a.page-link(
+              href=`?pagina=${pagina+1}&q=${q || ''}&fecha=${fecha || ''}&especialidad=${especialidadId || ''}`
+            ) Siguiente →
 
   div.mt-3
     a(href='/' class="btn btn-secondary") Volver al inicio

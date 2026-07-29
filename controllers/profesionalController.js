@@ -176,10 +176,7 @@ exports.crearProfesional = (req, res) => {
 };
 
 
-
-/// Mostrar formulario para editar un profesional existente
-exports.formularioEditarProfesional = (req, res) => {
-  const profesionalId = req.params.id;
+function renderFormularioEditar(res, profesionalId, error = null) {
 
   Profesional.obtenerPorId(profesionalId, (err, profesional) => {
     if (err) return res.status(500).send('Error al obtener el profesional');
@@ -191,11 +188,11 @@ exports.formularioEditarProfesional = (req, res) => {
       Profesional.obtenerEspecialidadesPorProfesional(profesionalId, (err3, especialidadesAsignadas) => {
         if (err3) return res.status(500).send('Error al obtener especialidades del profesional');
 
-        // 🔥 ACÁ SÍ existe profesional
         res.render('editarProfesional', {
           profesional,
           especialidades,
-          especialidadesAsignadas
+          especialidadesAsignadas,
+          error
         });
 
       });
@@ -203,6 +200,15 @@ exports.formularioEditarProfesional = (req, res) => {
     });
 
   });
+
+}
+
+
+
+
+/// Mostrar formulario para editar un profesional existente
+exports.formularioEditarProfesional = (req, res) => {
+  renderFormularioEditar(res, req.params.id);
 };
 
 exports.editarProfesional = (req, res) => {
@@ -242,8 +248,20 @@ exports.editarProfesional = (req, res) => {
     },
     (err) => {
       if (err) {
+
+        if (err.codigo === 'ESPECIALIDAD_EN_USO') {
+
+          return renderFormularioEditar(
+            res,
+            profesionalId,
+            err.especialidades
+          );
+
+        }
+
         console.error(err);
         return res.status(500).send('Error al editar el profesional');
+
       }
 
       res.redirect(`/profesionales?editado=${profesionalId}`);

@@ -33,6 +33,8 @@ class Profesional {
       p.email,
       p.estado,
       p.matricula,
+      p.created_at,
+      p.updated_at,
       GROUP_CONCAT(e.nombre) AS especialidades
     FROM profesionales p
     LEFT JOIN profesional_especialidad pe
@@ -175,38 +177,109 @@ class Profesional {
     callback
   ) {
 
-    const profesionalQuery = `
-    UPDATE profesionales 
-    SET nombre = ?, apellido = ?, dni = ?, telefono = ?, email = ?, matricula = ?
-    WHERE id = ?
-  `;
+    especialidades = (especialidades || []).map(Number);
+
+    // Obtener especialidades actuales
     db.query(
-      profesionalQuery,
-      [nombre, apellido, dni, telefono, email, matricula, id],
-      err => {
+      'SELECT especialidad_id FROM profesional_especialidad WHERE profesional_id = ?',
+      [id],
+      (err, rows) => {
+
         if (err) return callback(err);
 
+        const actuales = rows.map(r => Number(r.especialidad_id));
+
+        // Especialidades que se intentan eliminar
+        const eliminadas = actuales.filter(e => !especialidades.includes(e));
+
+        // Si no se elimina ninguna, continuar normalmente
+        if (eliminadas.length === 0) {
+          return guardarCambios();
+        }
+
+        const placeholders = eliminadas.map(() => '?').join(',');
+
         db.query(
-          'DELETE FROM profesional_especialidad WHERE profesional_id = ?',
-          [id],
-          err => {
+          `
+        SELECT DISTINCT e.nombre
+        FROM agendas a
+        INNER JOIN especialidades e
+          ON e.id = a.especialidad_id
+        WHERE a.profesional_id = ?
+        AND a.especialidad_id IN (${placeholders})
+        `,
+          [id, ...eliminadas],
+          (err, agendasEnUso) => {
+
             if (err) return callback(err);
 
-            if (especialidades && especialidades.length > 0) {
-              const values = especialidades.map(eid => [id, eid]);
+            if (agendasEnUso.length > 0) {
 
-              db.query(
-                'INSERT INTO profesional_especialidad (profesional_id, especialidad_id) VALUES ?',
-                [values],
-                callback
-              );
-            } else {
-              callback(null);
+              return callback({
+                codigo: 'ESPECIALIDAD_EN_USO',
+                especialidades: agendasEnUso.map(a => a.nombre)
+              });
+
             }
+
+            guardarCambios();
+
           }
+
         );
+
       }
+
     );
+
+    function guardarCambios() {
+
+      const profesionalQuery = `
+      UPDATE profesionales
+      SET nombre = ?, apellido = ?, dni = ?, telefono = ?, email = ?, matricula = ?
+      WHERE id = ?
+    `;
+
+      db.query(
+        profesionalQuery,
+        [nombre, apellido, dni, telefono, email, matricula, id],
+        err => {
+
+          if (err) return callback(err);
+
+          db.query(
+            'DELETE FROM profesional_especialidad WHERE profesional_id = ?',
+            [id],
+            err => {
+
+              if (err) return callback(err);
+
+              if (especialidades.length > 0) {
+
+                const values = especialidades.map(eid => [id, eid]);
+
+                db.query(
+                  'INSERT INTO profesional_especialidad (profesional_id, especialidad_id) VALUES ?',
+                  [values],
+                  callback
+                );
+
+              } else {
+
+                callback(null);
+
+              }
+
+            }
+
+          );
+
+        }
+
+      );
+
+    }
+
   }
 
 
@@ -235,9 +308,17 @@ class Profesional {
 
   static obtenerEspecialidadesPorProfesional(profesionalId, callback) {
     const query = `
-      SELECT e.id, e.nombre
+      SELECT
+        e.id,
+        e.nombre,
+        EXISTS (
+          SELECT 1
+          FROM agendas a
+          WHERE a.profesional_id = pe.profesional_id
+          AND a.especialidad_id = e.id
+        ) AS enUso
       FROM especialidades e
-      JOIN profesional_especialidad pe 
+      JOIN profesional_especialidad pe
         ON e.id = pe.especialidad_id
       WHERE pe.profesional_id = ?
     `;

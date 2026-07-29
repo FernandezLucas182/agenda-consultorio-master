@@ -41,16 +41,81 @@ exports.mostrarTurnos = (req, res) => {
 
   const q = normalizarTexto(req.query.q);
   const fecha = req.query.fecha || "";
+
+  const profesionalFiltro = req.query.profesional || "";
+  const especialidadFiltro = req.query.especialidad || "";
+
   const nuevoId = req.query.nuevo;
   const editadoId = req.query.editado;
 
+  console.log("======================");
+  console.log("QUERY:", req.query);
+  console.log("FECHA:", fecha);
+  console.log("FECHA RECIBIDA EN MOSTRAR TURNOS:", fecha);
+
+
   Turno.obtenerTodos((err, turnos) => {
 
-    console.log(turnos[0]);
+
+    console.log("FECHA FILTRO RECIBIDA:", fecha);
+
+    console.log(
+      turnos.map(t => ({
+        fechaOriginal: t.fecha,
+        fechaISO: new Date(t.fecha)
+          .toISOString()
+          .substring(0, 10)
+      }))
+    );
     if (err) {
+
       console.error("ERROR REAL:", err);
       return res.status(500).send(err.message);
+
     }
+    console.log("ANTES:", turnos.length);
+    console.log("URL COMPLETA:", req.originalUrl);
+
+    if (profesionalFiltro) {
+
+      turnos = turnos.filter(t =>
+        Number(t.profesional_id) === Number(profesionalFiltro)
+      );
+
+    }
+
+
+    if (especialidadFiltro) {
+
+      turnos = turnos.filter(t =>
+        Number(t.especialidad_id) === Number(especialidadFiltro)
+      );
+
+    }
+
+    if (fecha) {
+
+      turnos = turnos.filter(t => {
+
+        const fechaTurno = new Date(t.fecha)
+          .toISOString()
+          .split("T")[0];
+
+        console.log(
+          "Comparando:",
+          fechaTurno,
+          "===",
+          fecha,
+          "=",
+          fechaTurno === fecha
+        );
+        console.log("ID:", t.id, "RESULTADO:", fechaTurno === fecha);
+        return fechaTurno === fecha;
+
+      });
+
+    }
+
 
     if (q) {
       turnos = turnos.filter(t => {
@@ -70,31 +135,40 @@ exports.mostrarTurnos = (req, res) => {
 
       });
     }
-    if (fecha) {
-      turnos = turnos.filter(t => {
-        const fechaTurno = new Date(t.fecha)
-          .toISOString()
-          .split("T")[0];
 
-        return fechaTurno === fecha;
-      });
-    }
 
-    turnos = turnos.map(t => ({
+    console.log("DESPUES:", turnos.length);
+    console.log("======================");
 
-      ...t,
+    turnos = turnos.map(t => {
 
-      fechaISO: new Date(t.fecha).toISOString().split("T")[0],
+      const fechaOriginal = new Date(t.fecha);
 
-      fecha: formatearFecha(t.fecha),
+      return {
+        ...t,
 
-      recienCreado:
-        Number(t.id) === Number(nuevoId),
+        fechaISO: fechaOriginal.toISOString().split("T")[0],
 
-      recienEditado:
-        Number(t.id) === Number(editadoId)
+        fecha: formatearFecha(fechaOriginal),
 
-    }));
+        recienCreado: Number(t.id) === Number(nuevoId),
+
+        recienEditado: Number(t.id) === Number(editadoId)
+      };
+
+    });
+
+    const pagina = parseInt(req.query.pagina) || 1;
+    const porPagina = 10;
+
+    const totalTurnos = turnos.length;
+    const totalPaginas = Math.max(1, Math.ceil(totalTurnos / porPagina));
+
+    const inicio = (pagina - 1) * porPagina;
+    const fin = inicio + porPagina;
+
+    turnos = turnos.slice(inicio, fin);
+
     turnos.sort((a, b) => {
 
       if (a.recienCreado !== b.recienCreado)
@@ -107,16 +181,47 @@ exports.mostrarTurnos = (req, res) => {
 
     });
 
-    res.render('turnos', {
-      turnos,
-      q,
-      fecha,
-      nuevoTurnoId: req.query.nuevo,
-      turnoEditadoId: req.query.editado,
-      path: req.path,
-      calendario: "calendarioTurnos"
+        Turno.obtenerTodosProfesionales((errProf, profesionales) => {
+
+      if (errProf) {
+        console.error(errProf);
+        profesionales = [];
+      }
+
+      console.log("PROFESIONALES PARA VISTA TURNOS:");
+      console.log(profesionales);
+
+
+      Turno.obtenerTodasEspecialidades((errEsp, especialidades) => {
+
+        if (errEsp) {
+          console.error(errEsp);
+          especialidades = [];
+        }
+
+
+        res.render("turnos", {
+          turnos,
+          profesionales,
+          especialidades,
+          q,
+          fecha,
+          pagina,
+          totalPaginas,
+          nuevoTurnoId: req.query.nuevo,
+          turnoEditadoId: req.query.editado,
+          path: req.path,
+          calendario: "calendarioTurnos"
+        });
+
+
+      });
+
     });
+
+
   });
+
 };
 
 exports.mostrarTurno = (req, res) => {
@@ -150,10 +255,21 @@ exports.mostrarTurno = (req, res) => {
 
 exports.mostrarMisTurnos = (req, res) => {
 
+
+  const pagina = parseInt(req.query.pagina) || 1;
+  const porPagina = 15;
+
+  const offset = (pagina - 1) * porPagina;
+
   const profesionalId = req.session.user.profesional_id;
 
   const q = normalizarTexto(req.query.q);
+
   const fecha = req.query.fecha || "";
+
+  const especialidadId = req.query.especialidad || "";
+
+  console.log("FECHA EN MIS TURNOS:", fecha);
 
   Turno.obtenerPorProfesional(profesionalId, (err, turnos) => {
 
@@ -181,11 +297,24 @@ exports.mostrarMisTurnos = (req, res) => {
 
     }
 
+    if (especialidadId) {
+
+      turnos = turnos.filter(t =>
+        Number(t.especialidad_id) === Number(especialidadId)
+      );
+
+    }
+
+
     if (fecha) {
+
       turnos = turnos.filter(t => {
         const fechaTurno = new Date(t.fecha)
+
           .toISOString()
           .split("T")[0];
+
+        console.log("ID:", t.id, "RESULTADO:", fechaTurno === fecha);
 
         return fechaTurno === fecha;
       });
@@ -193,16 +322,45 @@ exports.mostrarMisTurnos = (req, res) => {
 
     turnos = turnos.map(t => ({
       ...t,
+
+      fechaISO:
+        new Date(t.fecha)
+          .toISOString()
+          .split("T")[0],
+
       fecha: formatearFecha(t.fecha)
     }));
 
-    res.render("misTurnos", {
-      turnos,
-      q,
-      fecha,
-      path: req.path,
-      calendario: "calendarioMisTurnos"
-    });
+    const totalRegistros = turnos.length;
+    const totalPaginas = Math.ceil(totalRegistros / porPagina);
+
+    turnos = turnos.slice(offset, offset + porPagina);
+
+    Turno.obtenerEspecialidadesPorProfesional(
+      profesionalId,
+      (errEsp, especialidades) => {
+
+        if (errEsp) {
+          console.error(errEsp);
+          especialidades = [];
+        }
+
+
+        res.render("misTurnos", {
+          turnos,
+          q,
+          fecha,
+          especialidadId,
+          especialidades,
+          pagina,
+          totalPaginas,
+          totalRegistros,
+          path: req.path,
+          calendario: "calendarioMisTurnos"
+        });
+
+      }
+    );
 
   });
 
@@ -210,6 +368,7 @@ exports.mostrarMisTurnos = (req, res) => {
 
 exports.mostrarFormularioNuevoTurno = (req, res) => {
 
+  const volver = req.query.volver || "";
   const pacienteId = req.query.paciente_id;
 
   Turno.obtenerEspecialidades((e1, especialidades) => {
@@ -229,11 +388,14 @@ exports.mostrarFormularioNuevoTurno = (req, res) => {
             pacientes.find(p => p.id == pacienteId);
         }
 
+        
+
         res.render('nuevoTurno', {
           especialidades,
           pacientes,
           profesionales,
-          pacienteSeleccionado
+          pacienteSeleccionado,
+          volver
         });
 
       });
@@ -915,11 +1077,13 @@ exports.obtenerEventosTodos = (req, res) => {
 
       turnos = turnos.filter(t => {
 
-        const fechaTurno = new Date(t.fecha)
-          .toLocaleDateString("sv-SE", {
-            timeZone: "America/Argentina/Buenos_Aires"
-          });
+        const fechaTurno =
+          new Date(t.fecha)
+            .toISOString()
+            .substring(0, 10);
 
+        console.log("COMPARANDO:", fechaTurno, "CON:", fecha);
+        console.log("ID:", t.id, "RESULTADO:", fechaTurno === fecha);
         return fechaTurno === fecha;
 
       });
@@ -1019,6 +1183,8 @@ exports.obtenerEventosTodos = (req, res) => {
 exports.obtenerEventosMisTurnos = (req, res) => {
 
   const profesionalId = req.session.user.profesional_id;
+  const especialidadId = req.query.especialidad || "";
+  const fecha = req.query.fecha || "";
 
 
   Turno.obtenerPorProfesional(profesionalId, (err, turnos) => {
@@ -1028,19 +1194,74 @@ exports.obtenerEventosMisTurnos = (req, res) => {
     }
 
 
-    req.session.user.profesional_id = profesionalId;
+    if (especialidadId) {
+
+      turnos = turnos.filter(t =>
+        Number(t.especialidad_id) === Number(especialidadId)
+      );
+
+    }
+
+    if (fecha) {
+
+      turnos = turnos.filter(t => {
+
+        const fechaTurno = new Date(t.fecha)
+          .toLocaleDateString("sv-SE", {
+            timeZone: "America/Argentina/Buenos_Aires"
+          });
+
+        return fechaTurno === fecha;
+
+      });
+
+    }
 
 
     const eventos = turnos.map(t => {
 
-      const fecha = new Date(t.fecha).toISOString().split("T")[0];
+      const fechaEvento = new Date(t.fecha)
+        .toLocaleDateString("sv-SE", {
+          timeZone: "America/Argentina/Buenos_Aires"
+        });
+
 
       const horaMostrar =
         t.hora ? t.hora.substring(0, 5) : "";
 
 
-      const nombreMostrar =
-        `${t.paciente_apellido}, ${t.paciente_nombre}`;
+      // mismo formato que admin
+      const nombre = t.paciente_nombre || "";
+      const apellido = t.paciente_apellido || "";
+
+      const partesNombre = nombre.trim().split(" ");
+
+      let nombreMostrar = "";
+
+      if (apellido && partesNombre.length > 0) {
+
+        const inicialSegundoNombre =
+          partesNombre.length > 1
+            ? ` ${partesNombre[1].charAt(0)}.`
+            : "";
+
+        nombreMostrar =
+          `${apellido}, ${partesNombre[0]}${inicialSegundoNombre}`;
+
+      } else {
+
+        nombreMostrar = nombre;
+
+      }
+
+
+      const color =
+        t.estado === "confirmado" ? "#198754" :
+          t.estado === "pendiente" ? "#ffc107" :
+            t.estado === "reservado" ? "#0d6efd" :
+              t.estado === "reprogramar" ? "#fd7e14" :
+                t.estado === "cancelado" ? "#dc3545" :
+                  "#6c757d";
 
 
       return {
@@ -1049,10 +1270,12 @@ exports.obtenerEventosMisTurnos = (req, res) => {
 
         title:
           `🕘 ${horaMostrar}
-👤 ${nombreMostrar}
-🩺 ${t.profesional_nombre}`,
+          👤 ${nombreMostrar}
+          🩺 ${t.profesional_nombre}`,
 
-        start: `${fecha}T${t.hora}`,
+
+        start: `${fechaEvento}T${t.hora}`,
+
 
         extendedProps: {
 
@@ -1062,7 +1285,14 @@ exports.obtenerEventosMisTurnos = (req, res) => {
           sucursal: t.sucursal_nombre,
           hora: horaMostrar
 
-        }
+        },
+
+
+        backgroundColor: color,
+
+        borderColor: color,
+
+        textColor: "#ffffff"
 
       };
 

@@ -6,39 +6,249 @@ block title
 block content
   h1 Editar Profesional
 
+  if error
+    .alert.alert-warning.mt-3
+      h5.mb-2 No se pudieron guardar los cambios
+
+      p.mb-2
+        | Las siguientes especialidades tienen agendas asociadas y no pueden eliminarse:
+
+      ul.mb-2
+        each especialidad in error
+          li= especialidad
+
+      p.mb-0
+        | Para eliminarlas primero debe eliminar o modificar las agendas correspondientes.
+
+
   form(action=`/profesionales/${profesional.id}/editar` method="POST")
+
     div.mb-3
       label.form-label(for="nombre") Nombre
       input.form-control(type="text" id="nombre" name="nombre" value=profesional.nombre required)
+
 
     div.mb-3
       label.form-label(for="apellido") Apellido
       input.form-control(type="text" id="apellido" name="apellido" value=profesional.apellido required)
 
+
     div.mb-3
       label.form-label(for="dni") DNI
       input.form-control(type="text" id="dni" name="dni" value=profesional.dni required)
+
 
     div.mb-3
       label.form-label(for="telefono") Teléfono
       input.form-control(type="text" id="telefono" name="telefono" value=profesional.telefono)
 
+
     div.mb-3
       label.form-label(for="email") Email
       input.form-control(type="email" id="email" name="email" value=profesional.email)
+
 
     div.mb-3
       label.form-label(for="matricula") Matrícula
       input.form-control(type="text" id="matricula" name="matricula" value=profesional.matricula required)
 
+
     div.mb-3
       label.form-label Especialidades
-      select.form-select(name="especialidades[]" multiple size="5")
+
+
+      .card.bg-light.border.mb-3
+
+        .card-body
+
+          h5.card-title.mb-3
+            i.bi.bi-heart-pulse.me-2
+            | Especialidades actuales
+
+
+          #especialidadesActuales
+
+            each especialidad in especialidadesAsignadas
+
+              .especialidad-item.d-flex.justify-content-between.align-items-center.border.rounded.p-2.mb-2.bg-white
+
+                span.fs-6
+                  if especialidad.enUso
+                    | 🔒 #{especialidad.nombre}
+                  else
+                    | 🩺 #{especialidad.nombre}
+
+
+                if !especialidad.enUso
+
+                  button.btn.btn-danger.btn-sm(
+                    type="button"
+                    onclick=`quitarEspecialidad(this, ${especialidad.id})`
+                  )
+                    i.bi.bi-trash
+                    |  Quitar
+
+
+                else
+
+                  button.btn.btn-secondary.btn-sm(
+                    type="button"
+                    disabled
+                    title="Tiene agendas asociadas"
+                  )
+                    i.bi.bi-lock
+                    |  Bloqueada
+
+
+          hr.my-3
+
+
+          small.text-muted
+            | 🔒 = Especialidad con agendas asociadas. No puede eliminarse.
+
+
+
+      label.form-label.mt-3 Agregar especialidad
+
+
+      select.form-select#selectEspecialidad(size="5")
+
+        option(value="") Seleccionar...
+
         each especialidad in especialidades
-          - const selected = especialidadesAsignadas.some(e => e.id === especialidad.id)
-          option(value=especialidad.id selected=selected)= especialidad.nombre
-      div.form-text Mantén presionada la tecla Ctrl (o Cmd) para seleccionar múltiples.
+
+          - const existe = especialidadesAsignadas.some(e => e.id === especialidad.id)
+
+          if !existe
+            option(value=especialidad.id)= especialidad.nombre
+
+
+
+      button.btn.btn-success.mt-2(
+        type="button"
+        onclick="agregarEspecialidad()"
+      )
+        i.bi.bi-plus-circle
+        |  Agregar
+
+
+
+      #especialidadesSeleccionadas
+
+        each especialidad in especialidadesAsignadas
+
+          input(
+            type="hidden"
+            name="especialidades[]"
+            value=especialidad.id
+            id=`esp-${especialidad.id}`
+          )
+
+
 
     div.mt-4
-      button.btn.btn-primary(type="submit") Guardar Cambios
-      a.btn.btn-secondary.ms-2(href="/profesionales") Cancelar
+
+      button.btn.btn-primary(type="submit")
+        | Guardar Cambios
+
+      a.btn.btn-secondary.ms-2(href="/profesionales")
+        | Cancelar
+
+
+
+  script.
+
+    function agregarEspecialidad(){
+
+      const select = document.getElementById('selectEspecialidad');
+
+      const id = select.value;
+
+      if(!id){
+          return;
+      }
+
+
+      const nombre = select.options[select.selectedIndex].text;
+
+
+      const existe = document.getElementById(`esp-${id}`);
+
+
+      if(existe){
+
+          alert('La especialidad ya está asignada');
+          return;
+
+      }
+
+
+      // Crear hidden para enviar al backend
+      const input = document.createElement('input');
+
+      input.type = 'hidden';
+      input.name = 'especialidades[]';
+      input.value = id;
+      input.id = `esp-${id}`;
+
+
+      document
+        .getElementById('especialidadesSeleccionadas')
+        .appendChild(input);
+
+
+
+      // Crear visualmente la tarjeta
+      const div = document.createElement('div');
+
+      div.className = 'especialidad-item d-flex justify-content-between align-items-center border rounded p-2 mb-2 bg-white';
+
+
+      div.innerHTML = `
+          <span class="fs-6">
+              🩺 ${nombre}
+          </span>
+
+          <button 
+              class="btn btn-danger btn-sm"
+              type="button"
+              onclick="quitarEspecialidad(this, ${id})">
+              <i class="bi bi-trash"></i>
+              Quitar
+          </button>
+      `;
+
+
+      document
+        .getElementById('especialidadesActuales')
+        .appendChild(div);
+
+
+
+      // quitar del select
+      select
+        .querySelector(`option[value="${id}"]`)
+        .remove();
+
+
+      select.value = "";
+
+    }
+
+
+    function quitarEspecialidad(btn, id){
+
+        const input = document.getElementById(`esp-${id}`);
+
+        if(input){
+            input.remove();
+        }
+
+
+        const item = btn.closest('.especialidad-item');
+
+        if(item){
+            item.remove();
+        }
+
+    }

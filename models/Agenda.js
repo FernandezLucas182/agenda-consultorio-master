@@ -494,6 +494,8 @@ class Agenda {
 
   static crearAgendaConHorarios(datos, callback) {
 
+    console.log("MODELO crearAgendaConHorarios");
+
     const {
       profesional_id,
       especialidad_id,

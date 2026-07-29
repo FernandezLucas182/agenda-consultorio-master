@@ -131,9 +131,9 @@ block content
                         Cerrar
 
             td
-              a(href=`/pacientes/${paciente.id}` class="btn btn-info btn-sm me-1") Ver Detalle
+              
               a(href=`/pacientes/${paciente.id}/editar` class="btn btn-warning btn-sm me-1") Editar
-              a(href=`/turnos/nuevo?paciente_id=${paciente.id}` class="btn btn-success btn-sm") Asignar Turno
+              a(href=`/turnos/nuevo?paciente_id=${paciente.id}&volver=pacientes` class="btn btn-success btn-sm") Asignar Turno
 
     // PAGINACIÓN INFERIOR
     if totalPaginas > 1

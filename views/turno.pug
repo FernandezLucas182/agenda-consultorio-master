@@ -19,4 +19,8 @@ block content
             li.list-group-item Hora: #{turno.hora}
             li.list-group-item Estado: #{turno.estado}
 
-    a.btn.btn-secondary.mt-3(href='/turnos') Volver a la lista de turnos
+    button.btn.btn-secondary(
+      type="button"
+      onclick="if(document.referrer){history.back()}else{window.location.href='/'}"
+    )
+      | Volver

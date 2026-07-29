@@ -932,3 +932,59 @@ ESTRELLAS LOGIN
 
   z-index: 5;
 }
+
+
+/* ==========================================
+   FULLCALENDAR - CURSOR
+========================================== */
+
+.fc-col-header-cell,
+.fc-col-header-cell a,
+.fc-daygrid-day-number,
+.fc-timegrid-slot,
+.fc-daygrid-day,
+.fc-timegrid-col {
+  cursor: pointer !important;
+}
+
+.fc-event {
+  cursor: pointer !important;
+}
+
+
+
+/* ===========================
+   EVENTOS DEL CALENDARIO PARA MEDICO
+=========================== */
+
+.fc-turno {
+  background: #0d6efd;
+  border-radius: 6px;
+  padding: 4px 6px;
+  color: white;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
+  border-left: 4px solid #084298;
+  overflow: hidden;
+}
+
+
+.fc-turno-hora {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+
+.fc-turno-paciente {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* Quitar transparencia propia de FullCalendar */
+.fc-event {
+  background: transparent !important;
+  border: none !important;
+}

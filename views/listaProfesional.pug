@@ -61,6 +61,8 @@ block content
       table.table.table-striped.table-bordered.table-hover
         thead
           tr
+            th Creado
+            th Editado
             th Matrícula
             th Nombre
             th Apellido
@@ -81,6 +83,18 @@ block content
               ? 'table-warning' 
               : ''
             )
+
+              td
+                if profesional.created_at
+                  = new Date(profesional.created_at).toLocaleDateString('es-AR')
+                else
+                  | -
+
+              td
+                if profesional.updated_at
+                  = new Date(profesional.updated_at).toLocaleDateString('es-AR')
+                else
+                  | -
 
               td= profesional.matricula
 

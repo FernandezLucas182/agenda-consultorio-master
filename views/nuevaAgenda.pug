@@ -8,7 +8,12 @@ block content
 
   form(action="/agendas/nueva" method="POST")
     // DATOS GENERALES
-    h3.mt-4.mb-3 Datos Generales
+    div.d-flex.justify-content-between.align-items-center.mt-4.mb-3
+      h3.mb-0 Datos Generales
+
+      button#btnRestaurar.btn.btn-warning(type="button")
+        i.bi.bi-arrow-counterclockwise.me-1
+        | Restaurar
     div.row.g-3
       div.col-md-6
         label.form-label(for="profesionalSelect") Profesional
@@ -43,6 +48,22 @@ block content
           option(value="50") 50 minutos
           option(value="60") 60 minutos
 
+      div.col-md-6
+        label.form-label(for="max_sobreturnos")
+          | Sobreturnos por día
+
+        input.form-control(
+          type="number"
+          id="max_sobreturnos"
+          name="max_sobreturnos"
+          min="0"
+          max="20"
+          value="0"
+        )
+
+        div.form-text
+          | Cantidad máxima de sobreturnos permitidos por día.
+
     // DISPONIBILIDAD SEMANAL
     h3.mt-5.mb-3 Disponibilidad semanal
 
@@ -63,21 +84,32 @@ block content
           button.btn.btn-outline-primary.btn-sm(type="button" onclick=`agregarBloque(${dia.id})`) + Agregar bloque horario
 
     div.mt-4
+
       button#btnGuardar.btn.btn-success.btn-lg(type="submit")
         | Guardar Agenda Completa
-      a.btn.btn-secondary.btn-lg.ms-2(href="/agendas") Volver
+
+      a.btn.btn-secondary.btn-lg.ms-2(href="/agendas")
+        | Volver
 
   // SCRIPT
   script.
     document.addEventListener('DOMContentLoaded', () => {
 
       const profesionalSelect = document.getElementById('profesionalSelect');
+      const btnRestaurar = document.getElementById('btnRestaurar');
+
+    
+  
       const especialidadSelect = document.getElementById('especialidadSelect');
       const sucursalSelect = document.getElementById('sucursalSelect');
       const btnGuardar = document.getElementById('btnGuardar');
       const alertaAgendaExistente = document.getElementById('alertaAgendaExistente');
-      
 
+      const profesionalesOriginales = profesionalSelect.innerHTML;
+
+      const especialidadesOriginales = especialidadSelect.innerHTML;
+
+     
       const horariosDisponibles = [
         "09:00","09:30","10:00","10:30","11:00","11:30",
         "12:00","12:30","13:00",
@@ -85,24 +117,27 @@ block content
         "19:00","19:30","20:00","20:30","21:00"
       ];
 
+      let actualizando = false;
+      let sincronizando = false;
       let bloqueIndex = 0;
 
-      sucursalSelect.addEventListener('change', () => {
-        verificarDisponibilidad();
-      });
+      
       
     //=========================
     //Verificar disponibilidad
     //=========================
       async function verificarDisponibilidad() {
-        const profesionalId = profesionalSelect.value;
-        const especialidadId = especialidadSelect.value;
+      const profesionalId = profesionalSelect.value;
+      const especialidadId = especialidadSelect.value;
+      const sucursalId = sucursalSelect.value;
 
-        if (!profesionalId || !especialidadId) return;
+      if (!profesionalId || !especialidadId || !sucursalId) {
+        return;
+      }
 
-        const res = await fetch(
-          `/agendas/disponibilidad/${profesionalId}/${especialidadId}/${sucursalId}`
-        );
+      const res = await fetch(
+        `/agendas/disponibilidad/${profesionalId}/${especialidadId}/${sucursalId}`
+      );
 
         const data = await res.json();
 
@@ -126,7 +161,7 @@ block content
           const sucursales = await res.json();
 
           sucursalSelect.innerHTML =
-            '<option disabled selected>Selecciona sucursal</option>';
+            '<option value="" disabled selected>-- Selecciona sucursal --</option>';
 
           sucursales.forEach(s => {
             const option = document.createElement('option');
@@ -147,42 +182,203 @@ block content
       // =========================
       
       // =========================
-      // PROFESIONAL CHANGE
+      // CARGAR ESPECIALIDADES
       // =========================
-      profesionalSelect.addEventListener('change', async () => {
-        const profesionalId = profesionalSelect.value;
+      async function cargarEspecialidades(profesionalId, conservar = "") {
+
+        sincronizando = true;
+
+        especialidadSelect.disabled = true;
 
         especialidadSelect.innerHTML =
-          '<option disabled selected>Cargando...</option>';
+          '<option selected>Cargando...</option>';
 
         try {
-          const res = await fetch(`/profesionales/${profesionalId}/especialidades`);
-          const especialidades = await res.json();
+
+          const res =
+            await fetch(`/profesionales/${profesionalId}/especialidades`);
+
+          const especialidades =
+            await res.json();
 
           especialidadSelect.innerHTML =
-            '<option disabled selected>Selecciona especialidad</option>';
+            '<option value="">-- Selecciona especialidad --</option>';
 
           especialidades.forEach(e => {
-            const option = document.createElement('option');
+
+            const option = document.createElement("option");
+
             option.value = e.id;
+
             option.textContent = e.nombre;
+
+            if (String(e.id) === String(conservar))
+              option.selected = true;
+
             especialidadSelect.appendChild(option);
+
           });
 
+          if (
+            !conservar &&
+            especialidades.length === 1
+          ) {
+            especialidadSelect.value =
+              especialidades[0].id;
+          }
+
         } catch (err) {
+
           console.error(err);
+
         }
+
+        especialidadSelect.disabled = false;
+
+        sincronizando = false;
+
         verificarDisponibilidad();
-        
-      });
+
+      }
+
 
       // =========================
-      // ESPECIALIDAD CHANGE
+      // CARGAR PROFESIONALES
       // =========================
-      especialidadSelect.addEventListener('change', () => {
+      async function cargarProfesionales(especialidadId, conservar = "") {
+
+        sincronizando = true;
+
+        profesionalSelect.disabled = true;
+
+        profesionalSelect.innerHTML =
+          '<option selected>Cargando...</option>';
+
+        try {
+
+          const res =
+            await fetch(`/profesionales/especialidad/${especialidadId}`);
+
+          const profesionales =
+            await res.json();
+
+          profesionalSelect.innerHTML =
+            '<option value="">-- Selecciona profesional --</option>';
+
+          profesionales.forEach(p => {
+
+            const option = document.createElement("option");
+
+            option.value = p.id;
+
+            option.textContent = p.nombre_completo
+
+            if (String(p.id) === String(conservar))
+              option.selected = true;
+
+            profesionalSelect.appendChild(option);
+
+          });
+
+          if (
+            !conservar &&
+            profesionales.length === 1
+          ) {
+
+            profesionalSelect.value =
+              profesionales[0].id;
+
+          }
+
+        } catch (err) {
+
+          console.error(err);
+
+        }
+
+        profesionalSelect.disabled = false;
+
+        sincronizando = false;
+
         verificarDisponibilidad();
+
+      }
+
+
+      // =========================
+      // PROFESIONAL
+      // =========================
+      profesionalSelect.addEventListener("change", async () => {
+
+        if (sincronizando) return;
+
+        const profesionalId =
+          profesionalSelect.value;
+
+        const especialidadActual =
+          especialidadSelect.value;
+
+        if (!profesionalId) return;
+
+        await cargarEspecialidades(
+          profesionalId,
+          especialidadActual
+        );
+
       });
 
+
+      // =========================
+      // ESPECIALIDAD
+      // =========================
+      especialidadSelect.addEventListener("change", async () => {
+
+        if (sincronizando) return;
+
+        const especialidadId =
+          especialidadSelect.value;
+
+        const profesionalActual =
+          profesionalSelect.value;
+
+        if (!especialidadId) return;
+
+        await cargarProfesionales(
+          especialidadId,
+          profesionalActual
+        );
+
+      });
+
+
+      // =========================
+      // SUCURSAL
+      // =========================
+      sucursalSelect.addEventListener(
+        "change",
+        verificarDisponibilidad
+      );
+
+
+      // =========================
+      // RESTAURAR
+      // =========================
+      btnRestaurar.addEventListener("click", () => {
+
+        sincronizando = true;
+
+        profesionalSelect.innerHTML = profesionalesOriginales;
+        especialidadSelect.innerHTML = especialidadesOriginales;
+
+        sucursalSelect.selectedIndex = 0;
+
+        btnGuardar.disabled = false;
+
+        alertaAgendaExistente.classList.add("d-none");
+
+        sincronizando = false;
+
+      });
       // =========================
       // BLOQUES HORARIOS
       // =========================
