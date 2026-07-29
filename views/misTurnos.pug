@@ -50,15 +50,16 @@ block content
 
   div.mb-3
 
-    a.btn.btn-outline-primary.me-2(
+    a.btn.me-2(
+      class=!especialidadId ? "btn-primary" : "btn-outline-primary"
       href="/mis-turnos"
     )
       | Todas
 
 
     each esp in especialidades
-
-      a.btn.btn-outline-primary.me-2(
+      a.btn.me-2(
+        class=Number(especialidadId) === esp.id ? "btn-primary" : "btn-outline-primary"
         href=`/mis-turnos?especialidad=${esp.id}`
       )
         = esp.nombre

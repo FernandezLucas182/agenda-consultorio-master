@@ -9,26 +9,75 @@ block content
   form(action=`/ausencias/${ausencia.id}/editar` method="POST")
     div.mb-3
       label.form-label(for="profesional_id") Profesional
-      select.form-select(name="agenda_id" id="agenda_id" required)
+
+      select.form-select(
+        name="agenda_id"
+        id="agenda_id"
+        required
+        disabled=esHistorica
+      )
         each agenda in agendas
           option(
             value=agenda.id
             selected=(agenda.id == ausencia.agenda_id)
           )= agenda.nombre
+
+      if esHistorica
+        input(
+          type="hidden"
+          name="agenda_id"
+          value=ausencia.agenda_id
+        )
+
     div.row.g-3.mb-3
+
       div.col-md-6
         label.form-label(for="fecha_inicio") Fecha Inicio
-        //- Asumiendo que el controlador envía la fecha en formato YYYY-MM-DD
-        input.form-control(type="date" name="fecha_inicio" id="fecha_inicio" value=ausencia.fecha_inicio required)
-      
+
+        input.form-control(
+          type="date"
+          name=esHistorica ? undefined : "fecha_inicio"
+          id="fecha_inicio"
+          value=ausencia.fecha_inicio
+          required
+          disabled=esHistorica
+        )
+
+        if esHistorica
+          input(
+            type="hidden"
+            name="fecha_inicio"
+            value=ausencia.fecha_inicio
+          )
+
       div.col-md-6
         label.form-label(for="fecha_fin") Fecha Fin
-        //- Asumiendo que el controlador envía la fecha en formato YYYY-MM-DD
-        input.form-control(type="date" name="fecha_fin" id="fecha_fin" value=ausencia.fecha_fin required)
+
+        input.form-control(
+          type="date"
+          name=esHistorica ? undefined : "fecha_fin"
+          id="fecha_fin"
+          value=ausencia.fecha_fin
+          required
+          disabled=esHistorica
+        )
+
+        if esHistorica
+          input(
+            type="hidden"
+            name="fecha_fin"
+            value=ausencia.fecha_fin
+          )
 
     div.mb-3
       label.form-label(for="motivo") Motivo
-      input.form-control(type="text" name="motivo" id="motivo" value=ausencia.motivo)
+
+      input.form-control(
+        type="text"
+        name="motivo"
+        id="motivo"
+        value=ausencia.motivo
+      )
 
     div.mt-4
       button.btn.btn-warning(type="submit") Actualizar Ausencia
@@ -36,63 +85,80 @@ block content
 
   .card.mt-4.historial-ausencias
 
-      .card-header
-          h5.mb-0 Historial de ausencias
+    .card-header
+      h5.mb-0 Historial de ausencias
 
+    .card-body
 
-      .card-body
+      .timeline-scroll
 
-        .timeline-scroll
+        .timeline-content
 
-          .timeline-content
+          .timeline-header
 
-            .timeline-header
+            each mes in ['Jun 2026','Jul 2026','Ago 2026','Sep 2026','Oct 2026']
 
-              each mes in ['Jun 2026','Jul 2026','Ago 2026','Sep 2026','Oct 2026']
+              .mes
 
-                .mes
+                .mes-titulo= mes
 
-                  .mes-titulo= mes
+                .dias
 
-                  .dias
+                  each _, i in Array.from({length:31})
+                    span= String(i + 1).padStart(2,'0')
 
-                    each _, i in Array.from({length:31})
+          each a in ausencias
 
-                      span= String(i+1).padStart(2,'0')
+            - const esActual = a.id == ausencia.id
+            - const PX_DIA = 14
+            - const left = a.offset * PX_DIA
+            - const width = a.dias * PX_DIA
 
+            .fila-ausencia
 
-            each a in ausencias
+              .info
 
-              - const esActual = a.id == ausencia.id
-              - const PX_DIA = 14
+                strong= a.motivo
 
-              - const left = a.offset * PX_DIA
-              - const width = a.dias * PX_DIA
+                br
 
+                small
+                  = a.inicioTexto
+                  |  al
+                  = a.finTexto
 
-              .fila-ausencia
+              .barra-contenedor
 
-                .info
+                .barra(
+                  class=esActual ? 'actual' : 'anterior'
+                  style=`left:${left}px;width:${width}px`
+                )
 
-                  strong= a.motivo
+                if esActual
+                  .badge.bg-primary.editando
+                    | Editando
 
-                  br
+  if !esHistorica
+  script.
 
-                  small
-                    = a.inicioTexto
-                    |  al
-                    = a.finTexto
+    const hoy = new Date().toISOString().split('T')[0];
 
+    const fechaInicio = document.getElementById('fecha_inicio');
+    const fechaFin = document.getElementById('fecha_fin');
 
-                .barra-contenedor
+    fechaInicio.min = hoy;
 
-                  .barra(
-                    class=esActual ? 'actual' : 'anterior'
-                    style=`left:${left}px;width:${width}px`
-                  )
+    fechaFin.min =
+      fechaInicio.value > hoy
+        ? fechaInicio.value
+        : hoy;
 
-                  if esActual
+    fechaInicio.addEventListener('change', function () {
 
-                    .badge.bg-primary.editando
+      fechaFin.min = this.value;
 
-                      | Editando
+      if (fechaFin.value < this.value) {
+        fechaFin.value = this.value;
+      }
+
+    });

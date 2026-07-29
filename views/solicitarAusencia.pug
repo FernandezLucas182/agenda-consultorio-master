@@ -31,18 +31,20 @@ block content
     .mb-3
       label.form-label Desde
 
-      input.form-control(
+      input(
         type="date"
         name="fecha_inicio"
+        id="fecha_inicio"
         required
       )
 
     .mb-3
       label.form-label Hasta
 
-      input.form-control(
+      input(
         type="date"
         name="fecha_fin"
+        id="fecha_fin"
         required
       )
 
@@ -61,3 +63,25 @@ block content
 
       a.btn.btn-secondary.ms-2(href="/ausencias")
         | Cancelar
+
+
+    script.
+
+      const fechaInicio = document.getElementById('fecha_inicio');
+      const fechaFin = document.getElementById('fecha_fin');
+
+      const hoy = new Date().toISOString().split('T')[0];
+
+      fechaInicio.min = hoy;
+      fechaFin.min = hoy;
+
+
+      fechaInicio.addEventListener('change', function () {
+
+        fechaFin.min = this.value;
+
+        if (fechaFin.value < this.value) {
+          fechaFin.value = this.value;
+        }
+
+      });

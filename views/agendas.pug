@@ -19,7 +19,9 @@ block content
       input.form-control(
         type="text"
         name="buscar"
-        placeholder="Buscar por profesional, especialidad o sucursal"
+        placeholder= usuario && usuario.rol === 'medico'
+          ? "Buscar por especialidad o sucursal"
+          : "Buscar por profesional, especialidad o sucursal"
         value=buscar
       )
 
@@ -28,7 +30,10 @@ block content
     a.btn.btn-secondary(href="/agendas") Mostrar todos
 
   div.d-flex.gap-2.mb-4
-    a.btn.btn-primary(href="/agendas/nueva") + Crear Agenda
+
+    if !usuario || usuario.rol !== 'medico'
+      a.btn.btn-primary(href="/agendas/nueva") + Crear Agenda
+
     a.btn.btn-secondary(href="/") Volver al inicio
 
   - const dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']

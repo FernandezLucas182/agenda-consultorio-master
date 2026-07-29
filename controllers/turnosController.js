@@ -181,7 +181,7 @@ exports.mostrarTurnos = (req, res) => {
 
     });
 
-        Turno.obtenerTodosProfesionales((errProf, profesionales) => {
+    Turno.obtenerTodosProfesionales((errProf, profesionales) => {
 
       if (errProf) {
         console.error(errProf);
@@ -388,7 +388,7 @@ exports.mostrarFormularioNuevoTurno = (req, res) => {
             pacientes.find(p => p.id == pacienteId);
         }
 
-        
+
 
         res.render('nuevoTurno', {
           especialidades,
@@ -795,7 +795,6 @@ exports.editarTurno = (req, res) => {
 
         (err) => {
 
-
           if (err) {
 
             console.log(err);
@@ -806,9 +805,11 @@ exports.editarTurno = (req, res) => {
 
           }
 
+          if (req.body.volver === "reprogramaciones") {
+            return res.redirect("/turnos/reprogramaciones");
+          }
 
           res.redirect(`/turnos?editado=${turnoId}`);
-
 
         }
 
@@ -965,6 +966,8 @@ exports.obtenerSucursalAgenda = (req, res) => {
 
 exports.mostrarFormularioEditarTurno = (req, res) => {
 
+  const volver = req.query.volver || "";
+
   Turno.obtenerPorId(req.params.id, (err, turno) => {
 
     if (err || !turno) {
@@ -994,7 +997,8 @@ exports.mostrarFormularioEditarTurno = (req, res) => {
               turno,
               pacientes,
               especialidades,
-              profesionales
+              profesionales,
+              volver
             });
 
           }

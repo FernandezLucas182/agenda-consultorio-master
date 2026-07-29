@@ -1,6 +1,6 @@
 const Ausencia = require('../models/Ausencia');
 const db = require('../models/Db');
-const { formatearFecha } = require('../utils/fechas');
+const { formatearFecha, formatearFechaLarga } = require('../utils/fechas');
 const { procesarAusencia } = require('../services/reprogramacionService');
 const SolicitudAusencia = require('../models/SolicitudAusencia');
 
@@ -77,6 +77,23 @@ exports.crearAusencia = (req, res) => {
   console.log("🔥 BODY AUSENCIA:", req.body);
 
   const { agenda_id, fecha_inicio, fecha_fin, motivo } = req.body;
+
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
+  const inicio = new Date(fecha_inicio);
+  inicio.setHours(0, 0, 0, 0);
+
+  const fin = new Date(fecha_fin);
+  fin.setHours(0, 0, 0, 0);
+
+  if (inicio < hoy || fin < hoy) {
+    return res.status(400).send("No se pueden registrar ausencias en fechas pasadas.");
+  }
+
+  if (fin < inicio) {
+    return res.status(400).send("La fecha de fin no puede ser anterior a la fecha de inicio.");
+  }
 
   Ausencia.crear(
     { agenda_id, fecha_inicio, fecha_fin, motivo },
@@ -165,6 +182,20 @@ exports.listarAusencias = (req, res) => {
 
     SolicitudAusencia.obtenerPendientes((err2, solicitudes) => {
       console.log("SOLICITUDES PENDIENTES:", solicitudes);
+      solicitudes = (solicitudes || []).map(s => {
+
+        return {
+          ...s,
+
+          fecha_inicio:
+            formatearFechaLarga(s.fecha_inicio),
+
+          fecha_fin:
+            formatearFechaLarga(s.fecha_fin)
+
+        };
+
+      });
 
 
       if (err2) {
@@ -200,6 +231,8 @@ exports.listarAusencias = (req, res) => {
 
 
       }));
+
+
 
       console.log("ENVIANDO A PUG:", solicitudes);
 
@@ -303,6 +336,14 @@ exports.mostrarFormularioEditar = (req, res) => {
 
           });
 
+          const hoy = new Date();
+          hoy.setHours(0, 0, 0, 0);
+
+          const fechaFinAusencia = new Date(ausencia.fecha_fin);
+          fechaFinAusencia.setHours(0, 0, 0, 0);
+
+          const esHistorica = fechaFinAusencia < hoy;
+
 
           res.render("editarAusencia", {
 
@@ -312,6 +353,8 @@ exports.mostrarFormularioEditar = (req, res) => {
             ausencias,
 
             fechaBase,
+
+            esHistorica,
 
             path: req.path
 
@@ -328,21 +371,82 @@ exports.mostrarFormularioEditar = (req, res) => {
 exports.editarAusencia = (req, res) => {
 
   const id = req.params.id;
-  const { agenda_id, fecha_inicio, fecha_fin, motivo } = req.body;
 
-  Ausencia.actualizar(
-    id,
-    { agenda_id, fecha_inicio, fecha_fin, motivo },
-    (err) => {
+  const {
+    agenda_id,
+    fecha_inicio,
+    fecha_fin,
+    motivo
+  } = req.body;
 
-      if (err) return res.status(500).send("Error al actualizar ausencia");
+  Ausencia.obtenerPorId(id, (err, ausenciaActual) => {
 
-      // 🔥 IMPORTANTE: volver a procesar reprogramación
-      procesarAusencia(agenda_id, fecha_inicio, fecha_fin);
-
-      res.redirect(`/ausencias?editado=${id}`);
+    if (err || !ausenciaActual) {
+      return res.status(404).send("Ausencia no encontrada");
     }
-  );
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const inicioAnterior = new Date(ausenciaActual.fecha_inicio);
+    inicioAnterior.setHours(0, 0, 0, 0);
+
+    const finAnterior = new Date(ausenciaActual.fecha_fin);
+    finAnterior.setHours(0, 0, 0, 0);
+
+    const inicioNuevo = new Date(fecha_inicio);
+    inicioNuevo.setHours(0, 0, 0, 0);
+
+    const finNuevo = new Date(fecha_fin);
+    finNuevo.setHours(0, 0, 0, 0);
+
+    // Siempre validar rango
+    if (finNuevo < inicioNuevo) {
+      return res.status(400).send(
+        "La fecha de fin no puede ser anterior a la fecha de inicio."
+      );
+    }
+
+    // ¿La ausencia original ya terminó?
+    const ausenciaHistorica = finAnterior < hoy;
+
+    // Si NO era histórica, no permitir moverla al pasado
+    if (!ausenciaHistorica) {
+
+      if (inicioNuevo < hoy || finNuevo < hoy) {
+        return res.status(400).send(
+          "No se puede modificar una ausencia vigente o futura para que quede en el pasado."
+        );
+      }
+
+    }
+
+    Ausencia.actualizar(
+      id,
+      {
+        agenda_id,
+        fecha_inicio,
+        fecha_fin,
+        motivo
+      },
+      (err) => {
+
+        if (err) {
+          return res.status(500).send("Error al actualizar ausencia");
+        }
+
+        procesarAusencia(
+          agenda_id,
+          fecha_inicio,
+          fecha_fin
+        );
+
+        res.redirect(`/ausencias?editado=${id}`);
+      }
+    );
+
+  });
+
 };
 
 exports.obtenerAusenciasAgenda = (req, res) => {

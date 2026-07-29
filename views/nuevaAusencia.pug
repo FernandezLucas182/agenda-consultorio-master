@@ -16,10 +16,10 @@ block content
     div.row.g-3.mb-3
       div.col-md-6
         label.form-label(for="fecha_inicio") Fecha Inicio
-        input.form-control(type="date" name="fecha_inicio" id="fecha_inicio" required)
+        input.form-control(type="date"  name="fecha_inicio"  id="fecha_inicio"  required)
       div.col-md-6
         label.form-label(for="fecha_fin") Fecha Fin
-        input.form-control(type="date" name="fecha_fin" id="fecha_fin" required)
+        input.form-control(type="date"  name="fecha_fin"  id="fecha_fin"  required)
 
     div.mb-3
       label.form-label(for="motivo") Motivo
@@ -46,6 +46,21 @@ block content
            
 
   script.
+
+    const hoy = new Date().toISOString().split('T')[0];
+
+    document.getElementById('fecha_inicio').min = hoy;
+    document.getElementById('fecha_fin').min = hoy;
+
+    document.getElementById('fecha_inicio').addEventListener('change', function () {
+
+        document.getElementById('fecha_fin').min = this.value;
+
+        if (document.getElementById('fecha_fin').value < this.value) {
+            document.getElementById('fecha_fin').value = this.value;
+        }
+
+    });
 
     document.getElementById('agenda_id')
       .addEventListener('change', cargarAusencias);

@@ -33,6 +33,11 @@ block content
           
 
         form(action=`/turnos/${turno.id}/editar` method="POST")
+          input(
+            type="hidden"
+            name="volver"
+            value=volver
+          )
           div.row.g-3
 
             div.col-md-6
@@ -144,8 +149,12 @@ block content
           .mt-4
             button.btn.btn-warning(type="submit") Actualizar Turno
 
-            a.btn.btn-secondary.ms-2(href="/turnos")
-              | Volver
+            if volver === "reprogramaciones"
+              a.btn.btn-secondary.ms-2(href="/turnos/reprogramaciones")
+                | Volver
+            else
+              a.btn.btn-secondary.ms-2(href="/turnos")
+                | Volver
 
             button.btn.btn-info.ms-2(
               type="button"

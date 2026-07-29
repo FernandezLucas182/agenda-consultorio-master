@@ -1,0 +1,27 @@
+extends layout
+
+block content
+  .container.mt-4
+    h1.mb-4 Transferir Agenda Masivamente
+
+    .card.shadow-sm
+      .card-body
+        p.text-muted
+          | Al transferir esta agenda, los turnos futuros asignados se reasignarán automáticamente al nuevo profesional. 
+          | Los turnos que generen conflicto de horario o no tengan disponibilidad pasarán a la sección de 
+          strong Reprogramaciones
+          |  para su gestión manual.
+
+        form(action=`/agendas/${agenda.id}/transferir` method="POST")
+          .mb-3
+            label.form-label(for="profesional_destino_id") Profesional Destino:
+            select.form-select#profesional_destino_id(name="profesional_destino_id" required)
+              option(value="" disabled selected) -- Seleccione Profesional --
+              each prof in profesionales
+                option(value=prof.id)= `${prof.nombre} ${prof.apellido}`
+
+          .d-flex.gap-2.mt-4
+            a.btn.btn-secondary(href="/agendas") Cancelar
+            button.btn.btn-warning(type="submit")
+              i.bi.bi-arrow-left-right.me-2
+              | Confirmar Transferencia
