@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 23-07-2026 a las 23:52:13
+-- Tiempo de generación: 29-07-2026 a las 05:48:01
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -64,7 +64,10 @@ INSERT INTO `agendas` (`id`, `profesional_id`, `duracion_turno`, `created_at`, `
 (26, 12, 30, '2026-06-13 18:43:42', 9, 0, 1, 1),
 (27, 15, 30, '2026-06-13 18:43:42', 12, 0, 1, 1),
 (30, 2, 10, '2026-07-03 19:33:47', 2, 0, 1, 1),
-(32, 16, 30, '2026-07-23 20:42:32', 11, 0, 1, 1);
+(32, 16, 30, '2026-07-23 20:42:32', 11, 0, 1, 1),
+(33, 5, 30, '2026-07-28 11:14:26', 11, 0, 1, 1),
+(36, 19, 10, '2026-07-28 22:17:23', 14, 0, 1, 1),
+(37, 11, 30, '2026-07-28 22:21:16', 4, 0, 1, 2);
 
 -- --------------------------------------------------------
 
@@ -160,7 +163,10 @@ INSERT INTO `agenda_horarios` (`id`, `agenda_id`, `dia_semana`, `hora_inicio`, `
 (140, 30, 3, '09:00:00', '12:00:00'),
 (141, 32, 1, '09:00:00', '20:30:00'),
 (142, 32, 2, '09:00:00', '20:00:00'),
-(143, 32, 3, '09:00:00', '19:00:00');
+(143, 32, 3, '09:00:00', '19:00:00'),
+(144, 33, 3, '12:00:00', '16:00:00'),
+(145, 36, 1, '09:00:00', '21:00:00'),
+(146, 37, 6, '09:00:00', '21:00:00');
 
 -- --------------------------------------------------------
 
@@ -203,7 +209,9 @@ INSERT INTO `ausencias` (`id`, `fecha_inicio`, `fecha_fin`, `motivo`, `created_a
 (23, '2026-08-20', '2026-08-22', 'por nacimiento ', '2026-07-14 02:39:10', 9),
 (24, '2026-08-10', '2026-08-13', 'viaje', '2026-07-23 19:26:21', 9),
 (25, '2026-07-22', '2026-07-27', 'viaje', '2026-07-23 19:33:23', 9),
-(26, '2026-09-10', '2026-09-15', 'congreso', '2026-07-23 21:31:42', 9);
+(26, '2026-09-10', '2026-09-15', 'congreso', '2026-07-23 21:31:42', 9),
+(27, '2026-07-31', '2026-08-01', 'personal', '2026-07-28 23:08:54', 6),
+(28, '2026-07-03', '2026-07-04', '', '2026-07-28 23:09:52', 4);
 
 -- --------------------------------------------------------
 
@@ -428,35 +436,36 @@ CREATE TABLE `profesionales` (
   `telefono` varchar(30) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
   `estado` enum('activo','inactivo') DEFAULT 'activo',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `profesionales`
 --
 
-INSERT INTO `profesionales` (`id`, `matricula`, `nombre`, `apellido`, `dni`, `telefono`, `email`, `estado`, `created_at`) VALUES
-(1, '258954698', 'Juan Carlos', 'Pérez', '39932888', '2664342588', 'juan.perez18@gmail.com', 'activo', '2026-02-26 06:30:05'),
-(2, '1234', 'Ana', 'Gómez', '27156222', '2664982373', 'ana.gomez2@gmail.com', 'activo', '2026-02-26 06:57:28'),
-(3, '6644979', 'Carlos', 'Lopez', '36572856', '2664281771', 'carlos.lopez3@gmail.com', 'activo', '2026-02-26 07:16:59'),
-(4, '753159', 'María', 'Fernandez', '30478278', '2664112297', 'maría.fernandez4@gmail.com', 'activo', '2026-02-26 07:17:26'),
-(5, '7418523', 'Luis', 'Martinez', '29931581', '2664497712', 'luis.martinez5@gmail.com', 'activo', '2026-02-27 22:43:39'),
-(6, '32145469', 'Sofía', 'Ramirez', '34395547', '2664345860', 'sofía.ramirez6@gmail.com', 'activo', '2026-02-27 22:44:19'),
-(7, '8523641', 'Diego', 'Torres', '24131168', '2664291932', 'diego.torres7@gmail.com', 'activo', '2026-02-27 22:45:33'),
-(8, '95368412', 'Lucía', 'Sosa', '28932287', '2664633968', 'lucía.sosa8@gmail.com', 'activo', '2026-02-27 22:46:25'),
-(9, '7496158', 'Pedro', 'Gimenez', '32532949', '2664418008', 'pedro.gimenez9@gmail.com', 'activo', '2026-03-24 16:44:27'),
-(10, '8436951', 'Valentina', 'Ruiz', '37735460', '2664436452', 'valentina.ruiz10@gmail.com', 'activo', '2026-04-08 03:10:24'),
-(11, '8529314', 'Jorge', 'Acosta', '24177207', '2664930514', 'jorge.acosta11@gmail.com', 'activo', '2026-04-08 05:22:20'),
-(12, '74125893325', 'Anibal', 'Farias', '22789363', '2665888888', 'anibalF@gmail.com', 'activo', '2026-04-16 23:23:09'),
-(13, '55547841', 'Emiliano', 'Ferreyra', '24656892', '2665458585', 'EmilFerr@gmail.com', 'activo', '2026-05-05 04:17:04'),
-(14, '7536986889', 'Luis', 'Carrizo', '19256784', '266789452', 'LuisC19@gmail.com', 'activo', '2026-05-11 17:41:18'),
-(15, '25631478', 'Martin', 'Giuliani', '20456789', '2665874125', 'GiuMartin@gmail.com', 'activo', '2026-05-11 19:53:08'),
-(16, '123587646', 'jose luis', 'gil', '245698753', '2665852369', 'jolui@gmail.com', 'activo', '2026-06-24 17:15:37'),
-(17, '951785469', 'Esteban', 'Ruiz', '27855693', '1145673425', 'estebanquito@gmail.com', 'activo', '2026-06-27 21:17:40'),
-(18, '222759337', 'adrian jeremias', 'peralta', '23567457', '2665852753', 'peralteAdrian1@gmail.com', 'activo', '2026-07-03 21:07:44'),
-(19, '9856478234566', 'Jacobo Martin', 'Lopez', '41258932', '2664789456', 'JacobMartinL@gmail.com', 'activo', '2026-07-06 22:45:20'),
-(20, '555566678', 'Joselin Beatriz', 'Marquez', '2833569851', '11545688796', 'BettyJosie@gmail.com', 'activo', '2026-07-06 22:53:59'),
-(21, '9888856232', 'Jeremias ', 'Sanchez', '225487741', '2665858585', 'jere@gmail.com', 'activo', '2026-07-23 20:45:31');
+INSERT INTO `profesionales` (`id`, `matricula`, `nombre`, `apellido`, `dni`, `telefono`, `email`, `estado`, `created_at`, `updated_at`) VALUES
+(1, '258954698', 'Juan Carlos', 'Pérez', '39932888', '2664342588', 'juan.perez18@gmail.com', 'activo', '2026-02-26 06:30:05', '2026-07-24 23:04:00'),
+(2, '1234', 'Ana', 'Gómez', '27156222', '2664982373', 'ana.gomez2@gmail.com', 'activo', '2026-02-26 06:57:28', '2026-07-24 23:04:00'),
+(3, '6644979', 'Carlos', 'Lopez', '36572856', '2664281771', 'carlos.lopez3@gmail.com', 'activo', '2026-02-26 07:16:59', '2026-07-24 23:04:00'),
+(4, '753159', 'María', 'Fernandez', '30478278', '2664112297', 'maría.fernandez4@gmail.com', 'activo', '2026-02-26 07:17:26', '2026-07-24 23:04:00'),
+(5, '7418523', 'Luis', 'Martinez', '29931581', '2664497712', 'luis.martinez5@gmail.com', 'activo', '2026-02-27 22:43:39', '2026-07-24 23:04:00'),
+(6, '32145469', 'Sofía', 'Ramirez', '34395547', '2664345860', 'sofía.ramirez6@gmail.com', 'activo', '2026-02-27 22:44:19', '2026-07-24 23:04:00'),
+(7, '8523641', 'Diego', 'Torres', '24131168', '2664291932', 'diego.torres7@gmail.com', 'activo', '2026-02-27 22:45:33', '2026-07-24 23:04:00'),
+(8, '95368412', 'Lucía', 'Sosa', '28932287', '2664633968', 'lucía.sosa8@gmail.com', 'activo', '2026-02-27 22:46:25', '2026-07-24 23:04:00'),
+(9, '7496158', 'Pedro', 'Gimenez', '32532949', '2664418008', 'pedro.gimenez9@gmail.com', 'activo', '2026-03-24 16:44:27', '2026-07-24 23:04:00'),
+(10, '8436951', 'Valentina', 'Ruiz', '37735460', '2664436452', 'valentina.ruiz10@gmail.com', 'activo', '2026-04-08 03:10:24', '2026-07-24 23:04:00'),
+(11, '8529314', 'Jorge', 'Acosta', '24177207', '2664930514', 'jorge.acosta11@gmail.com', 'activo', '2026-04-08 05:22:20', '2026-07-28 15:40:21'),
+(12, '74125893325', 'Anibal', 'Farias', '22789363', '2665888888', 'anibalF@gmail.com', 'activo', '2026-04-16 23:23:09', '2026-07-24 23:04:00'),
+(13, '55547841', 'Emiliano', 'Ferreyra', '24656892', '2665458585', 'EmilFerr@gmail.com', 'activo', '2026-05-05 04:17:04', '2026-07-24 23:04:00'),
+(14, '7536986889', 'Luis', 'Carrizo', '19256784', '266789452', 'LuisC19@gmail.com', 'activo', '2026-05-11 17:41:18', '2026-07-24 23:04:00'),
+(15, '25631478', 'Martin', 'Giuliani', '20456789', '2665874125', 'GiuMartin@gmail.com', 'activo', '2026-05-11 19:53:08', '2026-07-24 23:04:00'),
+(16, '123587646', 'jose luis', 'gil', '245698753', '2665852369', 'jolui@gmail.com', 'activo', '2026-06-24 17:15:37', '2026-07-24 23:04:00'),
+(17, '951785469', 'Esteban', 'Ruiz', '27855693', '1145673425', 'estebanquito@gmail.com', 'activo', '2026-06-27 21:17:40', '2026-07-24 23:04:00'),
+(18, '222759337', 'adrian jeremias', 'peralta', '23567457', '2665852753', 'peralteAdrian1@gmail.com', 'activo', '2026-07-03 21:07:44', '2026-07-24 23:04:00'),
+(19, '9856478234566', 'Jacobo Martin', 'Lopez', '41258932', '2664789456', 'JacobMartinL@gmail.com', 'activo', '2026-07-06 22:45:20', '2026-07-24 23:04:00'),
+(20, '555566678', 'Joselin Beatriz', 'Marquez', '2833569851', '11545688796', 'BettyJosie@gmail.com', 'activo', '2026-07-06 22:53:59', '2026-07-24 23:04:00'),
+(21, '9888856232', 'Jeremias ', 'Sanchez', '225487741', '2665858585', 'jere@gmail.com', 'activo', '2026-07-23 20:45:31', '2026-07-24 23:04:00');
 
 -- --------------------------------------------------------
 
@@ -482,12 +491,16 @@ INSERT INTO `profesional_especialidad` (`profesional_id`, `especialidad_id`) VAL
 (4, 6),
 (5, 3),
 (5, 8),
+(5, 11),
 (6, 4),
 (7, 3),
 (8, 3),
 (9, 9),
 (10, 10),
 (11, 4),
+(12, 2),
+(12, 5),
+(12, 9),
 (12, 14),
 (13, 11),
 (14, 8),
@@ -530,11 +543,13 @@ INSERT INTO `profesional_sucursal` (`id`, `profesional_id`, `sucursal_id`) VALUE
 (15, 9, 1),
 (13, 10, 2),
 (18, 11, 1),
+(25, 11, 2),
 (19, 12, 1),
 (12, 13, 2),
 (14, 14, 1),
 (20, 15, 1),
-(21, 16, 1);
+(21, 16, 1),
+(24, 19, 1);
 
 -- --------------------------------------------------------
 
@@ -646,7 +661,7 @@ INSERT INTO `turnos` (`id`, `agenda_id`, `paciente_id`, `profesional_id`, `espec
 (63, 10, 9, 13, 11, 2, '2026-06-25', '09:00:00', 'cancelado', 'normal', NULL, '2026-06-24 19:51:49'),
 (64, 14, 10, 6, 4, 1, '2026-07-07', '16:00:00', 'confirmado', 'normal', NULL, '2026-06-24 20:07:46'),
 (65, 27, 1, 15, 12, 1, '2026-07-02', '09:00:00', 'confirmado', 'normal', NULL, '2026-06-27 00:10:57'),
-(66, 4, 6, 4, 6, 1, '2026-07-03', '10:00:00', 'confirmado', 'normal', NULL, '2026-06-27 21:15:59'),
+(66, 4, 6, 4, 6, 1, '2026-07-03', '10:00:00', 'reprogramar', 'normal', NULL, '2026-06-27 21:15:59'),
 (67, 10, 1, 13, 11, 2, '2026-07-14', '09:50:00', 'reservado', 'normal', NULL, '2026-07-03 21:06:49'),
 (68, 14, 3, 6, 4, 1, '2026-07-21', '16:00:00', 'reservado', 'normal', NULL, '2026-07-21 15:47:11'),
 (74, 7, 7, 1, 2, 2, '2026-08-01', '11:00:00', 'pendiente', 'normal', NULL, '2026-07-23 00:27:34'),
@@ -737,7 +752,27 @@ INSERT INTO `turnos` (`id`, `agenda_id`, `paciente_id`, `profesional_id`, `espec
 (1359, 9, 13, 5, 3, 2, '2026-08-18', '17:10:00', 'pendiente', 'normal', NULL, '2026-07-23 00:55:05'),
 (1361, 12, 15, 14, 8, 1, '2026-08-24', '16:40:00', 'pendiente', 'normal', NULL, '2026-07-23 00:55:05'),
 (1364, 9, 7, 5, 3, 2, '2026-07-23', '09:00:00', 'reprogramar', 'normal', NULL, '2026-07-23 19:31:31'),
-(1365, 9, 9, 5, 3, 2, '2026-07-23', '09:20:00', 'reprogramar', 'normal', NULL, '2026-07-23 19:32:09');
+(1365, 9, 9, 5, 3, 2, '2026-07-23', '09:20:00', 'reprogramar', 'normal', NULL, '2026-07-23 19:32:09'),
+(1366, 9, 1, 5, 3, 2, '2026-08-03', '09:00:00', 'reservado', 'normal', NULL, '2026-07-28 11:34:45'),
+(1367, 9, 2, 5, 3, 2, '2026-08-03', '09:20:00', 'confirmado', 'normal', NULL, '2026-07-28 11:34:45'),
+(1368, 9, 3, 5, 3, 2, '2026-08-03', '09:40:00', 'pendiente', 'normal', NULL, '2026-07-28 11:34:45'),
+(1369, 9, 4, 5, 3, 2, '2026-08-03', '10:00:00', 'reservado', 'normal', NULL, '2026-07-28 11:34:45'),
+(1370, 9, 5, 5, 3, 2, '2026-08-03', '10:20:00', 'confirmado', 'normal', NULL, '2026-07-28 11:34:45'),
+(1371, 9, 6, 5, 3, 2, '2026-08-03', '10:40:00', 'pendiente', 'normal', NULL, '2026-07-28 11:34:45'),
+(1372, 9, 7, 5, 3, 2, '2026-08-03', '11:00:00', 'reservado', 'normal', NULL, '2026-07-28 11:34:45'),
+(1373, 9, 8, 5, 3, 2, '2026-08-03', '11:20:00', 'confirmado', 'normal', NULL, '2026-07-28 11:34:45'),
+(1374, 9, 9, 5, 3, 2, '2026-08-03', '11:40:00', 'pendiente', 'normal', NULL, '2026-07-28 11:34:45'),
+(1375, 9, 10, 5, 3, 2, '2026-08-03', '12:00:00', 'reservado', 'normal', NULL, '2026-07-28 11:34:45'),
+(1376, 9, 11, 5, 3, 2, '2026-08-04', '09:30:00', 'reservado', 'normal', NULL, '2026-07-28 11:34:45'),
+(1377, 9, 12, 5, 3, 2, '2026-08-04', '09:50:00', 'confirmado', 'normal', NULL, '2026-07-28 11:34:45'),
+(1378, 9, 13, 5, 3, 2, '2026-08-04', '10:10:00', 'pendiente', 'normal', NULL, '2026-07-28 11:34:45'),
+(1379, 9, 14, 5, 3, 2, '2026-08-04', '10:30:00', 'reservado', 'normal', NULL, '2026-07-28 11:34:45'),
+(1380, 9, 15, 5, 3, 2, '2026-08-04', '10:50:00', 'confirmado', 'normal', NULL, '2026-07-28 11:34:45'),
+(1381, 9, 16, 5, 3, 2, '2026-08-04', '11:10:00', 'pendiente', 'normal', NULL, '2026-07-28 11:34:45'),
+(1382, 9, 17, 5, 3, 2, '2026-08-04', '11:30:00', 'reservado', 'normal', NULL, '2026-07-28 11:34:45'),
+(1383, 9, 18, 5, 3, 2, '2026-08-04', '11:50:00', 'confirmado', 'normal', NULL, '2026-07-28 11:34:45'),
+(1384, 9, 19, 5, 3, 2, '2026-08-04', '12:10:00', 'pendiente', 'normal', NULL, '2026-07-28 11:34:45'),
+(1385, 9, 20, 5, 3, 2, '2026-08-04', '12:30:00', 'reservado', 'normal', NULL, '2026-07-28 11:34:45');
 
 -- --------------------------------------------------------
 
@@ -1214,7 +1249,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `agendas`
 --
 ALTER TABLE `agendas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT de la tabla `agenda_horarios`
@@ -1250,7 +1285,7 @@ ALTER TABLE `profesionales`
 -- AUTO_INCREMENT de la tabla `profesional_sucursal`
 --
 ALTER TABLE `profesional_sucursal`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT de la tabla `solicitudes_ausencias`
@@ -1268,7 +1303,7 @@ ALTER TABLE `sucursales`
 -- AUTO_INCREMENT de la tabla `turnos`
 --
 ALTER TABLE `turnos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1366;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1386;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
