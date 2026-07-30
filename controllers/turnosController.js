@@ -48,33 +48,33 @@ exports.mostrarTurnos = (req, res) => {
   const nuevoId = req.query.nuevo;
   const editadoId = req.query.editado;
 
-  console.log("======================");
+  /*console.log("======================");
   console.log("QUERY:", req.query);
   console.log("FECHA:", fecha);
-  console.log("FECHA RECIBIDA EN MOSTRAR TURNOS:", fecha);
+  console.log("FECHA RECIBIDA EN MOSTRAR TURNOS:", fecha);*/
 
 
   Turno.obtenerTodos((err, turnos) => {
 
 
-    console.log("FECHA FILTRO RECIBIDA:", fecha);
+    /*console.log("FECHA FILTRO RECIBIDA:", fecha);*/
 
-    console.log(
+    /*console.log(
       turnos.map(t => ({
         fechaOriginal: t.fecha,
         fechaISO: new Date(t.fecha)
           .toISOString()
           .substring(0, 10)
       }))
-    );
+    );*/
     if (err) {
 
-      console.error("ERROR REAL:", err);
+      /*console.error("ERROR REAL:", err);*/
       return res.status(500).send(err.message);
 
     }
-    console.log("ANTES:", turnos.length);
-    console.log("URL COMPLETA:", req.originalUrl);
+    /*console.log("ANTES:", turnos.length);
+    console.log("URL COMPLETA:", req.originalUrl);*/
 
     if (profesionalFiltro) {
 
@@ -101,15 +101,15 @@ exports.mostrarTurnos = (req, res) => {
           .toISOString()
           .split("T")[0];
 
-        console.log(
+        /*console.log(
           "Comparando:",
           fechaTurno,
           "===",
           fecha,
           "=",
           fechaTurno === fecha
-        );
-        console.log("ID:", t.id, "RESULTADO:", fechaTurno === fecha);
+        );*/
+        /*console.log("ID:", t.id, "RESULTADO:", fechaTurno === fecha);*/
         return fechaTurno === fecha;
 
       });
@@ -137,8 +137,8 @@ exports.mostrarTurnos = (req, res) => {
     }
 
 
-    console.log("DESPUES:", turnos.length);
-    console.log("======================");
+    /*console.log("DESPUES:", turnos.length);
+    console.log("======================");*/
 
     turnos = turnos.map(t => {
 
@@ -188,8 +188,8 @@ exports.mostrarTurnos = (req, res) => {
         profesionales = [];
       }
 
-      console.log("PROFESIONALES PARA VISTA TURNOS:");
-      console.log(profesionales);
+      /*console.log("PROFESIONALES PARA VISTA TURNOS:");
+      console.log(profesionales);*/
 
 
       Turno.obtenerTodasEspecialidades((errEsp, especialidades) => {
@@ -269,7 +269,7 @@ exports.mostrarMisTurnos = (req, res) => {
 
   const especialidadId = req.query.especialidad || "";
 
-  console.log("FECHA EN MIS TURNOS:", fecha);
+  /*console.log("FECHA EN MIS TURNOS:", fecha);*/
 
   Turno.obtenerPorProfesional(profesionalId, (err, turnos) => {
 
@@ -314,7 +314,7 @@ exports.mostrarMisTurnos = (req, res) => {
           .toISOString()
           .split("T")[0];
 
-        console.log("ID:", t.id, "RESULTADO:", fechaTurno === fecha);
+        /*console.log("ID:", t.id, "RESULTADO:", fechaTurno === fecha);*/
 
         return fechaTurno === fecha;
       });
@@ -448,11 +448,11 @@ exports.crearTurno = (req, res) => {
         if (errAgenda) return res.status(500).send("Error obteniendo agenda");
         if (!agenda) return res.status(400).send("Sin agenda");
 
-        console.log("VALIDANDO EN AGENDA:", {
+        /*console.log("VALIDANDO EN AGENDA:", {
           profesional_id,
           fecha,
           horaFinal
-        });
+        });*/
 
         Turno.validarHoraEnAgenda(
           profesional_id,
@@ -463,11 +463,11 @@ exports.crearTurno = (req, res) => {
             if (errHora) return res.status(500).send("Error horario");
 
             if (!valida) {
-              console.log("❌ FUERA DE AGENDA:", {
+              /*console.log("❌ FUERA DE AGENDA:", {
                 profesional_id,
                 fecha,
                 horaFinal
-              });
+              });*/
               return res.status(400).send("Horario fuera de agenda");
             }
 
@@ -477,11 +477,11 @@ exports.crearTurno = (req, res) => {
 
               if (errSuc) return res.status(500).send("Error sucursal");
 
-              console.log("✅ CREANDO TURNO:", {
+              /*console.log("✅ CREANDO TURNO:", {
                 profesional_id,
                 fecha,
                 horaFinal
-              });
+              });*/
 
               const data = {
                 paciente_id,
@@ -494,7 +494,7 @@ exports.crearTurno = (req, res) => {
                 agenda_id
               };
 
-              console.log("DATA CREAR TURNO:", data);
+              /*console.log("DATA CREAR TURNO:", data);*/
 
               Turno.crear(data, (err, result) => {
 
@@ -511,7 +511,7 @@ exports.crearTurno = (req, res) => {
                 req.flash('success', 'Turno creado exitosamente');
 
                 res.redirect(`/turnos?nuevo=${result.insertId}`);
-                console.log("NUEVO ID:", result.insertId);
+                /*console.log("NUEVO ID:", result.insertId);*/
 
 
               });
@@ -531,11 +531,11 @@ exports.crearTurno = (req, res) => {
 
     if (esNormal) {
 
-      console.log("CHECK TURNO EXISTENTE:", {
+      /*console.log("CHECK TURNO EXISTENTE:", {
         profesional_id,
         fecha,
         horaNormalizada
-      });
+      });*/
       Turno.existeTurnoEnHorario(profesional_id, fecha, horaNormalizada, (err2, existe) => {
 
         if (err2) {
@@ -562,10 +562,10 @@ exports.crearTurno = (req, res) => {
 
         const nuevaHora = sumarSegundos(horaNormalizada, (cantidad + 1) * 60);
 
-        console.log("HORA NORMALIZADA:", horaNormalizada);
+        /*console.log("HORA NORMALIZADA:", horaNormalizada);
         console.log("HORA RECIBIDA:", hora);
         console.log("FECHA RECIBIDA:", fecha);
-        console.log("PROFESIONAL:", profesional_id);
+        console.log("PROFESIONAL:", profesional_id);*/
 
         validarYCrear(nuevaHora);
 
@@ -640,7 +640,7 @@ exports.obtenerHorariosDisponibles = (req, res) => {
               if (err2) return res.status(500).json({ motivo: 'error_turnos' });
 
               let posibles = [];
-              console.log("BLOQUES AGENDA:", bloques);
+              /*console.log("BLOQUES AGENDA:", bloques);*/
               bloques.forEach(b => {
                 posibles.push(...generarTurnos(
                   b.hora_inicio,
@@ -768,8 +768,8 @@ exports.editarTurno = (req, res) => {
 
 
       if (err || !agenda) {
-        console.log("AGENDA ENCONTRADA:");
-        console.log(agenda);
+        /*console.log("AGENDA ENCONTRADA:");
+        console.log(agenda);*/
 
         req.flash("error", "No existe agenda");
 
@@ -785,8 +785,8 @@ exports.editarTurno = (req, res) => {
       req.body.sucursal_id = agenda.sucursal_id;
 
 
-      console.log("BODY FINAL:");
-      console.log(req.body);
+      /*console.log("BODY FINAL:");
+      console.log(req.body);*/
       Turno.actualizar(
 
         turnoId,
@@ -870,20 +870,20 @@ exports.mostrarReprogramaciones = (req, res) => {
 
 exports.obtenerEspecialidadesPorProfesional = (req, res) => {
 
-  console.log(
+  /*console.log(
     "PROFESIONAL RECIBIDO:",
     req.params.profesionalId
-  );
+  );*/
 
 
   Turno.obtenerEspecialidadesPorProfesional(
     req.params.profesionalId,
     (err, rows) => {
 
-      console.log(
+      /*console.log(
         "ESPECIALIDADES ENCONTRADAS:",
         rows
-      );
+      );*/
 
 
       if (err) return res.status(500).json([]);
@@ -896,20 +896,20 @@ exports.obtenerEspecialidadesPorProfesional = (req, res) => {
 
 exports.obtenerProfesionalesPorEspecialidad = (req, res) => {
 
-  console.log(
+  /*console.log(
     "ESPECIALIDAD RECIBIDA:",
     req.params.especialidadId
-  );
+  );*/
 
 
   Turno.obtenerProfesionalesPorEspecialidad(
     req.params.especialidadId,
     (err, rows) => {
 
-      console.log(
+      /*console.log(
         "PROFESIONALES ENCONTRADOS:",
         rows
-      );
+      );*/
 
       if (err) return res.status(500).json([]);
       res.json(rows || []);
@@ -930,7 +930,7 @@ exports.obtenerTodosProfesionales = (req, res) => {
       console.error(err);
       return res.status(500).json([]);
     }
-    console.log("ROWS:", rows);
+    /*console.log("ROWS:", rows);*/
     res.json(rows || []);
 
   });
@@ -953,8 +953,8 @@ exports.obtenerSucursalAgenda = (req, res) => {
         return res.status(500).json({});
       }
 
-      console.log("AGENDA DEVUELTA:");
-      console.log(agenda);
+      /*console.log("AGENDA DEVUELTA:");
+      console.log(agenda);*/
 
       res.json(agenda || {});
 
@@ -1044,7 +1044,7 @@ exports.obtenerEventosTodos = (req, res) => {
   const fecha = req.query.fecha || "";
 
   Turno.obtenerTodos((err, turnos) => {
-    console.log("FECHA RECIBIDA:", fecha);
+    /*console.log("FECHA RECIBIDA:", fecha);
 
     console.log(
       turnos.map(t => ({
@@ -1052,7 +1052,7 @@ exports.obtenerEventosTodos = (req, res) => {
         fecha: t.fecha,
         iso: new Date(t.fecha).toISOString().split("T")[0]
       }))
-    );
+    );*/
 
     if (q) {
 
@@ -1086,8 +1086,8 @@ exports.obtenerEventosTodos = (req, res) => {
             .toISOString()
             .substring(0, 10);
 
-        console.log("COMPARANDO:", fechaTurno, "CON:", fecha);
-        console.log("ID:", t.id, "RESULTADO:", fechaTurno === fecha);
+        /*console.log("COMPARANDO:", fechaTurno, "CON:", fecha);
+        console.log("ID:", t.id, "RESULTADO:", fechaTurno === fecha);*/
         return fechaTurno === fecha;
 
       });

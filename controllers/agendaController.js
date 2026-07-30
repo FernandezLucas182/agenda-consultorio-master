@@ -2,6 +2,7 @@ const Agenda = require('../models/Agenda');
 const Profesional = require('../models/Profesional');
 const Especialidad = require('../models/Especialidad');
 const db = require('../models/Db');
+const { transferirAgendaMasiva } = require('../services/agendaService'); // ← Agregar esta línea
 
 
 const normalizar = (txt) =>
@@ -112,14 +113,14 @@ exports.crearAgendaBase = (req, res) => {
   const { profesional_id, especialidad_id, duracion_turno, sucursal_id } = req.body;
 
   const horarios = req.body.horarios;
-  console.log("DATOS:", {
+  /*console.log("DATOS:", {
     profesional_id,
     especialidad_id,
     duracion_turno,
-    sucursal_id
-  });
+    sucursal_id,
+  });*/
 
-  console.log("ANTES DE LLAMAR AL MODELO");
+  /*console.log("ANTES DE LLAMAR AL MODELO");*/
 
   if (!horarios || Object.keys(horarios).length === 0) {
     return res.status(400).send("Debe agregar al menos un bloque horario");
@@ -131,6 +132,7 @@ exports.crearAgendaBase = (req, res) => {
     profesional_id,
     especialidad_id,
     duracion_turno,
+    max_sobreturnos: max_sobreturnos || 0,
     sucursal_id,
     horarios: listaHorarios
   };
@@ -289,7 +291,10 @@ exports.mostrarAgendas = (req, res) => {
         agrupadas[item.agenda_id] = {
           id: item.agenda_id,
           duracion_turno: item.duracion_turno,
+          max_sobreturnos: item.max_sobreturnos,
           profesional: item.nombre + ' ' + item.apellido,
+          // ✅ AHORA SÍ PASAMOS LA PROPIEDAD A PUG:
+          esta_transferida: Boolean(item.esta_transferida),
           filas: []
         };
       }
@@ -609,4 +614,72 @@ exports.formularioCopiarAgenda = (req, res) => {
 
   });
 
+};
+
+// ==========================
+// FORMULARIO TRANSFERIR AGENDA
+// ==========================
+exports.formularioTransferirAgenda = (req, res) => {
+  const agendaId = req.params.id;
+
+  // 1️⃣ Obtener los datos de la agenda a transferir
+  Agenda.obtenerAgendaBasePorId(agendaId, (err, agenda) => {
+    if (err || !agenda) {
+      req.flash('error', 'Agenda no encontrada.');
+      return res.redirect('/agendas');
+    }
+
+    // 2️⃣ Traemos los profesionales de la misma especialidad (excluyendo al actual)
+    const sql = `
+      SELECT DISTINCT 
+        p.id, 
+        p.nombre, 
+        p.apellido, 
+        CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo
+      FROM profesionales p
+      JOIN agendas a ON a.profesional_id = p.id
+      WHERE a.especialidad_id = ?
+        AND p.id != ?
+    `;
+
+    db.query(sql, [agenda.especialidad_id, agenda.profesional_id], (errProf, profesionales) => {
+      if (errProf) {
+        console.error("Error al buscar profesionales de la misma especialidad:", errProf);
+        profesionales = [];
+      }
+
+      res.render('transferirAgenda', {
+        agenda,
+        profesionales: profesionales || []
+      });
+    });
+  });
+};
+
+// ==========================
+// PROCESAR TRANSFERENCIA AGENDA
+// ==========================
+exports.procesarTransferenciaAgenda = (req, res) => {
+  const agendaId = req.params.id;
+  const { profesional_destino_id } = req.body;
+
+  if (!profesional_destino_id) {
+    req.flash('error', 'Debe seleccionar un profesional destino.');
+    return res.redirect(`/agendas/${agendaId}/transferir`);
+  }
+
+  // Ejecutamos directamente la transferencia masiva
+  transferirAgendaMasiva(agendaId, profesional_destino_id, (errTransfer, result) => {
+    if (errTransfer) {
+      console.error("Error al ejecutar transferirAgendaMasiva:", errTransfer);
+      req.flash('error', errTransfer.message || 'Error al procesar la transferencia.');
+      return res.redirect('/agendas');
+    }
+
+    req.flash(
+      'success',
+      `Transferencia procesada con éxito. Se actualizaron ${result.transferidos || 0} turnos.`
+    );
+    return res.redirect('/agendas');
+  });
 };

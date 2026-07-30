@@ -1,72 +1,117 @@
 const db = require('../models/Db');
-const Turno = require('../models/Turno');
-const Agenda = require('../models/Agenda');
-const { marcarParaReprogramacion } = require('./reprogramacionService');
 
-async function transferirAgendaMasiva(agendaOrigenId, profesionalDestinoId, callback) {
-  // 1. Obtener datos de la agenda origen y la agenda destino del profesional
-  const sqlAgendaDestino = `
-    SELECT id FROM agendas 
-    WHERE profesional_id = ? AND activo = 1 
-    LIMIT 1`;
+function transferirAgendaMasiva(agendaOrigenId, profesionalDestinoId, callback) {
+    db.getConnection((err, connection) => {
+        if (err) return callback(err);
 
-  db.query(sqlAgendaDestino, [profesionalDestinoId], (err, resDestino) => {
-    if (err || !resDestino.length) {
-      return callback(new Error("El profesional destino no posee una agenda activa asignada."));
-    }
+        connection.beginTransaction((err) => {
+            if (err) {
+                connection.release();
+                return callback(err);
+            }
 
-    const agendaDestinoId = resDestino[0].id;
+            // 1️⃣ Buscar turnos de la agenda origen que chocan en fecha y hora con CUALQUIER turno previo del profesional destino
+            const sqlColisiones = `
+                SELECT t1.id 
+                FROM turnos t1
+                INNER JOIN turnos t2 
+                  ON t1.fecha = t2.fecha 
+                 AND t1.hora = t2.hora 
+                 AND t2.profesional_id = ?
+                WHERE t1.agenda_id = ? 
+                  AND t1.fecha >= CURDATE()
+                  AND t1.estado IN ('pendiente', 'confirmado', 'reservado')
+            `;
 
-    // 2. Buscar turnos futuros que requieren migración
-    const sqlTurnos = `
-      SELECT * FROM turnos 
-      WHERE agenda_id = ? 
-        AND fecha >= CURDATE() 
-        AND estado IN ('pendiente', 'confirmado', 'reservado')`;
+            connection.query(sqlColisiones, [profesionalDestinoId, agendaOrigenId], (errCol, colisiones) => {
+                if (errCol) {
+                    return connection.rollback(() => {
+                        connection.release();
+                        callback(errCol);
+                    });
+                }
 
-    db.query(sqlTurnos, [agendaOrigenId], async (errTurnos, turnos) => {
-      if (errTurnos) return callback(errTurnos);
+                const idsEnConflicto = colisiones.map(c => c.id);
 
-      if (!turnos || turnos.length === 0) {
-        return callback(null, { transferidos: 0, aReprogramar: 0 });
-      }
+                // Función auxiliar para reprogramar si hay conflictos
+                const pasoReprogramar = (next) => {
+                    if (idsEnConflicto.length === 0) return next();
 
-      let transferidos = 0;
-      let aReprogramar = 0;
+                    const sqlReprogramar = `
+                        UPDATE turnos 
+                        SET estado = 'reprogramar' 
+                        WHERE id IN (?)
+                    `;
+                    connection.query(sqlReprogramar, [idsEnConflicto], (errRep) => {
+                        if (errRep) {
+                            return connection.rollback(() => {
+                                connection.release();
+                                callback(errRep);
+                            });
+                        }
+                        next();
+                    });
+                };
 
-      // Iterar sobre cada turno para validar si el profesional destino tiene libre el slot exacto
-      for (const turno of turnos) {
-        const fechaObj = new Date(turno.fecha);
-        let diaJS = fechaObj.getDay();
-        let diaBD = diaJS === 0 ? 7 : diaJS;
+                // 2️⃣ Mover a 'reprogramar' los conflictivos y luego transferir los limpios
+                pasoReprogramar(() => {
+                    const sqlTurnos = `
+                        UPDATE turnos 
+                        SET profesional_id = ? 
+                        WHERE agenda_id = ? 
+                          AND fecha >= CURDATE() 
+                          AND estado IN ('pendiente', 'confirmado', 'reservado')
+                          ${idsEnConflicto.length > 0 ? 'AND id NOT IN (?)' : ''}
+                    `;
 
-        // Comprobar horarios ocupados del nuevo profesional en esa fecha
-        Turno.obtenerHorariosOcupados(profesionalDestinoId, turno.fecha, (errOcupados, ocupados) => {
-          
-          const horarioOcupado = ocupados && ocupados.includes(turno.hora);
+                    const paramsTurnos = idsEnConflicto.length > 0
+                        ? [profesionalDestinoId, agendaOrigenId, idsEnConflicto]
+                        : [profesionalDestinoId, agendaOrigenId];
 
-          if (!horarioOcupado) {
-            // Se puede reasignar automáticamente
-            db.query(
-              `UPDATE turnos 
-               SET profesional_id = ?, agenda_id = ? 
-               WHERE id = ?`,
-              [profesionalDestinoId, agendaDestinoId, turno.id],
-              (errUpd) => {
-                if (!errUpd) transferidos++;
-              }
-            );
-          } else {
-            // Pasa a la vista de Reprogramaciones (reprogramacionTurno.pug)
-            marcarParaReprogramacion(turno.id);
-            aReprogramar++;
-          }
+                    connection.query(sqlTurnos, paramsTurnos, (errUpdTurnos, resTurnos) => {
+                        if (errUpdTurnos) {
+                            return connection.rollback(() => {
+                                connection.release();
+                                callback(errUpdTurnos);
+                            });
+                        }
+
+                        // 3️⃣ Desactivar la agenda origen
+                        const sqlAgenda = `
+                            UPDATE agendas 
+                            SET activo = 0 
+                            WHERE id = ?
+                        `;
+
+                        connection.query(sqlAgenda, [agendaOrigenId], (errUpdAgenda) => {
+                            if (errUpdAgenda) {
+                                return connection.rollback(() => {
+                                    connection.release();
+                                    callback(errUpdAgenda);
+                                });
+                            }
+
+                            connection.commit((errCommit) => {
+                                if (errCommit) {
+                                    return connection.rollback(() => {
+                                        connection.release();
+                                        callback(errCommit);
+                                    });
+                                }
+
+                                connection.release();
+                                return callback(null, {
+                                    total: resTurnos.affectedRows + idsEnConflicto.length,
+                                    transferidos: resTurnos.affectedRows,
+                                    reprogramados: idsEnConflicto.length
+                                });
+                            });
+                        });
+                    });
+                });
+            });
         });
-      }
-
-      return callback(null, { total: turnos.length });
     });
-  });
 }
 
 module.exports = { transferirAgendaMasiva };

@@ -385,4 +385,7 @@ function enviarMail(turno, token) {
 
 //========================================================
 
-module.exports = { procesarAusencia };
+module.exports = {
+  procesarAusencia,
+  marcarParaReprogramacion // <--- Exportar para reutilizar en transferencias masivas
+};

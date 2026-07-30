@@ -36,7 +36,6 @@ class Agenda {
       buscar = '';
     }
 
-
     let sql = `
       SELECT 
         a.profesional_id,
@@ -53,23 +52,33 @@ class Agenda {
         a.duracion_turno,
         a.max_sobreturnos,
         a.id AS agenda_id,
-        s.nombre AS sucursal
+        s.nombre AS sucursal,
+        -- Marca la agenda como transferida si existen turnos cuya agenda_id coincida 
+        -- pero estén asignados a otro profesional
+        EXISTS (
+          SELECT 1 FROM turnos t 
+          WHERE (t.agenda_id = a.id AND t.profesional_id != a.profesional_id)
+        ) AS esta_transferida
       FROM agenda_horarios ah
       JOIN agendas a ON ah.agenda_id = a.id
       JOIN profesionales p ON a.profesional_id = p.id
       JOIN especialidades e ON a.especialidad_id = e.id
       LEFT JOIN sucursales s ON a.sucursal_id = s.id
-      WHERE a.activo = 1
+      
+      -- MODIFICADO: Muestra activas O inactivas que hayan sido origen de transferencia
+      WHERE (
+        a.activo = 1 
+        OR EXISTS (
+          SELECT 1 FROM turnos t 
+          WHERE t.agenda_id = a.id AND t.profesional_id != a.profesional_id
+        )
+      )
     `;
 
     let params = [];
 
-    // 🔥 FILTRO POR ROL MÉDICO
     if (usuario && usuario.rol === 'medico') {
-      sql += `
-        AND a.profesional_id = ?
-      `;
-
+      sql += ` AND a.profesional_id = ? `;
       params.push(usuario.profesional_id);
     }
 
@@ -85,11 +94,7 @@ class Agenda {
       `;
 
       params.push(
-        `%${buscar}%`,
-        `%${buscar}%`,
-        `%${buscar}%`,
-        `%${buscar}%`,
-        `%${buscar}%`
+        `%${buscar}%`, `%${buscar}%`, `%${buscar}%`, `%${buscar}%`, `%${buscar}%`
       );
     }
 
@@ -102,7 +107,6 @@ class Agenda {
       callback(null, resultados || []);
     });
   }
-
 
 
   static actualizarAgendaBase(id, duracion_turno, max_sobreturnos, callback) {
@@ -177,6 +181,9 @@ class Agenda {
     const sql = `
       SELECT 
         a.id,
+        a.profesional_id,
+        a.especialidad_id,
+        a.sucursal_id,
         CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo,
         e.nombre AS especialidad,
         s.nombre AS sucursal,
@@ -500,6 +507,7 @@ class Agenda {
       profesional_id,
       especialidad_id,
       duracion_turno,
+      max_sobreturnos,
       horarios,
       sucursal_id
     } = datos;
@@ -564,9 +572,9 @@ class Agenda {
 
             connection.query(
               `INSERT INTO agendas
-             (profesional_id, especialidad_id, duracion_turno, sucursal_id, activo)
-             VALUES (?, ?, ?, ?, 1)`,
-              [profesional_id, especialidad_id, duracion_turno, sucursal_id],
+              (profesional_id, especialidad_id, duracion_turno, max_sobreturnos, sucursal_id, activo)
+              VALUES (?, ?, ?, ?, ?, 1)`,
+              [profesional_id, especialidad_id, duracion_turno, max_sobreturnos || 0, sucursal_id],
               (err, result) => {
 
                 if (err) {

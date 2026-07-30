@@ -51,19 +51,29 @@ block content
 
         if !usuario || usuario.rol !== 'medico'
 
-          div.d-flex.gap-2
+          div.d-flex.align-items-center.gap-2
+
+            if ag.esta_transferida
+              button.btn.btn-secondary.btn-sm(
+                type="button"
+                disabled
+                title="Esta agenda ya ha sido transferida a otro profesional"
+              )
+                i.bi.bi-lock-fill.me-1
+                | Transferida
+            else
+              a.btn.btn-warning.btn-sm(
+                href=`/agendas/${ag.agenda_id || ag.id}/transferir`
+                title="Transferir agenda completa a otro profesional"
+              )
+                i.bi.bi-arrow-left-right.me-1
+                | Transferir
 
             a.btn.btn-warning.btn-sm(
-                href=`/agendas/${ag.id}/editar`
+              href=`/agendas/${ag.agenda_id || ag.id}/editar`
             )
-                i.bi.bi-pencil
-                |  Editar
-
-            a.btn.btn-info.btn-sm(
-                href=`/agendas/${ag.id}/copiar`
-            )
-                i.bi.bi-files
-                |  Copiar
+              i.bi.bi-pencil.me-1
+              | Editar
 
       table.table.table-striped.table-bordered.table-sm.mt-0
 

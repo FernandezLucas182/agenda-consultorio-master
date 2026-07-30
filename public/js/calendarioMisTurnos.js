@@ -16,6 +16,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!calendarEl) return;
 
+    // 🔴 1. Leemos los parámetros de la URL aquí arriba una sola vez:
+    const params = new URLSearchParams(window.location.search);
+    const vistaParam = params.get("vista") || "dayGridMonth";
+
     const calendar = new FullCalendar.Calendar(calendarEl, {
 
         locale: "es",
@@ -23,22 +27,17 @@ document.addEventListener("DOMContentLoaded", () => {
         selectable: true,
 
         dateClick: function (info) {
+            // Usamos un nombre distinto (urlParams) para evitar que choque con 'params'
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set("fecha", info.dateStr);
+            urlParams.set("vista", "timeGridDay"); // 👈 Guardamos que queremos ver el día
 
-            console.log("CLICK DIA MEDICO:", info.dateStr);
-
-            const params =
-                new URLSearchParams(window.location.search);
-
-            params.set("fecha", info.dateStr);
-
-            window.location.href =
-                window.location.pathname + "?" + params.toString();
-
+            window.location.href = window.location.pathname + "?" + urlParams.toString();
         },
 
 
 
-        initialView: "dayGridMonth",
+        initialView: vistaParam,
 
         allDayText: 'Hs',
 
@@ -76,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         dayCellClassNames: function (arg) {
 
-            const params = new URLSearchParams(window.location.search);
+            // Reutilizamos la constante 'params' ya declarada arriba
             const fechaFiltro = fechaSeleccionada || params.get("fecha");
 
             if (!fechaFiltro) return [];
@@ -93,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         dayHeaderClassNames: function (arg) {
 
-            const params = new URLSearchParams(window.location.search);
+            // Reutilizamos la constante 'params' ya declarada arriba
             const fechaFiltro = fechaSeleccionada || params.get("fecha");
 
             if (!fechaFiltro) return [];
@@ -114,8 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         events: function (info, successCallback, failureCallback) {
 
-            const params = new URLSearchParams(window.location.search);
-
+            // Reutilizamos la constante 'params' ya declarada arriba
             const fecha =
                 params.get("fecha") || "";
 
@@ -187,9 +185,22 @@ document.addEventListener("DOMContentLoaded", () => {
                     ?.replace("👤 ", "")
                 || "";
 
+            // 🎨 Mapeo de colores por estado
+            const colores = {
+                confirmado: '#198754', // Verde
+                pendiente: '#ffc107',  // Amarillo
+                reservado: '#0d6efd',  // Azul
+                cancelado: '#dc3545',  // Rojo
+                completado: '#6c757d', // Gris
+                reprogramar: '#fd7e14' // Naranja
+            };
+
+            const estado = (arg.event.extendedProps.estado || '').toLowerCase();
+            const color = colores[estado] || '#0d6efd';
+
             return {
                 html: `
-    <div class="fc-turno">
+    <div class="fc-turno" style="--bg-estado: ${color};">
 
         <div class="fc-turno-hora">
             🕘 ${arg.event.extendedProps.hora}
@@ -230,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // MARCAR FECHA DEL FILTRO
     // ================================
 
-    const params = new URLSearchParams(window.location.search);
+    // 🔴 2. Quitamos la redeclaración 'const params = ...' que rompía el JS
     const fechaFiltro = params.get("fecha");
 
     if (fechaFiltro) {

@@ -196,12 +196,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
         eventContent: function (arg) {
 
+            // 🎨 Mapeo de colores por estado
+            const colores = {
+                confirmado: '#198754', // Verde
+                pendiente: '#ffc107',  // Amarillo
+                reservado: '#0d6efd',  // Azul
+                cancelado: '#dc3545',  // Rojo
+                completado: '#6c757d', // Gris
+                reprogramar: '#fd7e14' // Naranja
+            };
+
+            const estado = (arg.event.extendedProps.estado || '').toLowerCase();
+            const color = colores[estado] || '#0d6efd';
 
             return {
 
                 html: `
 
-                <div class="fc-turno">
+                <div class="fc-turno" style="--bg-estado: ${color};">
 
                     <div class="fc-turno-hora">
                         🕘 ${arg.event.extendedProps.hora}
@@ -222,7 +234,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 `
 
             };
-
 
         },
 

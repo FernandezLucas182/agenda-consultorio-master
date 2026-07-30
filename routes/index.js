@@ -100,6 +100,20 @@ router.get('/logout', authController.logout);
 // AGENDAS
 // =====================
 
+router.get(
+  '/agendas/:id/transferir',
+  isAuthenticated,
+  authorize('admin', 'secretaria'),
+  agendaController.formularioTransferirAgenda
+);
+
+router.post(
+  '/agendas/:id/transferir',
+  isAuthenticated,
+  authorize('admin', 'secretaria'),
+  agendaController.procesarTransferenciaAgenda
+);
+
 
 //====================================
 //Middleware - Autorizaciones
@@ -177,7 +191,7 @@ router.post('/turnos/:id/editar', isAuthenticated, authorize('admin', 'secretari
 
 router.post('/turnos/:id/eliminar', turnosController.eliminarTurno);
 
-router.get( '/turnos/:id', isAuthenticated, authorize('admin', 'secretaria', 'medico'), turnosController.mostrarTurno);
+router.get('/turnos/:id', isAuthenticated, authorize('admin', 'secretaria', 'medico'), turnosController.mostrarTurno);
 
 
 //=====================
@@ -194,10 +208,10 @@ router.get('/ausencias/solicitar', isAuthenticated, authorize('medico'), ausenci
 
 router.post('/ausencias/solicitar', isAuthenticated, authorize('medico'), ausenciasController.crearSolicitudAusencia);
 
-router.post('/ausencias/solicitud/:id/aprobar', isAuthenticated, authorize('admin','secretaria'), ausenciasController.aprobarSolicitud);
+router.post('/ausencias/solicitud/:id/aprobar', isAuthenticated, authorize('admin', 'secretaria'), ausenciasController.aprobarSolicitud);
 
 
-router.post('/ausencias/solicitud/:id/rechazar', isAuthenticated, authorize('admin','secretaria'), ausenciasController.rechazarSolicitud);
+router.post('/ausencias/solicitud/:id/rechazar', isAuthenticated, authorize('admin', 'secretaria'), ausenciasController.rechazarSolicitud);
 
 
 

@@ -81,16 +81,34 @@ block content
             div.col-md-6
               label.form-label Especialidad
 
-              select.form-select(
-                name="especialidad_id"
-                id="especialidad_id"
-              )
+              if volver === 'reprogramaciones'
+                //- Si viene de reprogramaciones: bloqueado + input oculto para no perder el dato en el POST
+                select.form-select(
+                  id="especialidad_id"
+                  disabled
+                )
+                  each especialidad in especialidades
+                    option(
+                      value=especialidad.id
+                      selected=(especialidad.id == turno.especialidad_id)
+                    )= especialidad.nombre
 
-                each especialidad in especialidades
-                  option(
-                    value=especialidad.id
-                    selected=(especialidad.id == turno.especialidad_id)
-                  )= especialidad.nombre
+                input(
+                  type="hidden"
+                  name="especialidad_id"
+                  value=turno.especialidad_id
+                )
+              else
+                //- Si viene de otra pantalla: funcional como siempre
+                select.form-select(
+                  name="especialidad_id"
+                  id="especialidad_id"
+                )
+                  each especialidad in especialidades
+                    option(
+                      value=especialidad.id
+                      selected=(especialidad.id == turno.especialidad_id)
+                    )= especialidad.nombre
 
             div.col-md-6
               label.form-label Sucursal
@@ -166,6 +184,8 @@ block content
 
 
   script.
+
+              const esReprogramacion = "#{volver}" === "reprogramaciones";
 
               const especialidadSelect =
                 document.getElementById('especialidad_id');
@@ -256,48 +276,47 @@ block content
                 const profesionalId = profesionalSelect.value;
 
                 try {
-                  
                   console.log(
                     'PROFESIONAL ACTUAL:',
                     obtenerProfesionalActual()
                   );
-                  const res = await fetch(
-                    `/profesionales/${profesionalId}/especialidades`
-                  );
 
-                  const especialidades = await res.json();
+                  // 1️⃣ Solo pedimos y actualizamos especialidades si NO es una reprogramación
+                  if (!esReprogramacion) {
+                    const res = await fetch(
+                      `/profesionales/${profesionalId}/especialidades`
+                    );
 
-                  especialidadSelect.innerHTML = '';
+                    const especialidades = await res.json();
 
-                  
-                  especialidades.forEach(e => {
-                    const option = document.createElement('option');
-                    option.value = e.id;
-                    option.textContent = e.nombre;
-                    especialidadSelect.appendChild(option);
-                  });
+                    especialidadSelect.innerHTML = '';
 
-                  // 👈 ACÁ SE TERMINA DE LLENAR EL SELECT
+                    especialidades.forEach(e => {
+                      const option = document.createElement('option');
+                      option.value = e.id;
+                      option.textContent = e.nombre;
+                      especialidadSelect.appendChild(option);
+                    });
 
-                  const especialidadId =
-                    especialidadOriginal && especialidades.some(e => e.id == especialidadOriginal)
-                      ? especialidadOriginal
-                      : especialidades[0].id;
+                    const especialidadId =
+                      especialidadOriginal && especialidades.some(e => e.id == especialidadOriginal)
+                        ? especialidadOriginal
+                        : especialidades[0].id;
 
-                  especialidadSelect.value = especialidadId;
+                    especialidadSelect.value = especialidadId;
+                  }
 
-                  
+                  // 2️⃣ Obtenemos la especialidad actual (sea la bloqueada o la recién seleccionada)
+                  const especialidadIdActual = especialidadSelect.value;
 
                   const resSuc = await fetch(
-                    `/turnos/sucursal/${profesionalId}/${especialidadId}`
+                    `/turnos/sucursal/${profesionalId}/${especialidadIdActual}`
                   );
-
-                  
 
                   const suc = await resSuc.json();
 
                   sucursalInput.value =
-                  suc.sucursal_nombre || '';
+                    suc.sucursal_nombre || '';
 
                   if (calendario) {
                     calendario.destroy();
@@ -307,11 +326,12 @@ block content
 
                   horaSelect.innerHTML =
                     '<option>Seleccione fecha</option>';
-  
+
                   console.log(
                     'PROFESIONAL PARA HORARIOS:',
                     obtenerProfesionalActual()
                   );
+
                   await cargarCalendario();
 
                 } catch(err) {

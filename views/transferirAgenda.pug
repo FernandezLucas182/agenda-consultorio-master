@@ -18,10 +18,10 @@ block content
             select.form-select#profesional_destino_id(name="profesional_destino_id" required)
               option(value="" disabled selected) -- Seleccione Profesional --
               each prof in profesionales
-                option(value=prof.id)= `${prof.nombre} ${prof.apellido}`
+                option(value=prof.id)= prof.nombre_completo || `${prof.nombre} ${prof.apellido}`
 
           .d-flex.gap-2.mt-4
-            a.btn.btn-secondary(href="/agendas") Cancelar
+            a.btn.btn-secondary(href="/agendas") Volver
             button.btn.btn-warning(type="submit")
               i.bi.bi-arrow-left-right.me-2
               | Confirmar Transferencia

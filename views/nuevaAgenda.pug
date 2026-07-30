@@ -64,24 +64,27 @@ block content
         div.form-text
           | Cantidad máxima de sobreturnos permitidos por día.
 
-    // DISPONIBILIDAD SEMANAL
+    // DISPONIBILIDAD SEMANAL (DE LUNES A SÁBADO)
     h3.mt-5.mb-3 Disponibilidad semanal
 
-    - const dias = [{id:1,nombre:"Lunes"},{id:2,nombre:"Martes"},{id:3,nombre:"Miércoles"},{id:4,nombre:"Jueves"},{id:5,nombre:"Viernes"},{id:6,nombre:"Sábado"},{id:7,nombre:"Domingo"}]
+    - const dias = [{id:1,nombre:"Lunes"},{id:2,nombre:"Martes"},{id:3,nombre:"Miércoles"},{id:4,nombre:"Jueves"},{id:5,nombre:"Viernes"},{id:6,nombre:"Sábado"}]
 
-    each dia in dias
-      div.card.mb-3
-        div.card-header
-          div.form-check
-            input.form-check-input.check-dia(type="checkbox" data-dia=dia.id id=`check-${dia.id}`)
-            label.form-check-label(for=`check-${dia.id}`)
-              strong #{dia.nombre}
+    // Grilla Bootstrap para mostrar las tarjetas lado a lado
+    div.row.g-3
+      each dia in dias
+        div.col-12.col-md-6.col-lg-4
+          div.card.h-100.shadow-sm
+            div.card-header.bg-light
+              div.form-check
+                input.form-check-input.check-dia(type="checkbox" data-dia=dia.id id=`check-${dia.id}`)
+                label.form-check-label(for=`check-${dia.id}`)
+                  strong #{dia.nombre}
 
-        div.card-body(id=`bloques-${dia.id}`)
-          //- Los bloques se agregarán aquí
+            div.card-body(id=`bloques-${dia.id}`)
+              //- Los bloques se agregarán aquí
 
-        div.card-footer
-          button.btn.btn-outline-primary.btn-sm(type="button" onclick=`agregarBloque(${dia.id})`) + Agregar bloque horario
+            div.card-footer.bg-white.border-top-0
+              button.btn.btn-outline-primary.btn-sm.w-100(type="button" onclick=`agregarBloque(${dia.id})`) + Agregar bloque horario
 
     div.mt-4
 
@@ -383,33 +386,26 @@ block content
       // BLOQUES HORARIOS
       // =========================
       window.agregarBloque = function(dia) {
-
         const contenedor = document.getElementById('bloques-' + dia);
-
         const options = horariosDisponibles
           .map(h => `<option value="${h}">${h}</option>`)
           .join('');
 
         const div = document.createElement('div');
-        div.className = 'row g-2 align-items-center mb-2';
+        div.className = 'd-flex align-items-center gap-1 mb-2 bg-light p-2 rounded border';
 
         div.innerHTML = `
           <input type="hidden" name="horarios[${bloqueIndex}][dia]" value="${dia}">
-          <div class="col-auto"><label>Desde:</label></div>
-          <div class="col-auto">
-            <select name="horarios[${bloqueIndex}][desde]" required>
-              <option value="">--</option>${options}
-            </select>
-          </div>
-          <div class="col-auto"><label>Hasta:</label></div>
-          <div class="col-auto">
-            <select name="horarios[${bloqueIndex}][hasta]" required>
-              <option value="">--</option>${options}
-            </select>
-          </div>
-          <div class="col-auto">
-            <button type="button" onclick="this.parentElement.parentElement.remove()">X</button>
-          </div>
+          <select class="form-select form-select-sm" name="horarios[${bloqueIndex}][desde]" required>
+            <option value="">Desde</option>${options}
+          </select>
+          <span class="text-muted">-</span>
+          <select class="form-select form-select-sm" name="horarios[${bloqueIndex}][hasta]" required>
+            <option value="">Hasta</option>${options}
+          </select>
+          <button type="button" class="btn btn-outline-danger btn-sm px-2" onclick="this.parentElement.remove()">
+            &times;
+          </button>
         `;
 
         contenedor.appendChild(div);

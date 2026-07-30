@@ -954,18 +954,19 @@ ESTRELLAS LOGIN
 
 
 /* ===========================
-   EVENTOS DEL CALENDARIO PARA MEDICO
+   EVENTOS DEL CALENDARIO
 =========================== */
 
 .fc-turno {
-  background: #0d6efd;
+  /* Guardamos un color por defecto usando var() */
+  background: var(--bg-estado, #0d6efd);
   border-radius: 6px;
   padding: 4px 6px;
   color: white;
   font-size: 0.75rem;
   line-height: 1.2;
   box-shadow: 0 2px 5px rgba(0, 0, 0, .25);
-  border-left: 4px solid #084298;
+  border-left: 4px solid rgba(0, 0, 0, 0.3);
   overflow: hidden;
 }
 
@@ -1013,7 +1014,3 @@ ESTRELLAS LOGIN
   color: #fff;
   box-shadow: 0 0 10px rgba(13, 110, 253, .35);
 }
-
-
-
-
