@@ -40,14 +40,25 @@ block content
 
   if agendas.length > 0
 
+    style.
+      .turno-recien-creado-agenda {
+        background-color: #d1e7dd !important; /* Verde claro estilo Bootstrap */
+        border-left: 5px solid #198754 !important; /* Borde verde lateral */
+        box-shadow: 0 0 10px rgba(25, 135, 84, 0.3);
+      }
+
     each ag in agendas
+      - const esNueva = (ag.id == nuevaAgendaId || ag.agenda_id == nuevaAgendaId)
 
       div.mt-3.px-2.py-1.rounded(
-        class=(ag.id == nuevaAgendaId ? 'turno-recien-creado-agenda' : '')
-        style="background:#e8f1ff; border-left:3px solid #0d6efd; margin-bottom:1px; display:flex; justify-content:space-between; align-items:center;"
+        class=(esNueva ? 'turno-recien-creado-agenda' : '')
+        style= esNueva ? '' : "background:#e8f1ff; border-left:3px solid #0d6efd; margin-bottom:1px; display:flex; justify-content:space-between; align-items:center;"
       )
 
-        span.fw-semibold= ag.profesional
+        span.fw-semibold
+          = ag.profesional
+          if esNueva
+            span.badge.bg-success.ms-2 ¡Editada / Creada!
 
         if !usuario || usuario.rol !== 'medico'
 
@@ -75,9 +86,11 @@ block content
               i.bi.bi-pencil.me-1
               | Editar
 
-      table.table.table-striped.table-bordered.table-sm.mt-0
+      table.table.table-striped.table-bordered.table-sm.mt-0(
+        class=(esNueva ? 'border-success' : '')
+      )
 
-        thead.table-dark
+        thead(class=(esNueva ? 'table-success text-dark' : 'table-dark'))
           tr
             th Especialidad
             th Día
@@ -86,10 +99,8 @@ block content
             th Duración
             th Máx. Sobreturnos
             th Sucursal
-            
 
         tbody
-
           each item in ag.filas
             tr
               td= item.especialidad

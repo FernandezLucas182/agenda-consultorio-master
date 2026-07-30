@@ -367,21 +367,41 @@ block content
       // RESTAURAR
       // =========================
       btnRestaurar.addEventListener("click", () => {
-
         sincronizando = true;
 
+        // Reset de desplegables
         profesionalSelect.innerHTML = profesionalesOriginales;
+        profesionalSelect.disabled = false;
+        profesionalSelect.selectedIndex = 0;
+
         especialidadSelect.innerHTML = especialidadesOriginales;
+        especialidadSelect.disabled = false;
+        especialidadSelect.selectedIndex = 0;
 
-        sucursalSelect.selectedIndex = 0;
+        cargarSucursales();
 
+        // Reset de Duración y Sobreturnos
+        const duracionSelect = document.getElementById('duracion_turno');
+        if (duracionSelect) duracionSelect.selectedIndex = 0;
+
+        const maxSobreturnos = document.getElementById('max_sobreturnos');
+        if (maxSobreturnos) maxSobreturnos.value = 0;
+
+        // Limpieza de bloques de horarios y desmarcado de checkboxes
+        [1, 2, 3, 4, 5, 6].forEach(diaId => {
+          const contenedor = document.getElementById(`bloques-${diaId}`);
+          if (contenedor) contenedor.innerHTML = '';
+          const check = document.getElementById(`check-${diaId}`);
+          if (check) check.checked = false;
+        });
+
+        // Habilitar botón guardar y ocultar alerta de agenda existente
         btnGuardar.disabled = false;
-
         alertaAgendaExistente.classList.add("d-none");
 
         sincronizando = false;
-
       });
+      
       // =========================
       // BLOQUES HORARIOS
       // =========================

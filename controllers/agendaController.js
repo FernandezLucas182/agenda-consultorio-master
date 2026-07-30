@@ -428,17 +428,18 @@ exports.formularioEditarAgenda = (req, res) => {
 
       if (err || !horarios) horarios = [];
 
+      // Mapeo defensivo
+      const horariosNormalizados = horarios.map(h => ({
+        ...h,
+        hora_inicio: String(h.hora_inicio || '').substring(0, 5),
+        hora_fin: String(h.hora_fin || '').substring(0, 5)
+      }));
+
       const horariosDisponibles = generarHorarios();
-
-      console.log("Horarios disponibles:", horariosDisponibles);
-
-      console.log("Agenda ID:", id);
-      console.log("Horarios:", horarios);
-      console.log("Agrupados:", agruparHorariosPorDia(horarios));
 
       res.render('editarAgenda', {
         agenda,
-        horarios: agruparHorariosPorDia(horarios),
+        horarios: agruparHorariosPorDia(horariosNormalizados),
         dias,
         horariosDisponibles
       });
@@ -449,7 +450,9 @@ exports.formularioEditarAgenda = (req, res) => {
 };
 
 
-
+// ==========================
+// EDITAR AGENDA COMPLETA
+// ==========================
 // ==========================
 // EDITAR AGENDA COMPLETA
 // ==========================
@@ -465,33 +468,7 @@ exports.editarAgenda = (req, res) => {
 
   const listaHorarios = Object.values(req.body.horarios || {});
 
-  if (listaHorarios.length === 0) {
-    return res.status(400).send('Debe agregar al menos un horario');
-  }
-
-  // 🔥 VALIDACIÓN PRIMERO
-  for (const h of listaHorarios) {
-
-    if (!h.desde || !h.hasta) {
-      return renderEditarConError(
-        req,
-        res,
-        id,
-        "Debe completar todos los horarios"
-      );
-    }
-
-    if (h.desde >= h.hasta) {
-      return renderEditarConError(
-        req,
-        res,
-        id,
-        "Elija un rango de horario válido"
-      );
-    }
-  }
-
-  // 🔥 SI TODO ES VÁLIDO → ACTUALIZAR
+  // 1. Siempre se actualiza primero la información base (duración y max_sobreturnos)
   Agenda.actualizarAgendaBase(
     id,
     duracion_turno,
@@ -504,13 +481,39 @@ exports.editarAgenda = (req, res) => {
         return res.redirect('/agendas');
       }
 
+      // 2. Si no enviaron horarios en la petición, finalizamos de inmediato sin revalidar horarios
+      if (listaHorarios.length === 0) {
+        req.flash('success', 'Agenda actualizada correctamente');
+        return res.redirect(`/agendas?nueva=${id}`);
+      }
+
+      // 3. Validar los rangos horarios enviados solo si existen
+      for (const h of listaHorarios) {
+        if (!h.desde || !h.hasta) {
+          return renderEditarConError(
+            req,
+            res,
+            id,
+            "Debe completar todos los horarios"
+          );
+        }
+
+        if (h.desde >= h.hasta) {
+          return renderEditarConError(
+            req,
+            res,
+            id,
+            "Elija un rango de horario válido"
+          );
+        }
+      }
+
+      // 4. Reemplazar los horarios si vinieron en el formulario
       Agenda.reemplazarHorarios(id, listaHorarios, (err) => {
 
         if (err) {
-
           console.error(err);
 
-          // Si el modelo envía un error de regla de negocio
           if (err.type === "BUSINESS_RULE") {
             return renderEditarConError(
               req,
@@ -529,7 +532,7 @@ exports.editarAgenda = (req, res) => {
         }
 
         req.flash('success', 'Agenda actualizada correctamente');
-        return res.redirect('/agendas');
+        return res.redirect(`/agendas?nueva=${id}`);
       });
     }
   );

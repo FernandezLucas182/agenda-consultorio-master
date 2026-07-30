@@ -223,50 +223,60 @@ class Agenda {
 
   static reemplazarHorarios(agenda_id, listaHorarios, callback) {
 
+    // 🟢 LINEA PARA ASEGURAR QUE EL ID SEA NUMERICO
+    const idAgendaNum = parseInt(agenda_id, 10);
+
     if (!listaHorarios || listaHorarios.length === 0) {
       return callback(new Error("Debe existir al menos un horario"));
     }
 
-    db.getConnection((err, connection) => {
+    // 1. Validar que dentro del mismo formulario no haya horarios solapados entre sí
+    for (let i = 0; i < listaHorarios.length; i++) {
+      for (let j = i + 1; j < listaHorarios.length; j++) {
+        const h1 = listaHorarios[i];
+        const h2 = listaHorarios[j];
 
+        if (h1.dia == h2.dia) {
+          // Si se solapan los horarios dentro del mismo array enviado
+          if (!(h1.hasta <= h2.desde || h1.desde >= h2.hasta)) {
+            return callback({
+              type: 'BUSINESS_RULE',
+              message: 'El profesional ya tiene un horario que se solapa en ese día'
+            });
+          }
+        }
+      }
+    }
+
+    db.getConnection((err, connection) => {
       if (err) return callback(err);
 
       connection.beginTransaction(err => {
-        let errorEncontrado = false;
-
         if (err) {
           connection.release();
           return callback(err);
         }
 
+        // Obtener profesional_id
         connection.query(
-          `SELECT profesional_id
-         FROM agendas
-         WHERE id = ?`,
+          `SELECT profesional_id FROM agendas WHERE id = ?`,
           [agenda_id],
           (err, agendaRows) => {
-
-            if (err) {
-              errorEncontrado = true;
-
+            if (err || !agendaRows.length) {
               return connection.rollback(() => {
                 connection.release();
-                callback(err);
+                callback(err || new Error("Agenda no encontrada"));
               });
             }
 
             const profesional_id = agendaRows[0].profesional_id;
 
-
-
+            // Borrar horarios actuales de la agenda
             connection.query(
               "DELETE FROM agenda_horarios WHERE agenda_id = ?",
               [agenda_id],
               (err) => {
-
                 if (err) {
-                  errorEncontrado = true;
-
                   return connection.rollback(() => {
                     connection.release();
                     callback(err);
@@ -274,37 +284,35 @@ class Agenda {
                 }
 
                 let pendientes = listaHorarios.length;
-                //const idsFinales = [];
-
+                let errorEncontrado = false;
 
                 listaHorarios.forEach(h => {
-
                   if (errorEncontrado) return;
 
                   if (h.desde >= h.hasta) {
                     errorEncontrado = true;
-
                     return connection.rollback(() => {
                       connection.release();
                       callback(new Error("Hora inicio debe ser menor que hora fin"));
                     });
                   }
 
+                  // Verificar solapamientos contra OTRAS agendas activas del mismo profesional
                   connection.query(
                     `SELECT ah.id
-                   FROM agenda_horarios ah
-                   JOIN agendas a ON ah.agenda_id = a.id
-                   WHERE a.profesional_id = ?
-                     AND ah.dia_semana = ?
-                     AND NOT (ah.hora_fin <= ? OR ah.hora_inicio >= ?)`,
-                    [profesional_id, h.dia, h.desde, h.hasta],
-
+                     FROM agenda_horarios ah
+                     JOIN agendas a ON ah.agenda_id = a.id
+                     WHERE a.profesional_id = ?
+                       AND a.id != ?
+                       AND a.activo = 1
+                       AND ah.dia_semana = ?
+                       AND NOT (ah.hora_fin <= ? OR ah.hora_inicio >= ?)`,
+                    [profesional_id, idAgendaNum, h.dia, h.desde, h.hasta], // 👈 Cambiado a idAgendaNum
                     (err, conflictos) => {
                       if (errorEncontrado) return;
 
                       if (err) {
                         errorEncontrado = true;
-
                         return connection.rollback(() => {
                           connection.release();
                           callback(err);
@@ -312,12 +320,9 @@ class Agenda {
                       }
 
                       if (conflictos.length > 0) {
-
                         errorEncontrado = true;
-
                         return connection.rollback(() => {
                           connection.release();
-
                           callback({
                             type: 'BUSINESS_RULE',
                             message: 'El profesional ya tiene un horario que se solapa en ese día'
@@ -325,17 +330,17 @@ class Agenda {
                         });
                       }
 
+                      // Insertar el nuevo horario
                       connection.query(
                         `INSERT INTO agenda_horarios 
-                       (agenda_id, dia_semana, hora_inicio, hora_fin)
-                       VALUES (?, ?, ?, ?)`,
+                         (agenda_id, dia_semana, hora_inicio, hora_fin)
+                         VALUES (?, ?, ?, ?)`,
                         [agenda_id, h.dia, h.desde, h.hasta],
                         (err) => {
                           if (errorEncontrado) return;
 
                           if (err) {
                             errorEncontrado = true;
-
                             return connection.rollback(() => {
                               connection.release();
                               callback(err);
@@ -345,12 +350,8 @@ class Agenda {
                           pendientes--;
 
                           if (pendientes === 0) {
-
                             connection.commit(err => {
-
                               if (err) {
-                                errorEncontrado = true;
-
                                 return connection.rollback(() => {
                                   connection.release();
                                   callback(err);
@@ -359,7 +360,6 @@ class Agenda {
 
                               connection.release();
                               callback(null, { agenda_id });
-
                             });
                           }
                         }

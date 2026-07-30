@@ -22,75 +22,82 @@ block content
           name="duracion_turno"
           required
         )
-
           option(
             value="10"
             selected=agenda.duracion_turno == 10
           ) 10 minutos
-
           option(
             value="20"
             selected=agenda.duracion_turno == 20
           ) 20 minutos
-
           option(
             value="30"
             selected=agenda.duracion_turno == 30
           ) 30 minutos
-
           option(
             value="40"
             selected=agenda.duracion_turno == 40
           ) 40 minutos
-
           option(
             value="45"
             selected=agenda.duracion_turno == 45
           ) 45 minutos
-
           option(
             value="60"
             selected=agenda.duracion_turno == 60
           ) 60 minutos
+
       div.col-md-6
         label.form-label(for="max_sobreturnos") Máx. Sobreturnos
         input.form-control(type="number" name="max_sobreturnos" value=agenda.max_sobreturnos required)
 
-    // DISPONIBILIDAD
-    h3.mb-3 Disponibilidad Semanal
+    // DISPONIBILIDAD SEMANAL
+    h3.mt-5.mb-3 Disponibilidad semanal
 
-    // Iteramos sobre los días de la semana
-    each dia in dias
-      div.card.mb-3
-        div.card-header
-          strong= dia.nombre
-        
-        div.card-body(id=`bloques-${dia.id}`)
-          //- Si existen horarios para este día, los renderizamos
-          if horarios[dia.id] && horarios[dia.id].length > 0
-            each h, index in horarios[dia.id]
-              div.row.g-2.align-items-center.mb-2.bloque-existente
-                input(type="hidden" name=`horarios[${dia.id}_${index}][dia]` value=dia.id)
-                
-                div.col-auto
-                  label.col-form-label Desde:
-                div.col-auto
-                  select.form-select.form-select-sm(name=`horarios[${dia.id}_${index}][desde]` required)
-                    each hora in horariosDisponibles
-                      option(value=hora selected=(hora == h.hora_inicio.slice(0,5)))= hora
-                
-                div.col-auto
-                  label.col-form-label Hasta:
-                div.col-auto
-                  select.form-select.form-select-sm(name=`horarios[${dia.id}_${index}][hasta]` required)
-                    each hora in horariosDisponibles
-                      option(value=hora selected=(hora == h.hora_fin.slice(0,5)))= hora
-                
-                div.col-auto
-                  button.btn.btn-danger.btn-sm(type="button" onclick="this.parentElement.parentElement.remove()") X
+    // Grilla Bootstrap para mostrar las tarjetas en columnas (Lunes a Sábado)
+    div.row.g-3
+      each dia in dias
+        if dia.id !== 7
+          div.col-12.col-md-6.col-lg-4
+            div.card.h-100.shadow-sm
+              div.card-header.bg-light
+                div.form-check
+                  input.form-check-input.check-dia(
+                    type="checkbox" 
+                    data-dia=dia.id 
+                    id=`check-${dia.id}`
+                    checked=(horarios[dia.id] && horarios[dia.id].length > 0)
+                  )
+                  label.form-check-label(for=`check-${dia.id}`)
+                    strong= dia.nombre
+              
+              div.card-body(id=`bloques-${dia.id}`)
+                //- Si existen horarios para este día, los renderizamos
+                if horarios[dia.id] && horarios[dia.id].length > 0
+                  each h, index in horarios[dia.id]
+                    div.d-flex.align-items-center.gap-1.mb-2.bg-light.p-2.rounded.border
+                      input(type="hidden" name=`horarios[${dia.id}_${index}][dia]` value=dia.id)
+                      
+                      select.form-select.form-select-sm(name=`horarios[${dia.id}_${index}][desde]` required)
+                        - var inicioNormalizado = h.hora_inicio.slice(0,5)
+                        if !horariosDisponibles.includes(inicioNormalizado)
+                          option(value=inicioNormalizado selected=true)= inicioNormalizado
+                        each hora in horariosDisponibles
+                          option(value=hora selected=(hora == inicioNormalizado))= hora
+                      
+                      span.text-muted -
 
-        div.card-footer
-          button.btn.btn-outline-primary.btn-sm(type="button" onclick=`agregarBloque(${dia.id})`) + Agregar bloque horario
+                      select.form-select.form-select-sm(name=`horarios[${dia.id}_${index}][hasta]` required)
+                        - var finNormalizado = h.hora_fin.slice(0,5)
+                        if !horariosDisponibles.includes(finNormalizado)
+                          option(value=finNormalizado selected=true)= finNormalizado
+                        each hora in horariosDisponibles
+                          option(value=hora selected=(hora == finNormalizado))= hora
+                      
+                      button.btn.btn-outline-danger.btn-sm.px-2(type="button" onclick="this.parentElement.remove()") &times;
+
+              div.card-footer.bg-white.border-top-0
+                button.btn.btn-outline-primary.btn-sm.w-100(type="button" onclick=`agregarBloque(${dia.id})`) + Agregar bloque horario
 
     div.mt-4
       button.btn.btn-success.btn-lg(type="submit") Guardar Cambios
@@ -107,42 +114,34 @@ block content
     function agregarBloque(dia) {
       const contenedor = document.getElementById('bloques-' + dia);
 
-      const div = document.createElement('div');
-      div.className = 'row g-2 align-items-center mb-2';
-
-      // Construir opciones del select
       const options = horariosDisponibles
         .map(h => `<option value="${h}">${h}</option>`)
         .join('');
 
+      const div = document.createElement('div');
+      div.className = 'd-flex align-items-center gap-1 mb-2 bg-light p-2 rounded border';
+
       div.innerHTML = `
         <input type="hidden" name="horarios[new_${bloqueIndex}][dia]" value="${dia}">
-        
-        <div class="col-auto">
-          <label class="col-form-label">Desde:</label>
-        </div>
-        <div class="col-auto">
-          <select class="form-select form-select-sm" name="horarios[new_${bloqueIndex}][desde]" required>
-            <option value="">--</option>
-            ${options}
-          </select>
-        </div>
-
-        <div class="col-auto">
-          <label class="col-form-label">Hasta:</label>
-        </div>
-        <div class="col-auto">
-          <select class="form-select form-select-sm" name="horarios[new_${bloqueIndex}][hasta]" required>
-            <option value="">--</option>
-            ${options}
-          </select>
-        </div>
-
-        <div class="col-auto">
-          <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">X</button>
-        </div>
+        <select class="form-select form-select-sm" name="horarios[new_${bloqueIndex}][desde]" required>
+          <option value="">Desde</option>
+          ${options}
+        </select>
+        <span class="text-muted">-</span>
+        <select class="form-select form-select-sm" name="horarios[new_${bloqueIndex}][hasta]" required>
+          <option value="">Hasta</option>
+          ${options}
+        </select>
+        <button type="button" class="btn btn-outline-danger btn-sm px-2" onclick="this.parentElement.remove()">
+          &times;
+        </button>
       `;
 
       contenedor.appendChild(div);
+
+      // Marca automáticamente el checkbox del día si se agrega un bloque
+      const check = document.getElementById('check-' + dia);
+      if (check) check.checked = true;
+
       bloqueIndex++;
     }
