@@ -110,7 +110,7 @@ exports.crearAgendaBase = (req, res) => {
   console.log("BODY:");
   console.log(req.body);
 
-  const { profesional_id, especialidad_id, duracion_turno, sucursal_id } = req.body;
+  const { profesional_id, especialidad_id, duracion_turno, sucursal_id, max_sobreturnos } = req.body;
 
   const horarios = req.body.horarios;
   /*console.log("DATOS:", {
